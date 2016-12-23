@@ -14,6 +14,9 @@
 
 #ifdef GE_DLL
 #include "ge_weapon.h"
+#ifdef GAME_DLL
+#include "gemp_player.h"
+#endif
 #endif
 
 #if !defined( CLIENT_DLL )
@@ -228,7 +231,7 @@ void CBaseCombatWeapon::Precache( void )
 			m_iPrimaryAmmoType = GetAmmoDef()->Index( GetWpnData().szAmmo1 );
 			if (m_iPrimaryAmmoType == -1)
 			{
-				Msg("ERROR: Weapon (%s) using undefined primary ammo type (%s)\n",GetClassname(), GetWpnData().szAmmo1);
+				Msg("ERROR: Weapon (%s) using undefined primary ammo type (%s)\n", GetClassname(), GetWpnData().szAmmo1);
 			}
 		}
 		if ( GetWpnData().szAmmo2[0] )
@@ -691,6 +694,14 @@ void CBaseCombatWeapon::OnPickedUp( CBaseCombatCharacter *pNewOwner )
 	{
 		m_OnPlayerPickup.FireOutput(pNewOwner, this);
 
+#ifdef GE_DLL
+		// Play the sound for everyone!
+		// Assuming the player is no longer spawn invulnerable, anyway.
+		CGEMPPlayer *pGEPlayer = ToGEMPPlayer(this);
+
+		if (pGEPlayer && !pGEPlayer->IsRadarCloaked())
+			EmitSound( GetShootSound( PICKUP ) );
+#else
 		// Play the pickup sound for 1st-person observers
 		CRecipientFilter filter;
 		for ( int i=1; i <= gpGlobals->maxClients; ++i )
@@ -705,7 +716,7 @@ void CBaseCombatWeapon::OnPickedUp( CBaseCombatCharacter *pNewOwner )
 		{
 			CBaseEntity::EmitSound( filter, pNewOwner->entindex(), "Player.PickupWeapon" );
 		}
-
+#endif
 		// Robin: We don't want to delete weapons the player has picked up, so 
 		// clear the name of the weapon. This prevents wildcards that are meant 
 		// to find NPCs finding weapons dropped by the NPCs as well.

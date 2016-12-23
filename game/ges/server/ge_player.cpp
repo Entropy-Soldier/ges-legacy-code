@@ -104,6 +104,23 @@ void CGEPlayer::Precache( void )
 	PrecacheScriptSound( "GEPlayer.HitOtherLimb" );
 	PrecacheScriptSound( "GEPlayer.HitOtherInvuln" );
 	PrecacheScriptSound( "GEPlayer.KillOther" );
+
+	PrecacheScriptSound( PICKUP_SOUND_GENERIC );
+	PrecacheScriptSound( PICKUP_SOUND_9MM );
+	PrecacheScriptSound( PICKUP_SOUND_RIFLE );
+	PrecacheScriptSound( PICKUP_SOUND_BUCKSHOT );
+	PrecacheScriptSound( PICKUP_SOUND_MAGNUM );
+	PrecacheScriptSound( PICKUP_SOUND_GOLDENGUN );
+	PrecacheScriptSound( PICKUP_SOUND_PROXIMITYMINE );
+	PrecacheScriptSound( PICKUP_SOUND_REMOTEMINE );
+	PrecacheScriptSound( PICKUP_SOUND_TIMEDMINE );
+	PrecacheScriptSound( PICKUP_SOUND_TKNIFE );
+	PrecacheScriptSound( PICKUP_SOUND_GRENADE );
+	PrecacheScriptSound( PICKUP_SOUND_SHELL );
+	PrecacheScriptSound( PICKUP_SOUND_ROCKET );
+	PrecacheScriptSound( PICKUP_SOUND_MOONRAKER );
+	PrecacheScriptSound( PICKUP_SOUND_WATCHLASER );
+
 #if 0
 	PrecacheScriptSound( "GEPlayer.HitPainMale" );
 	PrecacheScriptSound( "GEPlayer.HitPainFemale" );
@@ -171,6 +188,7 @@ void CGEPlayer::GiveAllItems( void )
 	GiveNamedItem( "weapon_slappers" );
 	GiveNamedItem( "weapon_knife" );
 	GiveNamedItem( "weapon_knife_throwing" );
+	GiveNamedItem( "weapon_watchlaser" );
 
 	GiveNamedItem( "weapon_pp7" );
 	GiveNamedItem( "weapon_pp7_silenced" );
@@ -1332,7 +1350,7 @@ void CGEPlayer::GiveNamedWeapon(const char* ident, int ammoCount, bool stripAmmo
 		const char* ammoId = GetAmmoForWeapon(id);
 
 		int aID = GetAmmoDef()->Index( ammoId );
-		GiveAmmo( ammoCount, aID, false );
+		GiveAmmo( ammoCount, aID, true );
 	}
 
 	CGEWeapon *pWeapon = (CGEWeapon*)GiveNamedItem(ident);

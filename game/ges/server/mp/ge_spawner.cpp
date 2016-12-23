@@ -245,7 +245,7 @@ void CGESpawner::SpawnEnt( int spawnstate )
 		{
 			m_hCurrentEntity = CBaseEntity::Create( m_szOverrideEntity, GetAbsOrigin(), GetAbsAngles(), this );
 			OnEntSpawned( m_szOverrideEntity );
-			EmitSound("Item.Materialize");
+			EmitSound("GEItem.Materialize");
 		}
 		// Don't try again even if we fail
 		m_fNextSpawnTime = 0;
@@ -259,7 +259,7 @@ void CGESpawner::SpawnEnt( int spawnstate )
 		{
 			m_hCurrentEntity = CBaseEntity::Create( m_szBaseEntity, GetAbsOrigin(), GetAbsAngles(), this );	
 			OnEntSpawned( m_szBaseEntity );
-			EmitSound("Item.Materialize");
+			EmitSound("GEItem.Materialize");
 		}
 		// Don't try again even if we fail
 		m_fNextSpawnTime = 0;

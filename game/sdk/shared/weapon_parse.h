@@ -38,6 +38,9 @@ typedef enum {
 	SPECIAL2,
 	SPECIAL3,
 	TAUNT,
+#ifdef GE_DLL
+	PICKUP,
+#endif
 
 	// Add new shoot sound types here
 

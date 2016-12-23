@@ -49,11 +49,13 @@ public:
 	virtual float	GetRange( void )								{ return 32.0f; }
 	virtual	float	GetDamageForActivity( Activity hitActivity )	{ return GetGEWpnData().m_iDamage; }
 	virtual bool	DamageWorld()									{ return true; }
+	virtual bool	SwingsInArc()									{ return true; }
+	virtual int		GetStaticHitActivity()							{ return NULL; }
 
 protected:
 	virtual	void	ImpactEffect( trace_t &trace );
 	bool			ImpactWater( const Vector &start, const Vector &end );
-	void			Swing( int bIsSecondary );
+	virtual void	Swing( int bIsSecondary );
 	void			Hit( trace_t &traceHit, Activity nHitActivity );
 	Activity		ChooseIntersectionPointAndActivity( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CBaseEntity *pOwner );
 

@@ -167,7 +167,11 @@ public:
 #if defined( CSTRIKE_DLL )
 	#define MAX_PLAYERS				65  // Absolute max players supported
 #else
+#ifdef GE_DLL
+	#define MAX_PLAYERS				17  // Absolute max players supported, sorry guys but the game just wan't built for 32 players.
+#else
 	#define MAX_PLAYERS				33  // Absolute max players supported
+#endif
 #endif
 
 #define MAX_PLACE_NAME_LENGTH		18

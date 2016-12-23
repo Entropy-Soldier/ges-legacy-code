@@ -1029,6 +1029,26 @@ int WeaponMaxDamageFromID(int id)
 	return 5000;
 }
 
+const char* WeaponPickupSoundFromID(int id)
+{
+	const CGEWeaponInfo *weap = NULL;
+	
+	const char *name = WeaponIDToAlias(id);
+	if (name && name[0] != '\0')
+	{
+		int h = LookupWeaponInfoSlot(name);
+		if (h == GetInvalidWeaponInfoHandle())
+			return NULL;
+
+		weap = dynamic_cast<CGEWeaponInfo*>(GetFileWeaponInfoFromHandle(h));
+
+		if (weap)
+			return weap->aShootSounds[PICKUP];
+	}
+
+	return NULL;
+}
+
 // End weapon helper functions
 
 #ifdef GAME_DLL

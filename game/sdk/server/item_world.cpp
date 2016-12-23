@@ -507,7 +507,7 @@ void CItem::Materialize( void )
 		// changing from invisible state to visible.
 
 #ifdef GE_DLL
-		EmitSound( "Item.Materialize" );
+		EmitSound( "GEItem.Materialize" );
 #else
 	#ifdef HL2MP
 		EmitSound( "AlyxEmp.Charge" );
@@ -530,6 +530,10 @@ void CItem::Precache()
 	BaseClass::Precache();
 
 	PrecacheScriptSound( "Item.Materialize" );
+
+#ifdef GE_DLL
+	PrecacheScriptSound( "GEItem.Materialize" );
+#endif
 }
 
 //-----------------------------------------------------------------------------

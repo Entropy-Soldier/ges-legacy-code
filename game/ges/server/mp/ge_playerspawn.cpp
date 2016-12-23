@@ -116,7 +116,7 @@ int CGEPlayerSpawn::GetDesirability(CGEPlayer *pRequestor)
 
 	// We should never be picked if we are not enabled
 	if (!IsEnabled())
-		return 0;
+		return INT_MIN;
 
 	int myTeam = m_iTeam;
 
@@ -239,7 +239,7 @@ int CGEPlayerSpawn::GetDesirability(CGEPlayer *pRequestor)
 
 	// They haven't had their first death yet, so don't bother with this nonsense.
 	if (pUniquePlayer->GetLastDeath() == Vector(-1, -1, -1))
-		return clamp(m_iBaseDesirability - m_iLastEnemyWeight - m_iLastUseWeight - m_iLastDeathWeight, 0, SPAWNER_DEFAULT_WEIGHT);
+		return min(m_iBaseDesirability - m_iLastEnemyWeight - m_iLastUseWeight - m_iLastDeathWeight, SPAWNER_DEFAULT_WEIGHT);
 	
 	// Calculate penalty based on where requesting player last died.
 	float dist = (pUniquePlayer->GetLastDeath() - GetAbsOrigin()).Length2D();
@@ -259,7 +259,7 @@ int CGEPlayerSpawn::GetDesirability(CGEPlayer *pRequestor)
 		m_iUniLastDeathWeight *= 2;
 
 	// Return a sum of our weight factors
-	return clamp(m_iBaseDesirability - m_iLastEnemyWeight - m_iLastUseWeight - m_iLastDeathWeight - m_iUniLastDeathWeight - m_iUniLastUseWeight, 0, SPAWNER_DEFAULT_WEIGHT);
+	return min(m_iBaseDesirability - m_iLastEnemyWeight - m_iLastUseWeight - m_iLastDeathWeight - m_iUniLastDeathWeight - m_iUniLastUseWeight, SPAWNER_DEFAULT_WEIGHT);
 }
 
 bool CGEPlayerSpawn::IsOccupied( void )

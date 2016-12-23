@@ -14,12 +14,9 @@
 #endif
 
 #include "wchar.h"
-
-#ifdef GAME_DLL
-  #include "valve_minmax_off.h"
-  #include <random>
-  #include "valve_minmax_on.h"
-#endif
+#include "valve_minmax_off.h"
+#include <random>
+#include "valve_minmax_on.h"
 
 #define M_TWOPI		6.2831853071795864f
 #define M_HALFPI	1.5707963267948966f
@@ -58,6 +55,7 @@ class C_GEGameplayEventListener { };
 #define AMMO_REMOTEMINE		"remotemine"
 #define AMMO_TKNIFE			"tknife"
 #define AMMO_MOONRAKER		"moonraker"
+#define AMMO_WATCHLASER		"watchlaser"
 #define AMMO_GRENADE		"grenades"
 #define AMMO_ROCKET			"rockets"
 #define AMMO_SHELL			"shells"
@@ -76,6 +74,24 @@ class C_GEGameplayEventListener { };
 #define AMMO_SHELL_ICON			"launcher_pickup"
 #define AMMO_ROCKET_ICON		"rocket_pickup"
 #define AMMO_MOONRAKER_ICON		"moonraker_pickup"
+#define AMMO_WATCHLASER_ICON	"moonraker_pickup"
+
+// Pickup sounds as defined in game_sounds_pickups_ges.txt
+#define PICKUP_SOUND_GENERIC	"AmmoPickup.Generic"
+#define PICKUP_SOUND_9MM		"AmmoPickup.9MM"
+#define PICKUP_SOUND_RIFLE		"AmmoPickup.Rifle"
+#define PICKUP_SOUND_BUCKSHOT	"AmmoPickup.Shotgun"
+#define PICKUP_SOUND_MAGNUM		"AmmoPickup.Magnum"
+#define PICKUP_SOUND_GOLDENGUN	"AmmoPickup.GoldenBullets"
+#define PICKUP_SOUND_PROXIMITYMINE	"AmmoPickup.ProxyMines"
+#define PICKUP_SOUND_REMOTEMINE	"AmmoPickup.RemoteMines"
+#define PICKUP_SOUND_TIMEDMINE	"AmmoPickup.TimedMines"
+#define PICKUP_SOUND_TKNIFE		"AmmoPickup.ThrowingKnives"
+#define PICKUP_SOUND_GRENADE	"AmmoPickup.Grenades"
+#define PICKUP_SOUND_SHELL		"AmmoPickup.GrenadeRounds"
+#define PICKUP_SOUND_ROCKET		"AmmoPickup.Rockets"
+#define PICKUP_SOUND_MOONRAKER	"AmmoPickup.Laser"
+#define PICKUP_SOUND_WATCHLASER	"AmmoPickup.WatchLaser"
 
 //Max Ammo Definitions
 const int AMMO_9MM_MAX			=	800;
@@ -91,6 +107,7 @@ const int AMMO_GRENADE_MAX		=	12;
 const int AMMO_ROCKET_MAX		=	6;
 const int AMMO_SHELL_MAX		=	12;
 const int AMMO_MOONRAKER_MAX	=	1;
+const int AMMO_WATCHLASER_MAX	=   200;
 
 const int AMMO_9MM_CRATE			=	50;
 const int AMMO_RIFLE_CRATE			=	75;
@@ -105,6 +122,7 @@ const int AMMO_GRENADE_CRATE		=	3;
 const int AMMO_ROCKET_CRATE			=	2;
 const int AMMO_SHELL_CRATE			=	4;
 const int AMMO_MOONRAKER_CRATE		=	0;
+const int AMMO_WATCHLASER_CRATE		=   0;
 
 //--------------------------------------------------------------------------------------------------------
 // Weapon IDs for all GoldenEye Game weapons
@@ -141,6 +159,7 @@ typedef enum GES_WEAPONS
 
 	WEAPON_MOONRAKER,
 	WEAPON_KNIFE,
+	WEAPON_WATCHLASER,
 
 	WEAPON_SPAWNMAX, // Don't spawn weapons in GEWeaponSpawner below this!
 
@@ -182,9 +201,10 @@ typedef struct
 // spawner name and the type of ammo they have. This is mainly for the spawner system
 // to recognize what type of ammo to spawn for each weapon
 //
+
 static const GEWeaponInfo_t GEWeaponInfo[] = 
 {
-	{WEAPON_NONE,			"weapon_none",			AMMO_NONE,		"#GE_NOWEAPON",		0,		-1	},
+	{WEAPON_NONE,			"weapon_none",			AMMO_NONE,		"#GE_NOWEAPON",		0,		-1 },
 	
 	// These are spawnable weapons (eg they can be created)
 	{WEAPON_PP7,			"weapon_pp7",			AMMO_9MM,		"#GE_PP7",			5,		2	},
@@ -214,7 +234,8 @@ static const GEWeaponInfo_t GEWeaponInfo[] =
 	{WEAPON_ROCKET_LAUNCHER,  "weapon_rocket_launcher",		AMMO_ROCKET,"#GE_RocketLauncher", 7,		7	},
 	
 	{WEAPON_MOONRAKER,	"weapon_moonraker",			AMMO_MOONRAKER,	"#GE_Moonraker",  10,		7	},
-	{WEAPON_KNIFE,		"weapon_knife",				AMMO_NONE,		"#GE_Knife",	  4,		3  },
+	{WEAPON_KNIFE,		"weapon_knife",				AMMO_NONE,		"#GE_Knife",	  4,		3   },
+	{WEAPON_WATCHLASER,		"weapon_watchlaser",	AMMO_WATCHLASER, "#GE_WatchLaser", 4,		6	},
 
 	{WEAPON_SPAWNMAX,	NULL,						AMMO_NONE,			"",				  0,		-1	},
 
@@ -286,6 +307,7 @@ extern const char *GetWeaponPrintName( int id );
 extern int GetRandWeightForWeapon( int id );
 extern int GetStrengthOfWeapon(int id);
 extern int WeaponMaxDamageFromID(int id);
+extern const char* WeaponPickupSoundFromID(int id);
 
 // Team colors for the GE Teams
 static Color COLOR_JANUS	( 238,  54,  54, 255 );
@@ -541,58 +563,33 @@ unsigned int RSHash(const char *str);
 template <class T>
 T GERandom(const T limit = T(1.0))
 {
-   static bool seeded = false;
-   static const double rand_max_reciprocal = double(1.0) / (double(RAND_MAX) + 1.0);
+	static bool seeded = false;
+	static std::mt19937 eng;
 
-#ifdef GAME_DLL
+	if (seeded)
+	{
+		std::uniform_real_distribution<> distr(0, limit);
+		float returnValue = distr(eng);
 
-   static std::mt19937 eng;
+		return T(returnValue);
+	}
 
-   if (seeded)
-   {
-	   if (iAlertCode & 4)
-	   {
-		   std::uniform_real_distribution<> distr(0, limit);
-		   float returnValue = distr(eng);
+	// Prepare the seed if we have yet to seed our random function.
+	std::random_device rd;
+	unsigned int seedValue = rd();
 
-		   return T(returnValue);
-	   }
-	   else
-		   return T(double(limit) * double(rand()) * rand_max_reciprocal);
-   }
+	// Can't seed mersine twister with zero.  The chance of getting this with rd() is -super- small 
+	// and mersine twister should be seeded with way more than just one int but for our purposes this should
+	// work fine.  I can't think of any way the client could obtain the server's random state from the limited information
+	// it would be given from gameplay/spawn selection and it's not like we require very specific random values to be chosen.
 
-   if (iAlertCode & 2)
-   {
-	   // Completely different server seeding which will hopefully be unpredictable.
-	   std::random_device rd;
-	   eng.seed(rd());
-	   std::uniform_int_distribution<> seeddist(6, 33550336);
-	   int seedValue = seeddist(eng);
-	   srand(seedValue);
-   }
-   else
-   {
-	   tm myTime;
-	   VCRHook_LocalTime( &myTime );
+	if (seedValue == 0)
+		seedValue = 7; // Chosen randomly by fair dice roll.
 
-	   srand( myTime.tm_sec + myTime.tm_min * 60 + myTime.tm_hour * 3600 );
-   }
-
-#else
-
-   if (seeded)
-	   return T(double(limit) * double(rand()) * rand_max_reciprocal);
-
-   tm myTime;
-   VCRHook_LocalTime( &myTime );
-
-   srand( myTime.tm_sec + myTime.tm_min * 60 + myTime.tm_hour * 3600 );
-
-#endif
-
-   seeded = true;
-   
-   return GERandom<T>(limit);
+	eng.seed(seedValue);
+	seeded = true;
+	
+	return GERandom<T>(limit);
 }
 
 // Since this returns a pointer, be secure against NULL, 

@@ -1746,6 +1746,9 @@
     <ClCompile Include="ges\client\c_ge_door_interp.cpp">
       <Filter>GES\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="ges\shared\weapon_watchlaser.cpp">
+      <Filter>GES\Weapons\Melee</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ges\client\clientmode_ge.h">

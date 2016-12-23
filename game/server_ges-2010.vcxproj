@@ -495,6 +495,7 @@
     <ClCompile Include="ges\server\ge_triggers.cpp" />
     <ClCompile Include="ges\server\prop_ge_dynamic.cpp" />
     <ClCompile Include="ges\shared\ge_webrequest.cpp" />
+    <ClCompile Include="ges\shared\weapon_watchlaser.cpp" />
     <ClCompile Include="sdk\server\hl2\npc_bullseye.cpp" />
     <ClCompile Include="sdk\server\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

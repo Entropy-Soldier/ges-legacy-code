@@ -138,8 +138,11 @@ void C_BaseCombatWeapon::OnDataChanged( DataUpdateType_t updateType )
 				{
 					pHudSelection->OnWeaponPickup( this );
 				}
-
+#ifdef GE_DLL
+				EmitSound( GetShootSound(PICKUP) ); // No checks needed here because it's the first person pickup sound.
+#else
 				pPlayer->EmitSound( "Player.PickupWeapon" );
+#endif
 			}
 		}
 	}

@@ -888,7 +888,8 @@ CBaseEntity* CGEMPPlayer::EntSelectSpawnPoint()
 
 	// Figure out the spawn with the highest weight
 
-	int bestweight = 2;
+	int bestweight = INT_MIN;
+	CGEPlayerSpawn *pBestSpawn = NULL;
 
 	for (int i = 0; i < vSpots->Count(); i++)
 	{
@@ -897,68 +898,101 @@ CBaseEntity* CGEMPPlayer::EntSelectSpawnPoint()
 		{
 			int weight = pSpawn->GetDesirability(this);
 			if (weight > bestweight)
+			{
+				pBestSpawn = pSpawn;
 				bestweight = weight;
-		}
-	}
-
-	bestweight *= 0.5; //establish a threshold for spawns that are within a certain value of bestweight.
-
-	// Build a list of player spawns
-	for ( int i=0; i < vSpots->Count(); i++ )
-	{
-		CGEPlayerSpawn *pSpawn = (CGEPlayerSpawn*) vSpots->Element(i).Get();
-		if ( GERules()->IsSpawnPointValid( pSpawn, this ) )
-		{
-			int weight = pSpawn->GetDesirability( this );
-			if ( weight > bestweight )
-			{
-				//Shifts the weights down into the 1/8-1/2 range from the 1/2 - 1 range. 
-				//Spawns at the bottom are 1 / 4th as likely to be picked as spawns at the top.
-				weight -= bestweight * 0.75;
-
-				vSpawners.AddToTail( pSpawn );
-				vWeights.AddToTail( weight );
-
-				if ( ge_debug_playerspawns.GetBool() )
-					Msg( "%i: Found spawn point %s with desirability %i\n", vSpawners.Count(), pSpawn->GetClassname(), weight );
-			}
-			else
-			{
-				vLeftovers.AddToTail( pSpawn );
 			}
 		}
 	}
-
-	// If we didn't find any spots bail out early
-	if ( vSpawners.Count() == 0 )
+	
+	// Somehow there are no valid spawns on the map.
+	if (!pBestSpawn)
 	{
-		if ( vLeftovers.Count() > 0 )
-		{
-			int x = GERandom<int>( vLeftovers.Count() );
-			pSpot = vLeftovers[x];
-		}
-		else
-		{
-			if ( ge_debug_playerspawns.GetBool() )
-				Msg( "No valid spawn points were found :(\n" );
+		if (ge_debug_playerspawns.GetBool())
+			Msg("No valid spawn points were found :(\n");
 
-			SetSpawnState( SS_BLOCKED_NO_SPOT );
-			m_flNextSpawnTry = gpGlobals->curtime + 1.0f;
-			return NULL;
-		}
+		SetSpawnState(SS_BLOCKED_NO_SPOT);
+		m_flNextSpawnTry = gpGlobals->curtime + 1.0f;
+		return NULL;
+	}
+
+	if (ge_debug_playerspawns.GetBool())
+		Msg("Best spawn point weight is %d!\n", bestweight);
+
+	// The best spawn point is enabled and not occupied but the desirability is not positive.  
+	// All the spawns are horrible so just forget about the random selection and use the least horrible one.
+	if (bestweight <= 0)
+	{
+		if (ge_debug_playerspawns.GetBool())
+			Msg("Failsafe selected best spawn point due to bad selection pool!\n");
+
+		pBestSpawn->NotifyOnUse();
+		return pBestSpawn;
 	}
 	else
 	{
-		// Use our desirability to pull a random weighted spawn point out
-		pSpot = GERandomWeighted<CGEPlayerSpawn*, float>( vSpawners.Base(), vWeights.Base(), vSpawners.Count() );
+		// We've got a few decent spawn points to choose from so let's choose from all the spawn points that are at least half as good as the best one.
+		// This is to prevent exploits and predictable spawning.
 
-		// Drop dead fix for when random weighted returns null (this should never happen!)
-		Assert( pSpot );
-		if ( !pSpot )
-			pSpot = vSpawners[ GERandom<int>(vSpawners.Count()) ];
+		bestweight *= 0.5; //establish a threshold for spawns that are within a certain value of bestweight.
 
-		if ( ge_debug_playerspawns.GetBool() )
-			Msg( "Selected spawn point %i!\n", vSpawners.Find( pSpot ) );
+		// Build a list of player spawns
+		for (int i = 0; i < vSpots->Count(); i++)
+		{
+			CGEPlayerSpawn *pSpawn = (CGEPlayerSpawn*)vSpots->Element(i).Get();
+			if (GERules()->IsSpawnPointValid(pSpawn, this))
+			{
+				int weight = pSpawn->GetDesirability(this);
+				if (weight > bestweight)
+				{
+					if (ge_debug_playerspawns.GetBool())
+						Msg("%i: Found spawn point %s with desirability %i\n", vSpawners.Count(), pSpawn->GetClassname(), weight);
+
+					//Shifts the weights down into the 1/8-1/2 range from the 1/2 - 1 range. 
+					//Spawns at the bottom are 1 / 4th as likely to be picked as spawns at the top.
+					weight -= bestweight * 0.75;
+
+					vSpawners.AddToTail(pSpawn);
+					vWeights.AddToTail(weight);
+				}
+				else
+				{
+					vLeftovers.AddToTail(pSpawn);
+				}
+			}
+		}
+
+		// If we didn't find any spots bail out early
+		if (vSpawners.Count() == 0)
+		{
+			if (vLeftovers.Count() > 0)
+			{
+				int x = GERandom<int>(vLeftovers.Count());
+				pSpot = vLeftovers[x];
+			}
+			else
+			{
+				if (ge_debug_playerspawns.GetBool())
+					Msg("No valid spawn points were found :(\n");
+
+				SetSpawnState(SS_BLOCKED_NO_SPOT);
+				m_flNextSpawnTry = gpGlobals->curtime + 1.0f;
+				return NULL;
+			}
+		}
+		else
+		{
+			// Use our desirability to pull a random weighted spawn point out
+			pSpot = GERandomWeighted<CGEPlayerSpawn*, float>(vSpawners.Base(), vWeights.Base(), vSpawners.Count());
+
+			// Drop dead fix for when random weighted returns null (this should never happen!)
+			Assert(pSpot);
+			if (!pSpot)
+				pSpot = vSpawners[GERandom<int>(vSpawners.Count())];
+
+			if (ge_debug_playerspawns.GetBool())
+				Msg("Selected spawn point %i!\n", vSpawners.Find(pSpot));
+		}
 	}
 
 	pSpot->NotifyOnUse();
@@ -1323,11 +1357,10 @@ void CGEMPPlayer::PreThink()
 					DevMsg("CC STATUS: %s (%s)\n", GetPlayerName(), steamID);
 					m_iDevStatus = GE_CONTRIBUTOR;
 				}
-				else if ( IsOnList( LIST_BANNED, m_iSteamIDHash) )
+				else if ( IsOnList(LIST_BANNED, m_iSteamIDHash) && (engine->IsDedicatedServer() || entindex() != 1) ) // No reason to stop banned players from playing on their own, at least.
 				{
 					char command[255];
-					Q_snprintf(command, 255, "kick %d\n", GetUserID());
-					Msg("%s is GE:S Auth Server Banned [%s]\n", steamID, command);
+					Q_snprintf(command, 255, "banid 0 %s kick\n", steamID);
 					engine->ServerCommand(command);
 				}
 

@@ -1797,6 +1797,9 @@
     <ClCompile Include="ges\server\ge_logic_bitflag.cpp">
       <Filter>GES\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="ges\shared\weapon_watchlaser.cpp">
+      <Filter>GES\Weapons\Melee</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sdk\server\plasma.h">

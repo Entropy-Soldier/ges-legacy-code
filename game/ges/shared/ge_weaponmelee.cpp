@@ -371,11 +371,11 @@ void CGEWeaponMelee::Swing( int bIsSecondary )
 	TraceAttackToTriggers( triggerInfo, traceHit.startpos, traceHit.endpos, vec3_origin );
 #endif
 
-	// We didn't hit a player, do some additional checks.  This means that if the user was looking directly at a player
+	// If we swing in an arc and we didn't hit a player on the direct trace, do some additional checks.  This means that if the user was looking directly at a player
 	// that player will always be hit at the location the user was aiming at, but if they weren't then they still
 	// have a good chance to hit someone close to their crosshair.
 
-	if (traceHit.fraction == 1.0 || !traceHit.m_pEnt->IsPlayer() )
+	if (SwingsInArc() && (traceHit.fraction == 1.0 || !traceHit.m_pEnt->IsPlayer()))
 	{
 		// This is just used to approximate the extra distance to add to the radius check to make sure we include
 		// all eligible entities, so we can just pretend the player is a giant cube and calculate the max possible distance from that.
@@ -537,12 +537,15 @@ void CGEWeaponMelee::Swing( int bIsSecondary )
 	}
 
 	// Send the anim
-	SendWeaponAnim( nHitActivity );
+	if (!GetStaticHitActivity())
+		SendWeaponAnim( nHitActivity );
+	else
+		SendWeaponAnim( GetStaticHitActivity() );
 
 	if ( pPlayer )
 		ToGEPlayer(pPlayer)->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 
 	//Setup our next attack times
-	m_flNextPrimaryAttack = gpGlobals->curtime + max(GetFireRate(),SequenceDuration());
-	m_flNextSecondaryAttack = gpGlobals->curtime + max(GetFireRate(),SequenceDuration());
+	m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
+	m_flNextSecondaryAttack = gpGlobals->curtime + GetFireRate();
 }

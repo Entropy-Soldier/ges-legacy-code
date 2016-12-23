@@ -567,10 +567,14 @@ void CBaseCombatWeapon::Materialize( void )
 	if ( IsEffectActive( EF_NODRAW ) )
 	{
 		// changing from invisible state to visible.
+#ifdef GE_DLL
+		EmitSound( "GEItem.Materialize" );
+#else
 #ifdef HL2MP
 		EmitSound( "AlyxEmp.Charge" );
 #else
 		EmitSound( "BaseCombatWeapon.WeaponMaterialize" );
+#endif
 #endif
 		
 		RemoveEffects( EF_NODRAW );

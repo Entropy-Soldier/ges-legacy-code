@@ -231,9 +231,9 @@ void GEInfAmmo_Callback(IConVar *var, const char *pOldString, float flOldValue)
 	if (!newstate)
 		return;
 
-	const char* ammotypes[13] = { AMMO_9MM, AMMO_RIFLE, AMMO_BUCKSHOT, AMMO_MAGNUM, AMMO_GOLDENGUN, AMMO_MOONRAKER, AMMO_ROCKET, AMMO_SHELL, AMMO_TIMEDMINE, AMMO_REMOTEMINE, AMMO_TKNIFE, AMMO_GRENADE, AMMO_PROXIMITYMINE };
+	const char* ammotypes[14] = { AMMO_9MM, AMMO_RIFLE, AMMO_BUCKSHOT, AMMO_MAGNUM, AMMO_GOLDENGUN, AMMO_MOONRAKER, AMMO_WATCHLASER, AMMO_ROCKET, AMMO_SHELL, AMMO_TIMEDMINE, AMMO_REMOTEMINE, AMMO_TKNIFE, AMMO_GRENADE, AMMO_PROXIMITYMINE };
 	// Somewhat dinky way of still allowing ammo pickups for mines/knives/grenades during inf ammo.  Just give the player one less than the max!
-	int ammoamounts[13] = { AMMO_9MM_MAX, AMMO_RIFLE_MAX, AMMO_BUCKSHOT_MAX, AMMO_MAGNUM_MAX, AMMO_GOLDENGUN_MAX, AMMO_MOONRAKER_MAX, AMMO_ROCKET_MAX,
+	int ammoamounts[14] = { AMMO_9MM_MAX, AMMO_RIFLE_MAX, AMMO_BUCKSHOT_MAX, AMMO_MAGNUM_MAX, AMMO_GOLDENGUN_MAX, AMMO_MOONRAKER_MAX, AMMO_WATCHLASER_MAX, AMMO_ROCKET_MAX,
 							AMMO_SHELL_MAX, AMMO_TIMEDMINE_MAX - 1, AMMO_REMOTEMINE_MAX - 1, AMMO_TKNIFE_MAX - 1, AMMO_GRENADE_MAX - 1, AMMO_PROXIMITYMINE_MAX - 1};
 
 	FOR_EACH_PLAYER(pPlayer)
@@ -1286,8 +1286,8 @@ void CGEMPRules::SetupChangeLevel( const char *next_level /*= NULL*/ )
 		if ( m_flChangeLevelTime > 0 )
 			return;
 
-		// If we have defined a "nextlevel" use that instead of choosing one
-		if ( *nextlevel.GetString() )
+		// If we have defined a "nextlevel", and it is not the transistion map, use that instead of choosing one
+		if ( *nextlevel.GetString() && Q_strcmp(nextlevel.GetString(), "ge_transition") )
 			Q_strncpy( m_szNextLevel, nextlevel.GetString(), sizeof(m_szNextLevel) );
 		else
 		{

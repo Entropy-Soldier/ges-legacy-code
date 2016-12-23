@@ -313,6 +313,7 @@
     <ClCompile Include="ges\shared\weapon_klobb.cpp" />
     <ClCompile Include="ges\shared\weapon_phantom.cpp" />
     <ClCompile Include="ges\shared\weapon_rcp90.cpp" />
+    <ClCompile Include="ges\shared\weapon_watchlaser.cpp" />
     <ClCompile Include="ges\shared\weapon_zmg.cpp" />
     <ClCompile Include="ges\shared\ge_weaponpistol.cpp" />
     <ClCompile Include="ges\shared\weapon_cmag.cpp" />

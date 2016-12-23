@@ -27,6 +27,7 @@
 #include "tier0/memdbgon.h"
 
 #define	SLAPPER_RANGE		65.0f
+#define	STOCK_RANGE			70.0f
 
 #ifdef CLIENT_DLL
 #define CWeaponSlappers C_WeaponSlappers

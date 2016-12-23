@@ -30,6 +30,7 @@ struct Ammo_t
 #ifdef GE_DLL
 	int					nCrateAmt;
 	char				*pIcon;
+	char				*pPickSound;
 #endif
 
 	// Values for player/NPC damage and carrying capability
@@ -90,12 +91,13 @@ public:
 #ifdef GE_DLL
 	int					CrateAmount( int nAmmoIndex );
 	char				*AmmoIcon( int nAmmoIndex );
+	char				*PickupSound( int nAmmoIndex );
 #endif
 
 	void				AddAmmoType(char const* name, int damageType, int tracerType, int plr_dmg, int npc_dmg, int carry, float physicsForceImpulse, int nFlags, int minSplashSize = 4, int maxSplashSize = 8 );
 	void				AddAmmoType(char const* name, int damageType, int tracerType, char const* plr_cvar, char const* npc_var, char const* carry_cvar, float physicsForceImpulse, int nFlags, int minSplashSize = 4, int maxSplashSize = 8 );
 #ifdef GE_DLL
-	void				AddAmmoTypeGE(char const* name, int damageType, int tracerType, int carry, float physicsForceImpulse, int crateAmt, char const* icon );
+	void				AddAmmoTypeGE(char const* name, int damageType, int tracerType, int carry, float physicsForceImpulse, int crateAmt, char const* icon, char const* pickupSound = NULL);
 #endif
 
 	CAmmoDef(void);

@@ -187,7 +187,11 @@ void CWeaponHL2MPBase::Materialize( void )
 	if ( IsEffectActive( EF_NODRAW ) )
 	{
 		// changing from invisible state to visible.
+#ifdef GE_DLL
+		EmitSound( "GEItem.Materialize" );
+#else
 		EmitSound( "AlyxEmp.Charge" );
+#endif
 		
 		RemoveEffects( EF_NODRAW );
 		DoMuzzleFlash();

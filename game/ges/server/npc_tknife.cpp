@@ -248,8 +248,11 @@ bool CGETKnife::MyTouch( CBaseCombatCharacter *pToucher )
 	{
 		if ( !ToGEPlayer(pToucher)->GiveNamedItem( "weapon_knife_throwing" ) )
 		{
-			if ( pToucher->GiveAmmo( 1, GetAmmoDef()->Index(AMMO_TKNIFE) ) )
+			if ( pToucher->GiveAmmo(1, GetAmmoDef()->Index(AMMO_TKNIFE), true) )
+			{
+				EmitSound(WeaponPickupSoundFromID(WEAPON_KNIFE_THROWING));
 				return true;
+			}
 		}
 		else
 			return true;

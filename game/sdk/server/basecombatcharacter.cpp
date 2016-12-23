@@ -40,6 +40,9 @@
 
 #ifdef GE_DLL
 #include "ge_player.h"
+#ifdef GAME_DLL
+#include "gemp_player.h"
+#endif
 #endif
 
 #ifdef HL2_DLL
@@ -2143,8 +2146,13 @@ bool CBaseCombatCharacter::Weapon_EquipAmmoOnly( CBaseCombatWeapon *pWeapon )
 			int	primaryGiven	= (pWeapon->UsesClipsForAmmo1()) ? pWeapon->m_iClip1 : pWeapon->GetPrimaryAmmoCount();
 			int secondaryGiven	= (pWeapon->UsesClipsForAmmo2()) ? pWeapon->m_iClip2 : pWeapon->GetSecondaryAmmoCount();
 
+#ifdef GE_DLL
+			int takenPrimary   = GiveAmmo( primaryGiven, pWeapon->m_iPrimaryAmmoType, true); 
+			int takenSecondary = GiveAmmo( secondaryGiven, pWeapon->m_iSecondaryAmmoType, true); 
+#else
 			int takenPrimary   = GiveAmmo( primaryGiven, pWeapon->m_iPrimaryAmmoType); 
 			int takenSecondary = GiveAmmo( secondaryGiven, pWeapon->m_iSecondaryAmmoType); 
+#endif
 			
 			if( pWeapon->UsesClipsForAmmo1() )
 			{
@@ -2166,7 +2174,18 @@ bool CBaseCombatCharacter::Weapon_EquipAmmoOnly( CBaseCombatWeapon *pWeapon )
 			
 			//Only succeed if we've taken ammo from the weapon
 			if ( takenPrimary > 0 || takenSecondary > 0 )
+#ifdef GE_DLL
+			{
+				CGEMPPlayer *pGEPlayer = ToGEMPPlayer(this);
+
+				if (pGEPlayer && !pGEPlayer->IsRadarCloaked())
+					pWeapon->EmitSound( pWeapon->GetShootSound(PICKUP) );  // We never play ammo pickup sounds on weapon pickups.
+
 				return true;
+			}
+#else
+				return true;
+#endif
 			
 			return false;
 		}
@@ -2944,7 +2963,14 @@ int CBaseCombatCharacter::GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSo
 	// Ammo pickup sound
 	if ( !bSuppressSound )
 	{
+#ifdef GE_DLL
+		CGEMPPlayer *pGEPlayer = ToGEMPPlayer(this);
+
+		if (pGEPlayer && !pGEPlayer->IsRadarCloaked())
+			EmitSound( GetAmmoDef()->PickupSound(iAmmoIndex) );
+#else
 		EmitSound( "BaseCombatCharacter.AmmoPickup" );
+#endif
 	}
 
 	m_iAmmo.Set( iAmmoIndex, m_iAmmo[iAmmoIndex] + iAdd );
