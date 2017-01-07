@@ -1800,6 +1800,9 @@
     <ClCompile Include="ges\shared\weapon_watchlaser.cpp">
       <Filter>GES\Weapons\Melee</Filter>
     </ClCompile>
+    <ClCompile Include="ges\server\mp\ge_entitytracker.cpp">
+      <Filter>GES\Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sdk\server\plasma.h">
@@ -3546,6 +3549,9 @@
       <Filter>GES\Entities</Filter>
     </ClInclude>
     <ClInclude Include="ges\server\mp\ge_mapmanager.h">
+      <Filter>GES\Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="ges\server\mp\ge_entitytracker.h">
       <Filter>GES\Gameplay</Filter>
     </ClInclude>
   </ItemGroup>

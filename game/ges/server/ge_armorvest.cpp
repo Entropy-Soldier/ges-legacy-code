@@ -46,6 +46,7 @@ ConVar ge_armorrespawn_pc_pow("ge_armorrespawn_pc_pow", "0.5", FCVAR_REPLICATED,
 
 ConVar ge_debug_armorspawns("ge_debug_armorspawns", "0", FCVAR_CHEAT | FCVAR_GAMEDLL, "Debug armor respawn progress.");
 
+ConVar ge_limithalfarmorpickup("ge_limithalfarmorpickup", "0", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Prevent players from getting more than half armor from a half armor pickup.");
 
 CGEArmorVest::CGEArmorVest( void )
 {
@@ -107,7 +108,8 @@ void CGEArmorVest::Precache( void )
 {
 	PrecacheModel( "models/weapons/armor/armor.mdl" );
 	PrecacheModel( "models/weapons/halfarmor/halfarmor.mdl" );
-	PrecacheScriptSound( "ArmorVest.Pickup" );
+	PrecacheScriptSound( PICKUP_SOUND_ARMOR );
+	PrecacheScriptSound( PICKUP_SOUND_HALFARMOR );
 
 	BaseClass::Precache();
 }
@@ -235,7 +237,7 @@ bool CGEArmorVest::MyTouch( CBasePlayer *pPlayer )
 	if ( !pGEPlayer )
 		return false;
 
-	return pGEPlayer->AddArmor(m_iAmount) || GERules()->ShouldForcePickup(pPlayer, this);
+	return pGEPlayer->AddArmor(m_iAmount,  ge_limithalfarmorpickup.GetBool() ? m_iAmount : MAX_ARMOR) || GERules()->ShouldForcePickup(pPlayer, this);
 }
 
 

@@ -1,3 +1,6 @@
+#ifndef GE_TRIGGERS_H
+#define GE_TRIGGERS_H
+
 #include "triggers.h"
 #include "ge_shareddefs.h"
 
@@ -31,3 +34,5 @@ public:
 	string_t	m_sKillMessage;
 
 };
+
+#endif

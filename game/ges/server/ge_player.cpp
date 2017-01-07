@@ -62,7 +62,6 @@ END_DATADESC()
 #endif
 
 ConVar ge_weapondroplimit("ge_weapondroplimit", "1", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Cap on the number of weapons a player can drop on death in addition to their active one.");
-ConVar ge_limithalfarmorpickup("ge_limithalfarmorpickup", "0", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Prevent players from getting more than half armor from a half armor pickup."); //--TAKE OUT LATER--
 
 ConVar ge_exp_pushscale("ge_exp_pushscale", "1", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Scale the amount of push force from explosions on players.");
 
@@ -129,30 +128,41 @@ void CGEPlayer::Precache( void )
 	BaseClass::Precache();
 }
 
-bool CGEPlayer::AddArmor( int amount )
+bool CGEPlayer::AddArmor( int amount, int maxAmount )
 {
-	// If player can't carry any more armor or the vest is a half vest and the player has more than half armor, return false.
-	if (ArmorValue() < GetMaxArmor() && ( !ge_limithalfarmorpickup.GetBool() || !(amount < MAX_ARMOR && ArmorValue() >= MAX_ARMOR * 0.5)))
+	// If player can't carry any more armor return false.
+	if ( ArmorValue() < maxAmount )
 	{
-		GEStats()->Event_PickedArmor(this, min(GetMaxArmor() - ArmorValue(), amount));
+		GEStats()->Event_PickedArmor(this, min(maxAmount - ArmorValue(), amount));
+
+		const char* pickupSound;
+		const char* itemName;
 
 		// Use a different cap depending on which armor it is.
-		if (ge_limithalfarmorpickup.GetBool() && amount < MAX_ARMOR)
-			IncrementArmorValue(amount, GetMaxArmor()/2);
+		if (amount < MAX_ARMOR)
+		{
+			pickupSound = PICKUP_SOUND_HALFARMOR;
+			itemName = "item_armorvest_half";
+		}
 		else
-			IncrementArmorValue( amount, GetMaxArmor() );
+		{
+			pickupSound = PICKUP_SOUND_ARMOR;
+			itemName = "item_armorvest";
+		}
 
-		CPASAttenuationFilter filter( this, "ArmorVest.Pickup" );
-		EmitSound( filter, entindex(), "ArmorVest.Pickup" );
+		IncrementArmorValue( amount, maxAmount );
+
+		CPASAttenuationFilter filter( this, pickupSound );
+		EmitSound( filter, entindex(), pickupSound );
 
 		CSingleUserRecipientFilter user( this );
 		user.MakeReliable();
 		UserMessageBegin( user, "ItemPickup" );
-			WRITE_STRING( "item_armorvest" );
+			WRITE_STRING( itemName );
 		MessageEnd();
 
 		// Tell plugins what we picked up
-		NotifyPickup( amount < MAX_ARMOR ? "item_armorvest_half" : "item_armorvest", 2 );
+		NotifyPickup( itemName, 2 );
 
 		// Picking up armor ends spawn invulnerability.
 		if ( GEMPRules()->GetSpawnInvulnCanBreak() )
@@ -169,7 +179,7 @@ void CGEPlayer::GiveAllItems( void )
 	EquipSuit(false);
 
 	SetHealth( GetMaxHealth() );
-	AddArmor( GetMaxArmor() );
+	AddArmor( GetMaxArmor(), GetMaxArmor() );
 
 
 	CBasePlayer::GiveAmmo( AMMO_9MM_MAX, AMMO_9MM );

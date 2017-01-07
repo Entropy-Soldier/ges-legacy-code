@@ -2179,7 +2179,23 @@ bool CBaseCombatCharacter::Weapon_EquipAmmoOnly( CBaseCombatWeapon *pWeapon )
 				CGEMPPlayer *pGEPlayer = ToGEMPPlayer(this);
 
 				if (pGEPlayer && !pGEPlayer->IsRadarCloaked())
-					pWeapon->EmitSound( pWeapon->GetShootSound(PICKUP) );  // We never play ammo pickup sounds on weapon pickups.
+					EmitSound( pWeapon->GetShootSound(PICKUP) );  // We never play ammo pickup sounds on weapon pickups.
+				else
+				{
+					// Just use valve's method to play the pickup sound for 1st-person observers and the target player.
+					CRecipientFilter filter;
+					for (int i = 1; i <= gpGlobals->maxClients; ++i)
+					{
+						CBasePlayer *player = UTIL_PlayerByIndex(i);
+						if (player && !player->IsAlive() && player->GetObserverMode() == OBS_MODE_IN_EYE)
+							filter.AddRecipient(player);
+					}
+
+					filter.AddRecipient( ToBasePlayer(this) );
+
+					if (filter.GetRecipientCount())
+						CBaseEntity::EmitSound( filter, entindex(), pWeapon->GetShootSound(PICKUP) );
+				}
 
 				return true;
 			}
@@ -2968,6 +2984,22 @@ int CBaseCombatCharacter::GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSo
 
 		if (pGEPlayer && !pGEPlayer->IsRadarCloaked())
 			EmitSound( GetAmmoDef()->PickupSound(iAmmoIndex) );
+		else
+		{
+			// Just use valve's method to play the pickup sound for 1st-person observers and the target player.
+			CRecipientFilter filter;
+			for (int i = 1; i <= gpGlobals->maxClients; ++i)
+			{
+				CBasePlayer *player = UTIL_PlayerByIndex(i);
+				if (player && !player->IsAlive() && player->GetObserverMode() == OBS_MODE_IN_EYE)
+					filter.AddRecipient(player);
+			}
+
+			filter.AddRecipient( ToBasePlayer(this) );
+
+			if (filter.GetRecipientCount())
+				CBaseEntity::EmitSound( filter, entindex(), GetAmmoDef()->PickupSound(iAmmoIndex) );
+		}
 #else
 		EmitSound( "BaseCombatCharacter.AmmoPickup" );
 #endif

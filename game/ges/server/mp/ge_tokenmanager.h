@@ -17,6 +17,7 @@
 #include "ge_player.h"
 #include "ge_weapon.h"
 #include "ge_spawner.h"
+#include "ge_ammocrate.h"
 #include "ent_capturearea.h"
 #include "ge_shareddefs.h"
 
@@ -111,9 +112,17 @@ public:
 	void SetGlobalAmmo( const char *szClassName, int amount = -1 );
 	void RemoveGlobalAmmo( const char *szClassName );
 	void ClearGlobalAmmo();
-
 	bool HasGlobalAmmo() { return m_vGlobalAmmo.Count() > 0; }
-	bool GiveGlobalAmmo( CBasePlayer *pPlayer );
+
+	// Insert a global ammo identifier into a given ammo crate.
+	bool InsertGlobalAmmo( CGEAmmoCrate *pCrate );
+
+	// Get the amount of ammo contained in a given global ammo slot.
+	int GetGlobalAmmoCount( int slot ) { return (slot >= 0 && m_vGlobalAmmo.Count() > (unsigned int)slot )? m_vGlobalAmmo[slot].amount : -1; }
+
+	// Get the type of ammo contained in a given global ammo slot.
+	int GetGlobalAmmoID( int slot ) { return (slot >= 0 && m_vGlobalAmmo.Count() > (unsigned int)slot )? m_vGlobalAmmo[slot].aID : -1; }
+
 
 	// Returns the list of tokens of a specific type
 	void FindTokens( const char *szClassName, CUtlVector<EHANDLE> &tokens );

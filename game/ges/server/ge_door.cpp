@@ -160,7 +160,7 @@ CGEDoor *CGEDoor::GetPartner()
 
 		if (pPartner == NULL)
 			Msg("Entity %s(%s) has bad partner entity %s\n", STRING(GetEntityName()), GetDebugName(), STRING(newPartner));
-		else if (pPartner != NULL && Q_stricmp(pPartner->GetClassname(), "CGEDoor"))
+		else if (pPartner != NULL && !Q_stricmp(pPartner->GetClassname(), "func_ge_door"))
 			partnerEnt = static_cast<CGEDoor*>(pPartner); //Actually return a partner ent.
 		else
 			Msg("Entity %s(%s) tried to adopt partner %s but they are not a ge_door!\n", STRING(GetEntityName()), GetDebugName(), STRING(newPartner));

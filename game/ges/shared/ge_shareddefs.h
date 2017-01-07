@@ -92,6 +92,34 @@ class C_GEGameplayEventListener { };
 #define PICKUP_SOUND_ROCKET		"AmmoPickup.Rockets"
 #define PICKUP_SOUND_MOONRAKER	"AmmoPickup.Laser"
 #define PICKUP_SOUND_WATCHLASER	"AmmoPickup.WatchLaser"
+#define PICKUP_SOUND_ARMOR		"ArmorVest.Pickup"
+#define PICKUP_SOUND_HALFARMOR	"ArmorVest_Half.Pickup"
+
+// Ammo crate skins as they appear in the ammo crate model.
+// More variety is coming soon.
+#define CRATE_SKIN_GENERIC			0
+#define CRATE_SKIN_9MM				0
+#define CRATE_SKIN_RIFLE			0
+#define CRATE_SKIN_BUCKSHOT			0
+#define CRATE_SKIN_MAGNUM			0
+#define CRATE_SKIN_GOLDENGUN		0
+#define CRATE_SKIN_PROXIMITYMINE	2
+#define CRATE_SKIN_REMOTEMINE		2
+#define CRATE_SKIN_TIMEDMINE		2
+#define CRATE_SKIN_TKNIFE			0
+#define CRATE_SKIN_GRENADE			1
+#define CRATE_SKIN_SHELL			0
+#define CRATE_SKIN_ROCKET			0
+#define CRATE_SKIN_MOONRAKER		0
+#define CRATE_SKIN_WATCHLASER		0
+
+#define AMMOCRATE_SKIN_DEFAULT		0
+#define AMMOCRATE_SKIN_GRENADES		1
+#define AMMOCRATE_SKIN_MINES		2
+
+#define AMMOCRATE_MODEL	"models/weapons/ammocrate.mdl"
+#define BABYCRATE_MODEL	"models/weapons/ammocrate_small.mdl"
+
 
 //Max Ammo Definitions
 const int AMMO_9MM_MAX			=	800;
@@ -268,13 +296,6 @@ enum WeaponEvents
 	WEAPON_EVENT_DRAW,
 	WEAPON_EVENT_HOLSTER,
 };
-
-#define AMMOCRATE_SKIN_DEFAULT		0
-#define AMMOCRATE_SKIN_GRENADES		1
-#define AMMOCRATE_SKIN_MINES		2
-
-#define AMMOCRATE_MODEL	"models/weapons/ammocrate.mdl"
-#define BABYCRATE_MODEL	"models/weapons/ammocrate_small.mdl"
 
 #define MAX_WEAPON_SPAWN_SLOTS	8
 const int MAX_NET_RADAR_ENTS = MAX_PLAYERS + 10;

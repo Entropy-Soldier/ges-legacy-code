@@ -12,6 +12,8 @@
 #include "cbase.h"
 
 #include "ammodef.h"
+#include "ge_ammocrate.h"
+#include "ge_entitytracker.h"
 
 #include "ge_utils.h"
 #include "gemp_gamerules.h"
@@ -229,16 +231,20 @@ const char *CGETokenManager::GetCaptureAreaToken( const char *szName )
 	return NULL;
 }
 
-bool CGETokenManager::GiveGlobalAmmo( CBasePlayer *pPlayer )
+bool CGETokenManager::InsertGlobalAmmo( CGEAmmoCrate *pCrate )
 {
-	if ( !pPlayer )
+	if ( !pCrate )
 		return false;
 
-	int amount = 0;
-	FOR_EACH_DICT( m_vGlobalAmmo, idx )
-		amount += pPlayer->GiveAmmo( m_vGlobalAmmo[idx].amount, m_vGlobalAmmo[idx].aID, true );
 
-	return (amount > 0);
+	//for ( int i = m_vGlobalAmmo.Count() - 1; i >= 0; i-- )
+	FOR_EACH_DICT(m_vGlobalAmmo, idx)
+	{
+		Warning( "Adding global ammo with index %d\n", idx );
+		pCrate->AddGlobalAmmoType( idx );
+	}
+
+	return true;
 }
 
 void CGETokenManager::SetGlobalAmmo( const char *szClassName, int amount /*=-1*/ )
@@ -248,8 +254,13 @@ void CGETokenManager::SetGlobalAmmo( const char *szClassName, int amount /*=-1*/
 		return;
 
 	int ammoid = GetAmmoDef()->Index( ammo );
+	int crateAmount = GetAmmoDef()->CrateAmount( ammoid );
+
+	if (crateAmount <= 0)
+		return; // Weapon is not meant to have ammo spawns so we can't have global ammo for it.
+
 	if ( amount == -1 )
-		amount = GetAmmoDef()->CrateAmount( ammoid ) / 2;
+		amount = crateAmount / 2;
 
 	int idx = m_vGlobalAmmo.Find( szClassName );
 	if ( idx != m_vGlobalAmmo.InvalidIndex() )
@@ -262,15 +273,43 @@ void CGETokenManager::SetGlobalAmmo( const char *szClassName, int amount /*=-1*/
 		m_vGlobalAmmo[idx].aID = ammoid;
 		m_vGlobalAmmo[idx].amount = amount;
 	}
+
+	// Now add this global ammo to each crate.
+	// Global ammo does not get changed too frequently(in most cases set at the start of the match and never changed)
+	// but ammo crate pickups happen all the time.  With <100 ammo crates in large maps this should be one of the
+	// better ways of doing this since the crates should never need to consult the gamerules on pickup.
+
+	CUtlVector<CGEAmmoCrate*> *ammoCrates = GEEntityTracker()->GetAmmoList();
+
+	for (int i = ammoCrates->Count() - 1; i >= 0; i--)
+	{
+		Warning("Adding new global ammo type %d to crate!\n", idx);
+		(*ammoCrates)[i]->AddGlobalAmmoType( idx );
+	}
 }
 
 void CGETokenManager::RemoveGlobalAmmo( const char *szClassName )
 {
-	m_vGlobalAmmo.Remove( szClassName );
+	int idx = m_vGlobalAmmo.Find(szClassName);
+
+	if (idx == -1) // We don't have it.
+		return;
+
+	CUtlVector<CGEAmmoCrate*> *ammoCrates = GEEntityTracker()->GetAmmoList();
+
+	for (int i = ammoCrates->Count() - 1; i >= 0; i--)
+		(*ammoCrates)[i]->RemoveGlobalAmmoType( idx );
+
+	m_vGlobalAmmo.RemoveAt(idx);
 }
 
 void CGETokenManager::ClearGlobalAmmo( void )
 {
+	CUtlVector<CGEAmmoCrate*> *ammoCrates = GEEntityTracker()->GetAmmoList();
+
+	for (int i = ammoCrates->Count() - 1; i >= 0; i--)
+		(*ammoCrates)[i]->RemoveAllGlobalAmmo();
+
 	m_vGlobalAmmo.RemoveAll();
 }
 

@@ -1,4 +1,4 @@
-//////////  Copyright © 2008, Goldeneye Source. All rights reserved. ///////////
+//////////  Copyright © 2016, Goldeneye Source. All rights reserved. ///////////
 // 
 // File: ge_mapmanager.cpp
 // Description: Manages all relevant map data

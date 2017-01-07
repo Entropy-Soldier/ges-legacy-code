@@ -9,10 +9,12 @@
 #include "cbase.h"
 
 #include "ammodef.h"
+#include "ge_utils.h"
 
 #include "ge_ammocrate.h"
 #include "ge_loadoutmanager.h"
 #include "gemp_gamerules.h"
+#include "ge_tokenmanager.h"
 #include "ge_spawner.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -54,10 +56,8 @@ void CGEAmmoSpawner::OnEntSpawned( const char *szClassname )
 
 	// Load us up with the appropriate ammo
 	int weapid = GEMPRules()->GetLoadoutManager()->GetWeaponInSlot( GetSlot() );
-	pCrate->SetWeaponID( weapid );
-	pCrate->SetAmmoType( GetAmmoDef()->Index( GetAmmoForWeapon(weapid) ) );
-	// Force a respawn NOW (default is to wait item respawn time)
-	pCrate->SetNextThink( gpGlobals->curtime );
+	pCrate->AddAmmoType(weapid, -1); // Adding the first ammo type spawns the crate.
+	GEMPRules()->GetTokenManager()->InsertGlobalAmmo( pCrate );
 }
 
 int CGEAmmoSpawner::ShouldRespawn( void )

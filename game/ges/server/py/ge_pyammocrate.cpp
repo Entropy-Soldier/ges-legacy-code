@@ -54,14 +54,6 @@ const char *pyGetAmmoType( CGEAmmoCrate *pAmmoCrate )
 	return "";
 }
 
-void pySetAmmoType( CGEAmmoCrate *pAmmoCrate, int ammoTypeID )
-{
-	if ( pAmmoCrate )
-	{
-		pAmmoCrate->SetAmmoType( ammoTypeID );
-	}
-}
-
 void pyAmmoSetAbsOrigin( CGEAmmoCrate *pAmmoCrate, Vector origin )
 {
 	if ( !pAmmoCrate )
@@ -103,7 +95,6 @@ BOOST_PYTHON_MODULE(GEAmmoCrate)
 	// The ammocrate class definition
 	class_<CGEAmmoCrate, bases<CBaseEntity>, boost::noncopyable>("CGEAmmoCrate", no_init)
 		.def("GetAmmoType", pyGetAmmoType)
-		.def("SetAmmoType", pySetAmmoType)
 		.def("GetWeaponId", pyAmmoGetWeaponID)
 		.def("GetWeight", pyAmmoGetWeight)
 		// The following override CBaseEntity to prevent movement when held

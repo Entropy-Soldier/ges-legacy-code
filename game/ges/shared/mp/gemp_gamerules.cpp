@@ -43,6 +43,7 @@
 	#include "ge_mapmanager.h"
 	#include "ge_stats_recorder.h"
 	#include "ge_bot.h"
+	#include "ge_entitytracker.h"
 
 	#include "ge_triggers.h"
 	#include "ge_door.h"
@@ -1028,6 +1029,12 @@ void CGEMPRules::LevelInitPreEntity()
 		m_pMapManager->ParseCurrentMapData();
 	else
 		Warning( "No Map Manager On Level Init!\n" );
+
+	// Create the Entity Tracker if not existing already
+	if ( !GEEntityTracker() )
+		CreateEntityTracker();
+	else
+		Warning( "[GERules] Entity tracker already existed!\n" );
 
 	// Create the Gameplay Manager if not existing already
 	if ( !GEGameplay() )

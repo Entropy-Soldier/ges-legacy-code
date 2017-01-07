@@ -29,6 +29,7 @@ struct Ammo_t
 
 #ifdef GE_DLL
 	int					nCrateAmt;
+	int					nCrateSkin;
 	char				*pIcon;
 	char				*pPickSound;
 #endif
@@ -89,6 +90,7 @@ public:
 	int					MaxSplashSize(int nAmmoIndex);
 	int					Flags(int nAmmoIndex);
 #ifdef GE_DLL
+	int					CrateSkin( int nAmmoIndex );
 	int					CrateAmount( int nAmmoIndex );
 	char				*AmmoIcon( int nAmmoIndex );
 	char				*PickupSound( int nAmmoIndex );
@@ -97,7 +99,7 @@ public:
 	void				AddAmmoType(char const* name, int damageType, int tracerType, int plr_dmg, int npc_dmg, int carry, float physicsForceImpulse, int nFlags, int minSplashSize = 4, int maxSplashSize = 8 );
 	void				AddAmmoType(char const* name, int damageType, int tracerType, char const* plr_cvar, char const* npc_var, char const* carry_cvar, float physicsForceImpulse, int nFlags, int minSplashSize = 4, int maxSplashSize = 8 );
 #ifdef GE_DLL
-	void				AddAmmoTypeGE(char const* name, int damageType, int tracerType, int carry, float physicsForceImpulse, int crateAmt, char const* icon, char const* pickupSound = NULL);
+	void				AddAmmoTypeGE(char const* name, int damageType, int tracerType, int carry, float physicsForceImpulse, int crateAmt, char const* icon, char const* pickupSound = NULL, int crateSkin = 0);
 #endif
 
 	CAmmoDef(void);

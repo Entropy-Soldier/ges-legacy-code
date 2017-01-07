@@ -11,6 +11,7 @@
 #include "cbase.h"
 
 #include "ammodef.h"
+#include "ge_entitytracker.h"
 
 #include "ge_shareddefs.h"
 #include "ge_tokenmanager.h"
@@ -35,11 +36,11 @@ ConVar ge_partialammopickups("ge_partialammopickups", "0", FCVAR_GAMEDLL | FCVAR
 
 CGEAmmoCrate::CGEAmmoCrate( void )
 {
-	m_iAmmoID = -1;
-	m_iAmmoAmount = 0;
-	m_bGaveGlobalAmmo = false;
-	m_iWeaponID = 0;
-	m_iWeight = 0;
+}
+
+CGEAmmoCrate::~CGEAmmoCrate( void )
+{
+	m_pContents.PurgeAndDeleteElements();
 }
 
 void CGEAmmoCrate::Spawn( void )
@@ -54,6 +55,8 @@ void CGEAmmoCrate::Spawn( void )
 
 	// So NPC's can "see" us
 	AddFlag( FL_OBJECT );
+
+	GEEntityTracker()->AddItemToTracker( this, ET_LIST_AMMO );
 
 	Respawn();
 }
@@ -70,11 +73,8 @@ void CGEAmmoCrate::Materialize( void )
 	BaseClass::Materialize();
 
 	// Notify Python about the ammobox
-	// Item tracker does not do well with ammocrates that have no assigned ammo type.
-	if ( GetScenario() && m_iAmmoID != -1 ) // CHECKING AMMOID IS A CRAPPY HOTFIX FOR NOW, FIX ITEM TRACKER.
-	{
+	if ( GetScenario() )
 		GetScenario()->OnAmmoSpawned( this );
-	}
 
 	// Override base's ItemTouch for NPC's
 	SetTouch( &CGEAmmoCrate::ItemTouch );
@@ -82,101 +82,228 @@ void CGEAmmoCrate::Materialize( void )
 
 CBaseEntity *CGEAmmoCrate::Respawn( void )
 {
-	// Notify Python about the ammobox
-	if ( GetScenario() && m_iAmmoID != -1 ) // CHECKING AMMOID IS A CRAPPY HOTFIX FOR NOW, FIX ITEM TRACKER.
-	{
-		GetScenario()->OnAmmoRemoved( this );
-	}
-
-	// Reset our global ammo flag
-	m_bGaveGlobalAmmo = false;
-
-	// Add our base ammo
-	if ( m_iAmmoID != -1 )
-	{
-		Ammo_t *pAmmo = GetAmmoDef()->GetAmmoOfIndex( m_iAmmoID );
-
-		if (pAmmo)
-		{
-			// Set the crate amount
-			m_iAmmoAmount = pAmmo->nCrateAmt;
-
-			// Set our skin as appropriate
-			if (Q_stristr(pAmmo->pName, "mine"))
-				m_nSkin = AMMOCRATE_SKIN_MINES;
-			else if (!Q_stricmp(pAmmo->pName, AMMO_GRENADE))
-				m_nSkin = AMMOCRATE_SKIN_GRENADES;
-			else
-				m_nSkin = AMMOCRATE_SKIN_DEFAULT;
-		}
-	}
-
-	// Don't show us if we won't give out any ammo
-	if ( !HasAmmo() )
+	if ( !m_pContents.Count() ) // There's nothing for this crate to give so we shouldn't actually spawn it.
 	{
 		BaseClass::Respawn();
 		SetThink( NULL );
 		return this;
 	}
 
+	// Notify Python about the ammobox
+	if ( GetScenario() )
+		GetScenario()->OnAmmoRemoved( this );
+
+	// Refill all the ammo slots.
+	RefillThink();
+
 	return BaseClass::Respawn();
+}
+
+void CGEAmmoCrate::RespawnNow()
+{
+	Respawn();
+	SetNextThink( gpGlobals->curtime );
 }
 
 void CGEAmmoCrate::RefillThink( void )
 {
-	m_bGaveGlobalAmmo = false;
-
-	if ( m_iAmmoID != -1 )
-	{
-		Ammo_t *pAmmo = GetAmmoDef()->GetAmmoOfIndex( m_iAmmoID );
-		Assert( pAmmo );
-		// Set the crate amount
-		m_iAmmoAmount = pAmmo->nCrateAmt;
-	}
+	for ( int i = m_pContents.Count() - 1; i >= 0; i-- )
+		m_pContents[i]->iAmmoTaken = 0;
 }
 
-void CGEAmmoCrate::SetWeaponID( int id )
-{
-	m_iWeaponID = id;
+bool CGEAmmoCrate::AddAmmoType( int weaponid, int amount )
+{ 
+	int newAmmoID = GetAmmoDef()->Index( GetAmmoForWeapon(weaponid) );
 
-	// Get our info
-	const char *name = WeaponIDToAlias( id );
-	if ( name && name[0] != '\0' )
+	if ( newAmmoID == -1 || amount == 0)
+		return false; // No ammo to add.
+
+	// Make sure we don't already have ammo registered under this weapon.
+	for ( int i = m_pContents.Count() - 1; i >= 0; i-- )
 	{
-		int h = LookupWeaponInfoSlot( name );
-		if ( h == GetInvalidWeaponInfoHandle() )
-			return;
+		if (m_pContents[i]->iWeaponID == weaponid)
+			return false;
+	}
 
-		CGEWeaponInfo *weap = dynamic_cast<CGEWeaponInfo*>( GetFileWeaponInfoFromHandle( h ) );
-		if ( weap )
+	Ammo_t *pAmmo = GetAmmoDef()->GetAmmoOfIndex( newAmmoID ); // We know this exists because we just fetched it.
+	Assert( pAmmo );
+
+	int crateAmount = pAmmo->nCrateAmt;
+
+	if (crateAmount <= 0)
+		return false; 	// This weapon isn't meant to spawn with ammo.
+
+	// Initalize our new ammo data.
+	AmmoData *pNewAmmoData = new AmmoData;
+
+	pNewAmmoData->iAmmoID = newAmmoID;
+	pNewAmmoData->iWeaponID = weaponid;
+	pNewAmmoData->iAmmoAmount = amount < 0 ? crateAmount : amount;
+	pNewAmmoData->iAmmoTaken = 0;
+	pNewAmmoData->iWeight = GEWeaponInfo[weaponid].strength;
+	pNewAmmoData->iGlbIndex = -1; // Normal ammo does not exist in the global ammo registry.
+
+	// Now that everything is ready, add our new entry to the ammo vector.
+	if (m_pContents.AddToTail(pNewAmmoData) == 0) // Add it and check if the index it was assigned to is the first one.
+	{
+		m_nSkin = pAmmo->nCrateSkin;
+		RespawnNow(); // First ammo type added spawns the crate.
+	}
+
+	return true;
+}
+
+bool CGEAmmoCrate::RemoveAmmoType( int weaponid )
+{ 
+	// Can't remove token ammo entries because these are global entries and should be removed that way.
+	if (weaponid == WEAPON_TOKEN)
+		return false;
+
+
+	int targetIndex = -1;
+
+	for ( int i = m_pContents.Count() - 1; i >= 0; i-- )
+	{
+		if (m_pContents[i]->iWeaponID == weaponid)
+			targetIndex = i;
+	}
+
+	if (targetIndex == -1)
+		return false; // Can't remove what we don't have.
+
+	m_pContents.Remove(targetIndex);
+
+	// Check our ammo status.
+	if (!HasAmmo())
+		BaseClass::Respawn(); // No ammo left in the crate now.
+
+	if (m_pContents.Count() < 1)
+		SetThink( NULL ); // And there's no more ammo types left to spawn back in, so don't spawn until we have some.
+	else if (targetIndex == 0) // Otherwise we at least have a slot 0 so let's make sure that didn't get changed.
+		m_nSkin =  GetAmmoDef()->CrateSkin(m_pContents[0]->iAmmoID); // And if it did, the skin is determined by new slot 0 ammo.
+
+
+	return true;
+}
+
+bool CGEAmmoCrate::AddGlobalAmmoType( int index )
+{ 
+	int ammoID = GEMPRules()->GetTokenManager()->GetGlobalAmmoID(index);
+	int globalAmmoCount = GEMPRules()->GetTokenManager()->GetGlobalAmmoCount(index);
+
+	if (ammoID == -1 || globalAmmoCount <= 0)
+	{
+		DevWarning("Tried to add invalid global ammo type with id %d and amount %d!\n", ammoID, globalAmmoCount);
+		return false;
+	}
+
+	// Make sure we don't already have this global index added.
+	for ( int i = m_pContents.Count() - 1; i >= 0; i-- )
+	{
+		if (m_pContents[i]->iGlbIndex == index)
+			return UpdateGlobalAmmoType(index);
+	}
+
+	// Initalize our new ammo data.
+	AmmoData *pNewAmmoData = new AmmoData;
+
+	pNewAmmoData->iAmmoID = ammoID;
+	pNewAmmoData->iWeaponID = WEAPON_TOKEN; // Global ammo is not associated by weapon.
+	pNewAmmoData->iAmmoAmount = globalAmmoCount;
+	pNewAmmoData->iAmmoTaken = 0;
+	pNewAmmoData->iWeight = 0; // Global ammo is in every single crate so who cares.
+	pNewAmmoData->iGlbIndex = index; // Index of this ammo entry in the global ammo registry.  Used for updates/removals.
+
+	// Now that everything is ready, add our new entry to the ammo vector.
+	if (m_pContents.AddToTail(pNewAmmoData) == 0) // Add it and check if the index it was assigned to is the first one.
+	{
+		m_nSkin = GetAmmoDef()->CrateSkin(m_pContents[0]->iAmmoID);
+		RespawnNow(); // First ammo type added spawns the crate.
+	}
+
+	return true;
+}
+
+bool CGEAmmoCrate::UpdateGlobalAmmoType( int index )
+{
+	int ammoID = GEMPRules()->GetTokenManager()->GetGlobalAmmoID( index );
+
+	if (ammoID == -1)
+	{
+		DevWarning("Tried to update invalid global ammo type!\n");
+		return false;
+	}
+
+	int targetIndex = -1;
+
+	for ( int i = m_pContents.Count() - 1; i >= 0; i-- )
+	{
+		if (m_pContents[i]->iGlbIndex == index)
 		{
-			m_iWeight = weap->iWeight;
+			targetIndex = i;
+			break;
 		}
 	}
+
+	if (targetIndex == -1)
+		return false;
+
+	if (targetIndex == 0) // If we updated the first ammo index we need to update the skin.
+		m_nSkin = GetAmmoDef()->CrateSkin(m_pContents[0]->iAmmoID);
+
+	m_pContents[targetIndex]->iAmmoID = ammoID;
+	m_pContents[targetIndex]->iAmmoAmount = GEMPRules()->GetTokenManager()->GetGlobalAmmoCount(index);
+	m_pContents[targetIndex]->iAmmoTaken = 0;
+
+	return true;
 }
 
-void CGEAmmoCrate::SetAmmoType( int id )
+bool CGEAmmoCrate::RemoveGlobalAmmoType( int index )
 { 
-	if ( GetAmmoDef()->GetAmmoOfIndex( id ) )
+	int targetIndex = -1;
+
+	for ( int i = m_pContents.Count() - 1; i >= 0; i-- )
 	{
-		m_iAmmoID = id;
-		Respawn();
+		if (m_pContents[i]->iGlbIndex == index)
+			targetIndex = i;
 	}
-	else
-	{
-		DevWarning( "[AmmoCrate] Invalid ammo type passed, ignored\n" );
-	}
+
+	if (targetIndex == -1)
+		return false; // Can't remove what we don't have.
+
+	m_pContents.Remove(targetIndex);
+
+	// Check our ammo status.
+	if (!HasAmmo())
+		BaseClass::Respawn(); // No ammo left in the crate now.
+
+	if (m_pContents.Count() < 1)
+		SetThink( NULL ); // And there's no more ammo types left to spawn back in, so don't spawn until we have some.
+	else if (targetIndex == 0) // Otherwise we at least have a slot 0 so let's make sure that didn't get changed.
+		m_nSkin =  GetAmmoDef()->CrateSkin(m_pContents[0]->iAmmoID); // And if it did, the skin is determined by new slot 0 ammo.
+
+
+	return true;
 }
 
-int CGEAmmoCrate::GetAmmoType( void )
-{
-	return m_iAmmoID;
+void CGEAmmoCrate::RemoveAllGlobalAmmo()
+{ 
+	for ( int i = m_pContents.Count() - 1; i >= 0; i-- )
+	{
+		if (m_pContents[i]->iGlbIndex != -1)
+			m_pContents.Remove(i); // Going backwards has another benefit here in that we don't need to worry about shifted elements.
+	}
 }
 
 bool CGEAmmoCrate::HasAmmo( void )
 {
-	// We have ammo if we have a base ammount or global ammo
-	return m_iAmmoAmount > 0 || (!m_bGaveGlobalAmmo && GEMPRules()->GetTokenManager()->HasGlobalAmmo());
+	int amount = 0;
+
+	for ( int i = m_pContents.Count() - 1; i >= 0; i-- )
+		amount += max(m_pContents[i]->iAmmoAmount - m_pContents[i]->iAmmoTaken, 0);
+
+	// We have ammo if any of our ammo types have ammo left.
+	return amount > 0;
 }
 
 void CGEAmmoCrate::ItemTouch( CBaseEntity *pOther )
@@ -195,8 +322,9 @@ void CGEAmmoCrate::ItemTouch( CBaseEntity *pOther )
 
 			if ( MyTouch( pBot ) )
 			{
-				SetTouch( NULL );
-				SetThink( NULL );
+				// Might not need these, let's see if we don't so we can make this as straightforward as possible.
+				// SetTouch( NULL );
+				// SetThink( NULL );
 
 				// player grabbed the item. 
 				g_pGameRules->PlayerGotItem( pBot, this );
@@ -216,49 +344,46 @@ bool CGEAmmoCrate::MyTouch( CBasePlayer *pPlayer )
 	// so just give the ammo to the player and return true!
 	if ( !HasAmmo() )
 	{
-		DevWarning( "[GEAmmoCrate] Crate touched with no ammo in it\n" );
+		Warning( "[GEAmmoCrate] Crate touched with no ammo in it\n" );
 		return true;
 	}
+	
+	bool someAmmoTaken = false;
+	int ammoTypeCount = m_pContents.Count();
 
-	int ammotaken = pPlayer->GiveAmmo(m_iAmmoAmount, m_iAmmoID);
-
-	m_iAmmoAmount -= ammotaken; // Subtract the amount that was actually given to the player from our carried ammo.
-
-	// Tell our token manager to give out any global ammo if we haven't this respawn cycle
-	if (!m_bGaveGlobalAmmo && GEMPRules()->GetTokenManager()->GiveGlobalAmmo(pPlayer))
+	for ( int i = 0; i < ammoTypeCount; i++ )
 	{
-		if (!ammotaken) //This way we get the sound even if we only pick up special ammo.
-			EmitSound("BaseCombatCharacter.AmmoPickup"); // We can't just surpress the sound normally since the surpress sound flag on the giveammo function also tells the game not to give you ammo based weapons.
+		// Try to give the player an ammo amount of each type equal to the amount that has not yet been taken from the crate.
+		// Only play the pickup sound on the first ammo type taken.
+		int ammoGiven = pPlayer->GiveAmmo( m_pContents[i]->iAmmoAmount - m_pContents[i]->iAmmoTaken, m_pContents[i]->iAmmoID, someAmmoTaken );
+		m_pContents[i]->iAmmoTaken += ammoGiven;
 
-		m_bGaveGlobalAmmo = true;
-		ammotaken += 1; // Tells us later that we took something
+		// Once ammo has been successfully given, take note of it so we no longer play the sound.
+		// and can force pickup if ge_partialammopickups is 0.
+		if ( ammoGiven )
+			someAmmoTaken = true;
 	}
 
-	if ( ammotaken )
-	{
-		if (!ge_partialammopickups.GetBool()) // If we picked up anything, WE PICKED UP IT ALL!...but only if we want to.
-		{
-			m_iAmmoAmount = 0;
-			m_bGaveGlobalAmmo = true;
-		}
-	}
-
-	if ( !HasAmmo() || GERules()->ShouldForcePickup( pPlayer, this ) )
+	// The crate should vanish and start its respawn cycle if:
+	// it has no ammo
+	// we've just taken some ammo and don't allow partial pickups
+	// the gamemode wants to force us to take it.
+	if ( !HasAmmo() || (someAmmoTaken && !ge_partialammopickups.GetBool()) || GERules()->ShouldForcePickup( pPlayer, this ) )
 		return true;
 	
-	// We still have ammo left in the crate, schedule a refill
+	// But if it's still around, make sure to refill all of the included ammo types after a little while.
 	SetThink( &CGEAmmoCrate::RefillThink );
 	SetNextThink( gpGlobals->curtime + g_pGameRules->FlItemRespawnTime( this ) );
 
 	return false;
 }
 
+// To be removed when entity tracker is finished.
 void CGEAmmoCrate::UpdateOnRemove(void)
 {
 	BaseClass::UpdateOnRemove();
 
-	// Notify Python about the ammobox
-	if ( GetScenario() && m_iAmmoID != -1 ) // CHECKING AMMOID IS A CRAPPY HOTFIX FOR NOW, FIX ITEM TRACKER.
+	if ( GetScenario() && m_pContents.Count() )
 	{
 		GetScenario()->OnAmmoRemoved( this );
 	}

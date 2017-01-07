@@ -1228,6 +1228,11 @@ public:
 	virtual void			UpdateBulletProof() { SetBulletProof(false); };
 	void					SetBulletProof( bool state ) { m_bBulletProof = state; };
 	bool					IsBulletProof() { return m_bBulletProof; };
+
+	// Let the entity know it is being tracked, so when it gets removed it knows to remove its entry in the entity tracker.
+	// it's okay if it gets removed by other means before it gets deleted, this just results in a needless search when it does.
+	// very few entities will ever be tracked, and even fewer will be untracked manually, so this should not be a problem.
+	void					NotifyOfTracking() { m_bGEItemTracked = true; };
 #endif
 	
 	void					SetModelName( string_t name );
@@ -1591,6 +1596,9 @@ private:
 
 #ifdef GE_DLL
 	CNetworkVar( bool, m_bBulletProof );
+
+	// Was the item tracked, at some point?
+	bool m_bGEItemTracked;
 #endif
 
 	// Our immediate parent in the movement hierarchy.

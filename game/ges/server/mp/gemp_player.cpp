@@ -1676,8 +1676,8 @@ bool CGEMPPlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 		// If we didn't pick it up and the game rules say we should have anyway remove it from the world
 		pWeapon->SetOwner( NULL );
 		pWeapon->SetOwnerEntity( NULL );
-		UTIL_Remove(pWeapon);
-		EmitSound("BaseCombatCharacter.AmmoPickup");
+		pWeapon->EmitSound( pWeapon->GetShootSound(PICKUP) );
+		UTIL_Remove( pWeapon );
 	}
 	else if ( ret )
 	{

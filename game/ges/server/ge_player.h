@@ -64,7 +64,7 @@ public:
 	bool IsInAimMode();
 	bool StartedAimMode()					{ return (m_flFullZoomTime > 0); }
 	bool IsRadarCloaked()					{ return m_bInSpawnInvul; }
-	bool AddArmor( int amount );
+	bool AddArmor( int amount, int maxAmount );
 	bool CheckInPVS(CBaseEntity *pEnt);
 
 	virtual void KnockOffHat( bool bRemove = false, const CTakeDamageInfo *dmg = NULL );

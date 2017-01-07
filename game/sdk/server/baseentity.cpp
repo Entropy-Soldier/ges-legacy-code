@@ -62,6 +62,10 @@
 #include "env_debughistory.h"
 #include "tier1/utlstring.h"
 
+#ifdef GE_DLL
+#include "ge_entitytracker.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -335,6 +339,7 @@ CBaseEntity::CBaseEntity( bool bServerOnly )
 
 #ifdef GE_DLL
 	m_bBulletProof = false;
+	m_bGEItemTracked = false;
 #endif
 
 	SetFriction( 1.0f );
@@ -1861,6 +1866,12 @@ void CBaseEntity::UpdateOnRemove( void )
 
 	// Notifies entity listeners, etc
 	gEntList.NotifyRemoveEntity( GetRefEHandle() );
+
+#if GE_DLL
+	// We are about to be deleted so we should no longer be tracked.
+	if (m_bGEItemTracked)
+		GEEntityTracker()->RemoveItemFromTracker(this);
+#endif
 
 	if ( edict() )
 	{

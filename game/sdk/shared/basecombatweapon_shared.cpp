@@ -697,10 +697,24 @@ void CBaseCombatWeapon::OnPickedUp( CBaseCombatCharacter *pNewOwner )
 #ifdef GE_DLL
 		// Play the sound for everyone!
 		// Assuming the player is no longer spawn invulnerable, anyway.
-		CGEMPPlayer *pGEPlayer = ToGEMPPlayer(this);
+		CGEMPPlayer *pGEPlayer = ToGEMPPlayer(pNewOwner);
 
 		if (pGEPlayer && !pGEPlayer->IsRadarCloaked())
 			EmitSound( GetShootSound( PICKUP ) );
+		else
+		{
+			// Just use valve's method to play the pickup sound for 1st-person observers
+			CRecipientFilter filter;
+			for (int i = 1; i <= gpGlobals->maxClients; ++i)
+			{
+				CBasePlayer *player = UTIL_PlayerByIndex(i);
+				if (player && !player->IsAlive() && player->GetObserverMode() == OBS_MODE_IN_EYE)
+					filter.AddRecipient(player);
+			}
+
+			if (filter.GetRecipientCount())
+				CBaseEntity::EmitSound( filter, entindex(), GetShootSound(PICKUP) );
+		}
 #else
 		// Play the pickup sound for 1st-person observers
 		CRecipientFilter filter;

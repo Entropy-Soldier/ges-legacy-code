@@ -1,3 +1,6 @@
+#ifndef GE_DOOR_H
+#define GE_DOOR_H
+
 ///////////// Copyright © 2008, Goldeneye: Source. All rights reserved. /////////////
 // 
 // File: ge_door.h
@@ -89,3 +92,5 @@ private:
 
 	Vector m_vecGroupCenter; // Center of the door and all its partners, used for calculating rotating door move direction.
 };
+
+#endif

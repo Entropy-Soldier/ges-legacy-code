@@ -192,6 +192,14 @@ float CAmmoDef::DamageForce(int nAmmoIndex)
 }
 
 #ifdef GE_DLL
+int CAmmoDef::CrateSkin( int nAmmoIndex )
+{
+	if ( nAmmoIndex < 1 || nAmmoIndex >= m_nAmmoIndex )
+		return 0;
+
+	return m_AmmoType[nAmmoIndex].nCrateSkin;
+}
+
 int CAmmoDef::CrateAmount( int nAmmoIndex )
 {
 	if ( nAmmoIndex < 1 || nAmmoIndex >= m_nAmmoIndex )
@@ -302,7 +310,7 @@ void CAmmoDef::AddAmmoType(char const* name, int damageType, int tracerType,
 //-----------------------------------------------------------------------------
 // Purpose: Add an ammo type with it's damage & carrying capability specified via integers
 //-----------------------------------------------------------------------------
-void CAmmoDef::AddAmmoTypeGE(char const* name, int damageType, int tracerType, int carry, float physicsForceImpulse, int crateAmt, char const* icon, char const* pickupSound /*= NULL*/ )
+void CAmmoDef::AddAmmoTypeGE(char const* name, int damageType, int tracerType, int carry, float physicsForceImpulse, int crateAmt, char const* icon, char const* pickupSound /*= NULL*/, int crateSkin /*= 0*/ )
 {
 	if ( AddAmmoType( name, damageType, tracerType, 0, 4, 8 ) == false )
 		return;
@@ -313,6 +321,7 @@ void CAmmoDef::AddAmmoTypeGE(char const* name, int damageType, int tracerType, i
 	m_AmmoType[m_nAmmoIndex].pMaxCarry = carry;
 	m_AmmoType[m_nAmmoIndex].physicsForceImpulse = physicsForceImpulse;
 	m_AmmoType[m_nAmmoIndex].nCrateAmt = crateAmt;
+	m_AmmoType[m_nAmmoIndex].nCrateSkin = crateSkin;
 
 	len = strlen(pickupSound);
 	m_AmmoType[m_nAmmoIndex].pPickSound = new char[len + 1];
