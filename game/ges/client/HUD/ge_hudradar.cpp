@@ -108,6 +108,7 @@ private:
 
 	// Textures!
 	CHudTexture		*m_Background;
+	Color			m_BackgroundColor;
 
 	CHudTexture		*m_IconBlip;
 	CHudTexture		*m_IconBlipAbove;
@@ -138,6 +139,12 @@ static const sRadarPos GERadarPos[] = {
 	{"r80", "0" },
 	{"r80", "c-40" },
 };
+
+#define BG_ALPHA_PLAYER 225
+#define BG_ALPHA_SPECTATOR 255
+#define BG_COLOR_FFA Color(0, 255, 0, BG_ALPHA_PLAYER)
+#define BG_COLOR_JANUS Color(224, 37, 43, BG_ALPHA_PLAYER)
+#define BG_COLOR_MI6 Color(8, 161, 248, BG_ALPHA_PLAYER)
 
 void GERadarPos_Callback( IConVar *var, const char *pOldString, float flOldValue )
 {
@@ -189,6 +196,7 @@ CGERadar::CGERadar( const char *pElementName ) :
 	SetHiddenBits( HIDEHUD_PLAYERDEAD | HIDEHUD_HEALTH );
 
 	m_Background = NULL;
+	m_BackgroundColor = BG_COLOR_FFA;
 	m_IconBlip = NULL;
 	m_IconToken = NULL;
 	m_IconTokenAbove = NULL;
@@ -274,11 +282,11 @@ void CGERadar::FireGameEvent( IGameEvent *event )
 		{
 			int team = event->GetInt( "team" );
 			if ( team == TEAM_MI6 )
-				m_Background = gHUD.GetIcon( "ge_radar_bg_mi6" );
+				m_BackgroundColor = BG_COLOR_MI6;
 			else if ( team == TEAM_JANUS )
-				m_Background = gHUD.GetIcon( "ge_radar_bg_janus" );
+				m_BackgroundColor = BG_COLOR_JANUS;
 			else
-				m_Background = gHUD.GetIcon("ge_radar_bg");
+				m_BackgroundColor = BG_COLOR_FFA;
 		}
 
 		Reset();
@@ -536,12 +544,17 @@ void CGERadar::Paint()
 	if ( !m_Background )
 		Init();
 
-	// Draw the radar background.
-	int bgAlpha = 225;
-	if ( C_BasePlayer::GetLocalPlayer() && C_BasePlayer::GetLocalPlayer()->IsObserver() )
-		bgAlpha = 255;
+	Color bgcol = m_BackgroundColor;
 
-	m_Background->DrawSelf(m_iSideBuff, m_iSideBuff, m_flRadarDiameter, m_flRadarDiameter, Color(255,255,255,bgAlpha));
+	// Draw the radar background.
+	if ( C_BasePlayer::GetLocalPlayer() && C_BasePlayer::GetLocalPlayer()->IsObserver() )
+	{
+		int r, g, b, a;
+		bgcol.GetColor(r, g, b, a);
+		bgcol.SetColor(r, g, b, 255);
+	}
+
+	m_Background->DrawSelf(m_iSideBuff, m_iSideBuff, m_flRadarDiameter, m_flRadarDiameter, bgcol);
 
 	// Now go through the list of radar targets and represent them on the radar screen
 	// by drawing their icons on top of the background.

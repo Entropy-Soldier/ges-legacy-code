@@ -182,17 +182,22 @@ bp::dict pyWeaponInfo( bp::object weap, CBaseCombatCharacter *pOwner = NULL )
 			info["uses_clip"] = weap->iMaxClip1 != WEAPON_NOCLIP;
 			info["clip_size"] = weap->iMaxClip1;
 			info["clip_def"] = weap->iDefaultClip1;
-			
+			info["ammo_type"] = GetAmmoForWeapon( weap_id );
+
 			int aid = GetAmmoDef()->Index( GetAmmoForWeapon( weap_id ) );
 			Ammo_t *ammo = GetAmmoDef()->GetAmmoOfIndex( aid );
 			if ( ammo )
 			{
-				info["ammo_type"] = GetAmmoForWeapon( weap_id );
 				info["ammo_max"] = ammo->pMaxCarry;
 
 				if ( pOwner )
 					info["ammo_count"] = pOwner->GetAmmoCount( aid );
 			}			
+			else
+			{
+				info["ammo_max"] = 0;
+				info["ammo_count"] = 0;
+			}
 		}
 	}
 

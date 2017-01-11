@@ -77,6 +77,12 @@ public:
 	int GetWeaponID( int slot = 0) { return ( slot < m_pContents.Count() && slot >= 0 ) ? m_pContents[slot]->iWeaponID : -1; }
 	int GetWeight( int slot = 0) { return ( slot < m_pContents.Count() && slot >= 0 ) ? m_pContents[slot]->iWeight : -1; }
 
+	// Entity Functions
+	void InputInsertAmmo(inputdata_t &inputdata);
+	void InputRemoveAmmo(inputdata_t &inputdata);
+
+	void InputInsertSlotAmmo(inputdata_t &inputdata);
+	void InputRemoveSlotAmmo(inputdata_t &inputdata);
 private:
 
 	struct AmmoData

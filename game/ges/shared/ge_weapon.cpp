@@ -29,6 +29,7 @@
 	#include "npc_gebase.h"
 	#include "particle_parse.h"
 	#include "ge_tokenmanager.h"
+	#include "ge_entitytracker.h"
 #endif
 
 #include "gemp_gamerules.h"
@@ -151,11 +152,12 @@ void CGEWeapon::Spawn()
 	// Notify the token manager we are arriving
 	GEMPRules()->GetTokenManager()->OnTokenSpawned( this );
 
+	// Add us to the approperate entity tracker list
+	GEEntityTracker()->AddItemToTracker( this, ET_LIST_WEAPON );
+
 	// Notify Python about the weapon
 	if ( GetScenario() )
-	{
 		GetScenario()->OnWeaponSpawned( this );
-	}
 }
 
 void CGEWeapon::UpdateOnRemove( void )

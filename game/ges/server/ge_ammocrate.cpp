@@ -17,6 +17,7 @@
 #include "ge_tokenmanager.h"
 #include "gebot_player.h"
 #include "gemp_gamerules.h"
+#include "ge_loadoutmanager.h"
 
 #include "ge_ammocrate.h"
 
@@ -30,6 +31,10 @@ BEGIN_DATADESC( CGEAmmoCrate )
 	// Function Pointers
 	DEFINE_ENTITYFUNC( ItemTouch ),
 	DEFINE_THINKFUNC( RefillThink ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "InsertAmmo", InputInsertAmmo ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "RemoveAmmo", InputRemoveAmmo ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "InsertSlotAmmo", InputInsertSlotAmmo ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveSlotAmmo", InputRemoveSlotAmmo ),
 END_DATADESC();
 
 ConVar ge_partialammopickups("ge_partialammopickups", "0", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Allow players to pick up ammo from a crate without picking up all of it.");
@@ -56,9 +61,12 @@ void CGEAmmoCrate::Spawn( void )
 	// So NPC's can "see" us
 	AddFlag( FL_OBJECT );
 
+	// Add us to the gameplay item tracker.
 	GEEntityTracker()->AddItemToTracker( this, ET_LIST_AMMO );
 
-	Respawn();
+	// Make sure we don't appear until we actually have ammo.
+	BaseClass::Respawn();
+	SetThink( NULL );
 }
 
 void CGEAmmoCrate::Precache( void )
@@ -378,12 +386,50 @@ bool CGEAmmoCrate::MyTouch( CBasePlayer *pPlayer )
 	return false;
 }
 
+
+void CGEAmmoCrate::InputInsertAmmo(inputdata_t &inputdata)
+{
+	// Input format is "WEAPONID AMOUNT"
+
+	const char* inputString = inputdata.value.String();
+	CUtlVector<char*> data;
+
+	Q_SplitString(inputString, " ", data);
+
+	// AddAmmoType will take care of any invalid inputs.
+	AddAmmoType(atoi(data[0]), atoi(data[1]));
+
+	data.PurgeAndDeleteElements();
+}
+
+void CGEAmmoCrate::InputRemoveAmmo(inputdata_t &inputdata)
+{
+	// Input format is "WEAPONID"
+
+	// RemoveAmmoType will take care of any invalid inputs.
+	RemoveAmmoType( atoi(inputdata.value.String()) );
+}
+
+void CGEAmmoCrate::InputInsertSlotAmmo(inputdata_t &inputdata)
+{
+	// AddAmmoType will take care of any invalid inputs.
+	AddAmmoType(GEMPRules()->GetLoadoutManager()->GetWeaponInSlot( inputdata.value.Int() ), -1);
+}
+
+void CGEAmmoCrate::InputRemoveSlotAmmo(inputdata_t &inputdata)
+{
+	// Input format is "WEAPONID"
+
+	// RemoveAmmoType will take care of any invalid inputs.
+	RemoveAmmoType( GEMPRules()->GetLoadoutManager()->GetWeaponInSlot( inputdata.value.Int() ) );
+}
+
 // To be removed when entity tracker is finished.
 void CGEAmmoCrate::UpdateOnRemove(void)
 {
 	BaseClass::UpdateOnRemove();
 
-	if ( GetScenario() && m_pContents.Count() )
+	if ( GetScenario() )
 	{
 		GetScenario()->OnAmmoRemoved( this );
 	}

@@ -36,9 +36,6 @@
 // Add, remove, and search using armor list.
 #define ET_LIST_ARMOR 3
 
-// Add, remove, and search using gamemode list.
-#define ET_LIST_GAMEPLAY 4
-
 // Add, remove, and search using map list.
 #define ET_LIST_MAP 10
 
@@ -105,6 +102,7 @@ private:
 };
 
 extern void CreateEntityTracker();
+extern void DestroyEntityTracker();
 extern CGEEntityTracker* GEEntityTracker();
 
 #endif //GE_ENTITYTRACKER_H

@@ -13,6 +13,7 @@
 #include "ge_shareddefs.h"
 #include "ge_tokenmanager.h"
 #include "gemp_gamerules.h"
+#include "ge_entitytracker.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -139,6 +140,14 @@ BOOST_PYTHON_MODULE(GEGlobal)
 	self.attr("AMMO_GRENADE")		= AMMO_GRENADE;
 	self.attr("AMMO_ROCKET")		= AMMO_ROCKET;
 	self.attr("AMMO_SHELL")		= AMMO_SHELL;
+
+	// Entity tracker lists
+	self.attr("ET_LIST_ALL")		= ET_LIST_ALL;
+	self.attr("ET_LIST_WEAPON")		= ET_LIST_WEAPON;
+	self.attr("ET_LIST_AMMO")		= ET_LIST_AMMO;
+	self.attr("ET_LIST_ARMOR")		= ET_LIST_ARMOR;
+	self.attr("ET_LIST_MAP")		= ET_LIST_MAP;
+	self.attr("ET_LIST_GAMEMODE")	= ET_LIST_GAMEMODE;
 
 	self.attr("HUD_PRINTNOTIFY")	= HUD_PRINTNOTIFY;
 	self.attr("HUD_PRINTCONSOLE") = HUD_PRINTCONSOLE;

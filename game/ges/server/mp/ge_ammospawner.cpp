@@ -24,16 +24,30 @@ class CGEAmmoSpawner : public CGESpawner
 {
 public:
 	DECLARE_CLASS( CGEAmmoSpawner, CGESpawner );
-	
+	DECLARE_DATADESC();
+
 protected:
 	virtual void OnInit( void );
 	virtual void OnEntSpawned( const char *szClassname );
 	
 	virtual int  ShouldRespawn( void );
 	virtual float GetRespawnInterval( void );
+
+	void InputInsertAmmo(inputdata_t &inputdata);
+	void InputRemoveAmmo(inputdata_t &inputdata);
+
+	void InputInsertSlotAmmo(inputdata_t &inputdata);
+	void InputRemoveSlotAmmo(inputdata_t &inputdata);
 };
 
 LINK_ENTITY_TO_CLASS( ge_ammospawner, CGEAmmoSpawner );
+
+BEGIN_DATADESC( CGEAmmoSpawner )
+	DEFINE_INPUTFUNC( FIELD_STRING, "InsertAmmo", InputInsertAmmo ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "RemoveAmmo", InputRemoveAmmo ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "InsertSlotAmmo", InputInsertSlotAmmo ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveSlotAmmo", InputRemoveSlotAmmo ),
+END_DATADESC();
 
 void CGEAmmoSpawner::OnInit( void )
 {
@@ -55,9 +69,9 @@ void CGEAmmoSpawner::OnEntSpawned( const char *szClassname )
 	pCrate->SetOriginalSpawnAngles( GetAbsAngles() );
 
 	// Load us up with the appropriate ammo
-	int weapid = GEMPRules()->GetLoadoutManager()->GetWeaponInSlot( GetSlot() );
+	int weapid = GEMPRules()->GetLoadoutManager()->GetWeaponInSlot( GetSlot() ); // If this isn't a valid weapon or slot AddAmmoType will not do anything.
 	pCrate->AddAmmoType(weapid, -1); // Adding the first ammo type spawns the crate.
-	GEMPRules()->GetTokenManager()->InsertGlobalAmmo( pCrate );
+	GEMPRules()->GetTokenManager()->InsertGlobalAmmo( pCrate ); // Insert global ammo if there is any.
 }
 
 int CGEAmmoSpawner::ShouldRespawn( void )
@@ -76,4 +90,59 @@ int CGEAmmoSpawner::ShouldRespawn( void )
 float CGEAmmoSpawner::GetRespawnInterval( void )
 {
 	return IsOverridden() ? 0 : GERules()->FlItemRespawnTime(NULL);
+}
+
+void CGEAmmoSpawner::InputInsertAmmo(inputdata_t &inputdata)
+{
+	// Input format is "WEAPONID AMOUNT"
+
+	// Make sure we have a crate.
+	CGEAmmoCrate *pCrate = (CGEAmmoCrate*) GetEnt();
+	if ( !pCrate )
+		return;
+
+	const char* inputString = inputdata.value.String();
+	CUtlVector<char*> data;
+
+	Q_SplitString(inputString, " ", data);
+
+	// AddAmmoType will take care of any invalid inputs.
+	pCrate->AddAmmoType(atoi(data[0]), atoi(data[1]));
+
+	data.PurgeAndDeleteElements();
+}
+
+void CGEAmmoSpawner::InputRemoveAmmo(inputdata_t &inputdata)
+{
+	// Input format is "WEAPONID"
+
+	// Make sure we have a crate.
+	CGEAmmoCrate *pCrate = (CGEAmmoCrate*) GetEnt();
+	if ( !pCrate )
+		return;
+
+	// RemoveAmmoType will take care of any invalid inputs.
+	pCrate->RemoveAmmoType( atoi(inputdata.value.String()) );
+}
+
+void CGEAmmoSpawner::InputInsertSlotAmmo(inputdata_t &inputdata)
+{
+	// Make sure we have a crate.
+	CGEAmmoCrate *pCrate = (CGEAmmoCrate*) GetEnt();
+	if ( !pCrate )
+		return;
+
+	// AddAmmoType will take care of any invalid inputs.
+	pCrate->AddAmmoType(GEMPRules()->GetLoadoutManager()->GetWeaponInSlot( inputdata.value.Int() ), -1);
+}
+
+void CGEAmmoSpawner::InputRemoveSlotAmmo(inputdata_t &inputdata)
+{
+	// Make sure we have a crate.
+	CGEAmmoCrate *pCrate = (CGEAmmoCrate*) GetEnt();
+	if ( !pCrate )
+		return;
+
+	// RemoveAmmoType will take care of any invalid inputs.
+	pCrate->RemoveAmmoType( GEMPRules()->GetLoadoutManager()->GetWeaponInSlot( inputdata.value.Int() ) );
 }

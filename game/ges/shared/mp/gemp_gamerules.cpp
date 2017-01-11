@@ -483,6 +483,9 @@ CGEMPRules::CGEMPRules()
 	m_pMapManager = new CGEMapManager;
 	m_pMapManager->ParseMapSelectionData();
 
+	// Create the Entity Tracker
+	CreateEntityTracker();
+
 	// Figure out what day it is
 	//int day, month, year;
 	//GetCurrentDate(&day, &month, &year);
@@ -523,6 +526,9 @@ CGEMPRules::~CGEMPRules()
 	g_Teams.Purge();
 	delete m_pLoadoutManager;
 	delete m_pTokenManager;
+	delete m_pMapManager;
+
+	DestroyEntityTracker();
 
 	// These are deleted with the rest of the entities
 	g_pPlayerResource = NULL;
@@ -1029,12 +1035,6 @@ void CGEMPRules::LevelInitPreEntity()
 		m_pMapManager->ParseCurrentMapData();
 	else
 		Warning( "No Map Manager On Level Init!\n" );
-
-	// Create the Entity Tracker if not existing already
-	if ( !GEEntityTracker() )
-		CreateEntityTracker();
-	else
-		Warning( "[GERules] Entity tracker already existed!\n" );
 
 	// Create the Gameplay Manager if not existing already
 	if ( !GEGameplay() )

@@ -239,10 +239,7 @@ bool CGETokenManager::InsertGlobalAmmo( CGEAmmoCrate *pCrate )
 
 	//for ( int i = m_vGlobalAmmo.Count() - 1; i >= 0; i-- )
 	FOR_EACH_DICT(m_vGlobalAmmo, idx)
-	{
-		Warning( "Adding global ammo with index %d\n", idx );
 		pCrate->AddGlobalAmmoType( idx );
-	}
 
 	return true;
 }
@@ -282,10 +279,7 @@ void CGETokenManager::SetGlobalAmmo( const char *szClassName, int amount /*=-1*/
 	CUtlVector<CGEAmmoCrate*> *ammoCrates = GEEntityTracker()->GetAmmoList();
 
 	for (int i = ammoCrates->Count() - 1; i >= 0; i--)
-	{
-		Warning("Adding new global ammo type %d to crate!\n", idx);
 		(*ammoCrates)[i]->AddGlobalAmmoType( idx );
-	}
 }
 
 void CGETokenManager::RemoveGlobalAmmo( const char *szClassName )

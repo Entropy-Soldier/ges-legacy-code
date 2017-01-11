@@ -2178,7 +2178,7 @@ bool CBaseCombatCharacter::Weapon_EquipAmmoOnly( CBaseCombatWeapon *pWeapon )
 			{
 				CGEMPPlayer *pGEPlayer = ToGEMPPlayer(this);
 
-				if (pGEPlayer && !pGEPlayer->IsRadarCloaked())
+				if (pGEPlayer && ( pGEPlayer->IsBotPlayer() || !pGEPlayer->IsRadarCloaked() ) )
 					EmitSound( pWeapon->GetShootSound(PICKUP) );  // We never play ammo pickup sounds on weapon pickups.
 				else
 				{
@@ -2982,7 +2982,7 @@ int CBaseCombatCharacter::GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSo
 #ifdef GE_DLL
 		CGEMPPlayer *pGEPlayer = ToGEMPPlayer(this);
 
-		if (pGEPlayer && !pGEPlayer->IsRadarCloaked())
+		if (pGEPlayer && ( pGEPlayer->IsBotPlayer() || !pGEPlayer->IsRadarCloaked() ) )
 			EmitSound( GetAmmoDef()->PickupSound(iAmmoIndex) );
 		else
 		{

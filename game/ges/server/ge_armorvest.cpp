@@ -15,6 +15,7 @@
 #include "gemp_gamerules.h"
 #include "ge_player.h"
 #include "gebot_player.h"
+#include "ge_entitytracker.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -85,6 +86,9 @@ void CGEArmorVest::Spawn( void )
 	{
 		m_iPlayerPointContribution[i] = 0;
 	}
+
+	// Add us to the approperate entity tracker list
+	GEEntityTracker()->AddItemToTracker( this, ET_LIST_ARMOR );
 
 	// Notify Python about the armor
 	if ( GetScenario() )

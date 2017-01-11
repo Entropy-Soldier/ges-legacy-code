@@ -6,21 +6,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "cbase.h"
-
-#include "ge_gamerules.h"
-#include "gemp_gamerules.h"
-#include "gemp_player.h"
-#include "ge_spawner.h"
-#include "ge_gameplayresource.h"
-
-#include "ge_loadoutmanager.h"
-#include "ge_tokenmanager.h"
-
-#include "ge_utils.h"
-#include "script_parser.h"
-#include "filesystem.h"
-
-#include "ge_playerspawn.h"
 #include "ge_entitytracker.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -47,7 +32,7 @@ void CreateEntityTracker()
 {
 	if ( GEEntityTracker() )
 	{
-		DevWarning( "Entity Tracker already exists!\n" );
+		Warning( "Tried to make Entity Tracker when it already exists!\n" );
 		return;
 	}
 
@@ -55,6 +40,12 @@ void CreateEntityTracker()
 
 	if ( !GEEntityTracker() )
 		AssertFatal( "Failed to create entity tracker!" );
+}
+
+void DestroyEntityTracker()
+{
+	delete g_GEEntityTracker;
+	g_GEEntityTracker = NULL;
 }
 
 bool CGEEntityTracker::AddItemToTracker( CBaseEntity *pEntity, char list /*== ET_LIST_ALL*/ )
@@ -65,30 +56,30 @@ bool CGEEntityTracker::AddItemToTracker( CBaseEntity *pEntity, char list /*== ET
 		return false;
 	}
 
+	const char* targetClassName = pEntity->GetClassname();
+	int targetlist = list;
+
 	if (list == ET_LIST_ALL)
 	{
-		const char* targetClassName = pEntity->GetClassname();
-
 		if (!Q_strncmp(targetClassName, "weapon_", 7))
-			m_vWeaponList.AddToTail( (CGEWeapon*)pEntity ); // There are no entities that start with weapon_ that are not CGEWeapons.
+			targetlist = ET_LIST_WEAPON; // There are no entities that start with weapon_ that are not CGEWeapons.
 		else if (!Q_strcmp(targetClassName, "ge_ammocrate"))
-			m_vAmmoList.AddToTail( (CGEAmmoCrate*)pEntity );
+			targetlist = ET_LIST_AMMO;
 		else if (!Q_strcmp(targetClassName, "item_armorvest"))
-			m_vArmorList.AddToTail( (CGEArmorVest*)pEntity );
-		else
-			return false; // Can't autosort.
+			targetlist = ET_LIST_ARMOR;
 	}
-	else
+
+	switch(targetlist) 
 	{
-		switch(list) 
-		{
-			case ET_LIST_WEAPON : m_vWeaponList.AddToTail( (CGEWeapon*)pEntity ); break;
-			case ET_LIST_AMMO : m_vAmmoList.AddToTail( (CGEAmmoCrate*)pEntity ); break;
-			case ET_LIST_ARMOR : m_vArmorList.AddToTail( (CGEArmorVest*)pEntity ); break;
-			case ET_LIST_MAP : m_vMapEntList.AddToTail( pEntity ); break;
-			case ET_LIST_GAMEMODE : m_vGamemodeEntList.AddToTail( pEntity ); break;
-		}
+		case ET_LIST_WEAPON : m_vWeaponList.AddToTail( (CGEWeapon*)pEntity ); break;
+		case ET_LIST_AMMO : m_vAmmoList.AddToTail( (CGEAmmoCrate*)pEntity ); break;
+		case ET_LIST_ARMOR : m_vArmorList.AddToTail( (CGEArmorVest*)pEntity ); break;
+		case ET_LIST_MAP : m_vMapEntList.AddToTail( pEntity ); break;
+		case ET_LIST_GAMEMODE : m_vGamemodeEntList.AddToTail( pEntity ); break;
+		default: return false; // Invalid list.
 	}
+
+//	Warning("Added %s to item tracker, tracking count is now %d\n", pEntity->GetClassname(), m_vGamemodeEntList.Count() + m_vMapEntList.Count() + m_vArmorList.Count() + m_vAmmoList.Count() + m_vWeaponList.Count() );
 
 	pEntity->NotifyOfTracking();
 	return true;
@@ -134,6 +125,8 @@ bool CGEEntityTracker::RemoveItemFromTracker( CBaseEntity *pEntity, char list /*
 		case ET_LIST_MAP : targetIndex = m_vMapEntList.Find( pEntity ); targetIndex > -1 ? m_vMapEntList.FastRemove(targetIndex) : success--; success++; break;
 		case ET_LIST_GAMEMODE : targetIndex = m_vGamemodeEntList.Find( pEntity ); targetIndex > -1 ? m_vGamemodeEntList.FastRemove(targetIndex) : success--; success++; break;
 	}
+
+//	Warning("Removed %s from item tracker, tracking count is now %d\n", pEntity->GetClassname(), m_vGamemodeEntList.Count() + m_vMapEntList.Count() + m_vArmorList.Count() + m_vAmmoList.Count() + m_vWeaponList.Count() );
 
 	// Successful if we found the entity to remove, 
 	return success > 0;

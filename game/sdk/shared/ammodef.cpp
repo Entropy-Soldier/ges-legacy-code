@@ -18,7 +18,11 @@
 //-----------------------------------------------------------------------------
 Ammo_t *CAmmoDef::GetAmmoOfIndex(int nAmmoIndex)
 {
+	#ifdef GE_DLL 
+	if ( nAmmoIndex < 0 || nAmmoIndex >= m_nAmmoIndex )
+	#else
 	if ( nAmmoIndex >= m_nAmmoIndex )
+	#endif
 		return NULL;
 
 	return &m_AmmoType[ nAmmoIndex ];
