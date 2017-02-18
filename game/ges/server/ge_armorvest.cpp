@@ -90,12 +90,6 @@ void CGEArmorVest::Spawn( void )
 	// Add us to the approperate entity tracker list
 	GEEntityTracker()->AddItemToTracker( this, ET_LIST_ARMOR );
 
-	// Notify Python about the armor
-	if ( GetScenario() )
-	{
-		GetScenario()->OnArmorSpawned( this );
-	}
-
 	// Override base's ItemTouch for NPC's
 	SetTouch( &CGEArmorVest::ItemTouch );
 
@@ -121,12 +115,6 @@ void CGEArmorVest::Precache( void )
 CBaseEntity *CGEArmorVest::Respawn(void)
 {
 	BaseClass::Respawn();
-
-	if ( GetScenario() )
-	{
-		// Notify Python about the armor
-		GetScenario()->OnArmorRemoved( this );
-	}
 
 	SetSolid( SOLID_NONE );
 	RemoveSolidFlags( FSOLID_TRIGGER );
@@ -189,12 +177,6 @@ void CGEArmorVest::Materialize(void)
 	if (GEMPRules()->ArmorShouldRespawn() && m_bEnabled)
 	{
 		BaseClass::Materialize();
-
-		// Notify Python about the armor
-		if ( GetScenario() )
-		{
-			GetScenario()->OnArmorSpawned( this );
-		}
 
 		// Override base's ItemTouch for NPC's
 		SetTouch(&CGEArmorVest::ItemTouch);
@@ -299,17 +281,6 @@ int CGEArmorVest::CalcSpawnProgress()
 
 	// If player2 is within 17% of the radius, the armor does not tick down at all.
 	return (int)clamp(10 - 12 * metric, 0, 10);
-}
-
-void CGEArmorVest::UpdateOnRemove(void)
-{
-	BaseClass::UpdateOnRemove();
-
-	// Notify Python about the ammobox
-	if (GetScenario())
-	{
-		GetScenario()->OnArmorRemoved(this);
-	}
 }
 
 void CGEArmorVest::AddSpawnProgressMod(CBasePlayer *pPlayer, int amount)

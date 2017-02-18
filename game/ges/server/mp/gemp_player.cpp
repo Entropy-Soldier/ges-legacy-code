@@ -1793,7 +1793,7 @@ void CGEMPPlayer::OnGameplayEvent( GPEvent event )
 	else if ( event == ROUND_START )
 	{
 		// Reset markers on round start
-		SetScoreBoardColor( SB_COLOR_NORMAL );
+		SetHudColor( SB_COLOR_NORMAL );
 	}
 	else if ( event == ROUND_END || event == MATCH_END )
 	{

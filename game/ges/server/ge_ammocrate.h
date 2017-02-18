@@ -67,9 +67,6 @@ public:
 	// Checks to see if the crate has any ammo types that have not been completely taken.
 	bool HasAmmo( void );
 
-	// Callback for when the crate is removed.
-	void UpdateOnRemove();
-
 	// Returns the AmmoID of the ammo at the given slot of this ammo crate.  Slot 0 is the base slot.
 	int GetAmmoType( int slot = 0) { return ( slot < m_pContents.Count() && slot >= 0 ) ? m_pContents[slot]->iAmmoID : -1; };
 

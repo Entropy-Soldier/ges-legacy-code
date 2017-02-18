@@ -58,6 +58,7 @@ CGEMine::CGEMine( void )
 
 CGEMine::~CGEMine( void )
 {
+	StopSound(GetAttachSound());
 }
 
 extern ConVar sv_gravity;
@@ -117,6 +118,7 @@ void CGEMine::InputExplode( inputdata_t &inputdata )
 	ExplosionCreate( GetAbsOrigin() + forward*4, GetAbsAngles(), inputdata.pActivator, GetDamage(), GetDamageRadius(), 
 		SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, this);
 
+	StopSound(GetAttachSound());
 	// Effectively hide us from everyone until the explosion is done with
 	GEUTIL_DelayRemove( this, GE_EXP_MAX_DURATION );
 }
@@ -128,7 +130,10 @@ void CGEMine::Precache( void )
 	PrecacheModel("models/weapons/mines/w_remotemine.mdl");
 	PrecacheModel("models/weapons/mines/w_timedmine.mdl");
 
-	PrecacheScriptSound( "weapon_mines.Attach" );
+	PrecacheScriptSound( "weapon_remotemine.Attach" );
+	PrecacheScriptSound( "weapon_proximitymine.Attach" );
+	PrecacheScriptSound( "weapon_timedmine.Attach" );
+
 	PrecacheScriptSound( "Mine.Beep" );
 }
 
@@ -313,14 +318,24 @@ int CGEMine::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 const char* CGEMine::GetPrintName( void )
 {
-	if ( GetWeaponID() == WEAPON_PROXIMITYMINE )
-		return "#GE_ProximityMine";
-	else if ( GetWeaponID() == WEAPON_REMOTEMINE )
-		return "#GE_RemoteMine";
-	else if ( GetWeaponID() == WEAPON_TIMEDMINE )
-		return "#GE_TimedMine";
-	else
-		return "Mine";
+	switch (GetWeaponID())
+	{
+		case WEAPON_REMOTEMINE: return "#GE_RemoteMine";
+		case WEAPON_PROXIMITYMINE: return "#GE_ProximityMine";
+		case WEAPON_TIMEDMINE: return "#GE_TimedMine";
+		default: return "#GE_TimedMine";
+	}
+}
+
+const char* CGEMine::GetAttachSound( void )
+{
+	switch (GetWeaponID())
+	{
+		case WEAPON_REMOTEMINE: return ATTACH_SOUND_REMOTE;
+		case WEAPON_PROXIMITYMINE: return ATTACH_SOUND_PROXIMITY;
+		case WEAPON_TIMEDMINE: return ATTACH_SOUND_TIMED;
+		default: return ATTACH_SOUND_TIMED;
+	}
 }
 
 void CGEMine::MineAttach(CBaseEntity *pEntity)
@@ -352,7 +367,7 @@ void CGEMine::MineAttach(CBaseEntity *pEntity)
 	m_bInAir = false;
 	m_flAttachTime = gpGlobals->curtime;
 
-	EmitSound("weapon_mines.Attach");
+	EmitSound(GetAttachSound());
 
 	RemoveFlag(FL_DONTTOUCH);
 }

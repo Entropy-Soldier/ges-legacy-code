@@ -384,14 +384,28 @@ void CGETokenManager::OnTokenPicked( CGEWeapon *pToken, CGEPlayer *pPlayer )
 {
 	const char *szClassName = pToken->GetClassname();
 	if ( GetTokenDef(szClassName) )
-		GEGameplay()->GetScenario()->OnTokenPicked( pToken, pPlayer );
+	{
+		GEGameplay()->GetScenario()->OnTokenPicked(pToken, pPlayer);
+
+		// For testing purposes, remove later.
+		FOR_EACH_PLAYER(pGEPlayer)
+			pGEPlayer->SetRadarSweepTime(gpGlobals->curtime);
+		END_OF_PLAYER_LOOP()
+	}
 }
 
 void CGETokenManager::OnTokenDropped( CGEWeapon *pToken, CGEPlayer *pPlayer )
 {
 	const char *szClassName = pToken->GetClassname();
 	if ( GetTokenDef(szClassName) )
-		GEGameplay()->GetScenario()->OnTokenDropped( pToken, pPlayer );
+	{
+		GEGameplay()->GetScenario()->OnTokenDropped(pToken, pPlayer);
+
+		// For testing purposes, remove later.
+		FOR_EACH_PLAYER(pGEPlayer)
+			pGEPlayer->SetRadarSweepTime(gpGlobals->curtime);
+		END_OF_PLAYER_LOOP()
+	}
 }
 
 void CGETokenManager::OnCaptureAreaSpawned( CGECaptureArea *pArea )

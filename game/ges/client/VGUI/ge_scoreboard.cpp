@@ -527,7 +527,7 @@ void CGEScoreBoard::UpdatePlayerInfo()
 				m_pPlayerList->SetSelectedItem(itemID);
 
 			// Obey Python's color scheme for this player, default is the team color
-			int col = GEPlayerRes()->GetScoreBoardColor(i);
+			int col = GEPlayerRes()->GetHudColor(i);
 			IScheme *pScheme = scheme()->GetIScheme( GetScheme() );
 			switch ( col )
 			{

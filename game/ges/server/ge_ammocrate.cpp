@@ -80,10 +80,6 @@ void CGEAmmoCrate::Materialize( void )
 {
 	BaseClass::Materialize();
 
-	// Notify Python about the ammobox
-	if ( GetScenario() )
-		GetScenario()->OnAmmoSpawned( this );
-
 	// Override base's ItemTouch for NPC's
 	SetTouch( &CGEAmmoCrate::ItemTouch );
 }
@@ -96,10 +92,6 @@ CBaseEntity *CGEAmmoCrate::Respawn( void )
 		SetThink( NULL );
 		return this;
 	}
-
-	// Notify Python about the ammobox
-	if ( GetScenario() )
-		GetScenario()->OnAmmoRemoved( this );
 
 	// Refill all the ammo slots.
 	RefillThink();
@@ -422,15 +414,4 @@ void CGEAmmoCrate::InputRemoveSlotAmmo(inputdata_t &inputdata)
 
 	// RemoveAmmoType will take care of any invalid inputs.
 	RemoveAmmoType( GEMPRules()->GetLoadoutManager()->GetWeaponInSlot( inputdata.value.Int() ) );
-}
-
-// To be removed when entity tracker is finished.
-void CGEAmmoCrate::UpdateOnRemove(void)
-{
-	BaseClass::UpdateOnRemove();
-
-	if ( GetScenario() )
-	{
-		GetScenario()->OnAmmoRemoved( this );
-	}
 }

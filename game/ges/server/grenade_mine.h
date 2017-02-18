@@ -18,6 +18,10 @@
 #include "grenade_gebase.h"
 #include "weapon_mines.h"
 
+#define ATTACH_SOUND_REMOTE		"weapon_remotemine.Attach"
+#define ATTACH_SOUND_TIMED		"weapon_timedmine.Attach"
+#define ATTACH_SOUND_PROXIMITY	"weapon_proximitymine.Attach"
+
 class CSoundPatch;
 class CSprite;
 
@@ -42,6 +46,7 @@ public:
 
 	virtual bool		IsInAir( void ) { return m_bInAir; };
 	virtual const char* GetPrintName( void );
+	virtual const char* GetAttachSound( void );
 	virtual int			GetCustomData( void ) { return m_bInAir ? 1 : 0; };
 	
 	// Input handlers

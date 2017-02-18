@@ -76,7 +76,7 @@ void CGEPlayerResource::UpdatePlayerData( void )
 			m_iDevStatus.Set( i, pPlayer->GetDevStatus() );
 			m_iCampingPercent.Set( i, pPlayer->GetCampingPercent() );
 			m_iFrags.Set( i, pPlayer->FragCount() );
-			m_iScoreBoardColor.Set( i, pPlayer->GetScoreBoardColor() );
+			m_iScoreBoardColor.Set( i, pPlayer->GetHudColor() );
 			m_bIsActive.Set( i, pPlayer->IsActive() );
 
 			// Send off our current character!

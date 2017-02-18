@@ -154,10 +154,6 @@ void CGEWeapon::Spawn()
 
 	// Add us to the approperate entity tracker list
 	GEEntityTracker()->AddItemToTracker( this, ET_LIST_WEAPON );
-
-	// Notify Python about the weapon
-	if ( GetScenario() )
-		GetScenario()->OnWeaponSpawned( this );
 }
 
 void CGEWeapon::UpdateOnRemove( void )
@@ -166,13 +162,6 @@ void CGEWeapon::UpdateOnRemove( void )
 	// Notify the token manager we are going away
 	if ( GEMPRules() && GEMPRules()->GetTokenManager() )
 		GEMPRules()->GetTokenManager()->OnTokenRemoved( this );
-
-
-	// Notify Python about the weapon disappearing
-	if ( GetScenario() )
-	{
-		GetScenario()->OnWeaponRemoved( this );
-	}
 }
 
 #endif //GAME_DLL
@@ -202,11 +191,8 @@ void CGEWeapon::Equip( CBaseCombatCharacter *pOwner )
 	// Disable Glowing (but preserve our set color)
 	SetEnableGlow( false );
 
-	// Notify Python about the weapon disappearing
-	if ( GetScenario() )
-	{
-		GetScenario()->OnWeaponRemoved( this );
-	}
+	// Don't track us while someone is carrying us around, since we're no longer a pickup.
+	GEEntityTracker()->RemoveItemFromTracker( this, ET_LIST_WEAPON );
 #endif
 
 	// Fill this bad boy up with ammo if we have any for it to use!
@@ -226,12 +212,15 @@ void CGEWeapon::Drop( const Vector &vecVelocity )
 {
 #ifdef GAME_DLL
 	// Call this first so we can capture who owned the entity before the drop
-	GEMPRules()->GetTokenManager()->OnTokenDropped( this, ToGEPlayer(GetOwner()) );
+	GEMPRules()->GetTokenManager()->OnTokenDropped( this, ToGEPlayer( GetOwner() ) );
 
 	SetEnableGlow( m_bServerGlow );
+
+	// We're a pickup again.
+	GEEntityTracker()->AddItemToTracker( this, ET_LIST_WEAPON );
 #endif
 
-	CGEMPPlayer *pGEMPPlayer = ToGEMPPlayer(GetOwner());
+	CGEMPPlayer *pGEMPPlayer = ToGEMPPlayer( GetOwner() );
 
 	if (pGEMPPlayer && GetWeaponID() < WEAPON_RANDOM)
 		m_nSkin = pGEMPPlayer->GetUsedWeaponSkin(GetWeaponID()); // Just in case the player never pulled it out.

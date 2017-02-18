@@ -108,11 +108,16 @@ private:
 
 	// Textures!
 	CHudTexture		*m_Background;
+	CHudTexture		*m_BackgroundSweep;
 	Color			m_BackgroundColor;
 
 	CHudTexture		*m_IconBlip;
 	CHudTexture		*m_IconBlipAbove;
 	CHudTexture		*m_IconBlipBelow;
+
+	CHudTexture		*m_IconBlipFriendly;
+	CHudTexture		*m_IconBlipAboveFriendly;
+	CHudTexture		*m_IconBlipBelowFriendly;
 
 	CHudTexture		*m_IconToken;
 	CHudTexture		*m_IconTokenAbove;
@@ -121,10 +126,22 @@ private:
 	void ThinkAdvance( float delay = 0.025f ) { m_flNextThink = gpGlobals->curtime + delay; }
 };
 
+
+#define BG_ALPHA_PLAYER 225
+#define BG_ALPHA_SPECTATOR 255
+#define BG_COLOR_FFA_VALUES 0, 255, 0, BG_ALPHA_PLAYER
+#define BG_COLOR_JANUS_VALUES 224, 37, 43, BG_ALPHA_PLAYER
+#define BG_COLOR_MI6_VALUES 8, 161, 248, BG_ALPHA_PLAYER
+#define BG_COLOR_FFA Color(BG_COLOR_FFA_VALUES)
+#define BG_COLOR_JANUS Color(BG_COLOR_JANUS_VALUES)
+#define BG_COLOR_MI6 Color(BG_COLOR_MI6_VALUES)
+#define BG_SWEEP_TIME 1.0
+#define BG_SWEEP_ALPHA 50
+
 // Static colors definitions!
-Color CGERadar::s_ColorDM( 0, 185, 0, 255 );
-Color CGERadar::s_ColorMI6( 134, 210, 255, 255 );
-Color CGERadar::s_ColorJanus( 202, 47, 47, 255 );
+Color CGERadar::s_ColorDM( BG_COLOR_FFA_VALUES );
+Color CGERadar::s_ColorMI6( BG_COLOR_MI6_VALUES );
+Color CGERadar::s_ColorJanus( BG_COLOR_JANUS_VALUES );
 
 typedef struct
 {
@@ -139,12 +156,6 @@ static const sRadarPos GERadarPos[] = {
 	{"r80", "0" },
 	{"r80", "c-40" },
 };
-
-#define BG_ALPHA_PLAYER 225
-#define BG_ALPHA_SPECTATOR 255
-#define BG_COLOR_FFA Color(0, 255, 0, BG_ALPHA_PLAYER)
-#define BG_COLOR_JANUS Color(224, 37, 43, BG_ALPHA_PLAYER)
-#define BG_COLOR_MI6 Color(8, 161, 248, BG_ALPHA_PLAYER)
 
 void GERadarPos_Callback( IConVar *var, const char *pOldString, float flOldValue )
 {
@@ -196,6 +207,7 @@ CGERadar::CGERadar( const char *pElementName ) :
 	SetHiddenBits( HIDEHUD_PLAYERDEAD | HIDEHUD_HEALTH );
 
 	m_Background = NULL;
+	m_BackgroundSweep = NULL;
 	m_BackgroundColor = BG_COLOR_FFA;
 	m_IconBlip = NULL;
 	m_IconToken = NULL;
@@ -203,6 +215,10 @@ CGERadar::CGERadar( const char *pElementName ) :
 	m_IconTokenBelow = NULL;
 	m_IconBlipAbove = NULL;
 	m_IconBlipBelow = NULL;
+
+	m_IconBlipFriendly = NULL;
+	m_IconBlipAboveFriendly = NULL;
+	m_IconBlipBelowFriendly = NULL;
 
 	m_flScaleX = 1.0f;
 	m_flScaleY = 1.0f;
@@ -224,12 +240,17 @@ void CGERadar::VidInit( void )
 {
 	// Load up our default icons
 	m_Background	 = gHUD.GetIcon("ge_radar_bg");
+	m_BackgroundSweep	 = gHUD.GetIcon("ge_radar_sweep");
 	m_IconBlip		 = gHUD.GetIcon("ge_radar_blip");
 	m_IconToken		 = gHUD.GetIcon("ge_radar_token");
 	m_IconTokenAbove = gHUD.GetIcon("ge_radar_token_up");
 	m_IconTokenBelow = gHUD.GetIcon("ge_radar_token_down");
 	m_IconBlipAbove	 = gHUD.GetIcon("ge_radar_up");
 	m_IconBlipBelow  = gHUD.GetIcon("ge_radar_down");
+
+	m_IconBlipFriendly = gHUD.GetIcon("ge_radar_blip_friendly");
+	m_IconBlipAboveFriendly = gHUD.GetIcon("ge_radar_up_friendly");
+	m_IconBlipBelowFriendly = gHUD.GetIcon("ge_radar_down_friendly");
 
 	Reset();
 }
@@ -240,17 +261,17 @@ void CGERadar::Reset( void )
 	// Think NOW!
 	ThinkAdvance(0);
 
-	if ( m_Background )
-	{
-		m_flScaleX = GetWide() / m_Background->Width();
-		m_flScaleY = GetTall() / m_Background->Height();
-	}
-
-	// Curtail anyone from making the radar into a permanent crosshair by not allowing it anywhere near the center of the screen
 	int x, y, screenW, screenH;
 	GetPos( x, y );
 	surface()->GetScreenSize( screenW, screenH );
 
+	if ( m_Background )
+	{
+		m_flScaleX = (float)GetWide() / m_Background->Width();
+		m_flScaleY = (float)GetTall() / m_Background->Height();
+	}
+
+	// Curtail anyone from making the radar into a permanent crosshair by not allowing it anywhere near the center of the screen
 	if ( x > (screenW * 0.4) && x < (screenW * 0.6) && y > (screenH * 0.4) && y < (screenH * 0.6) )
 	{
 		x = (screenW * 0.6);
@@ -260,7 +281,7 @@ void CGERadar::Reset( void )
 	m_iSideBuff = scheme()->GetProportionalScaledValue( 8 );
 
 	// Hard code base size of 64 to prevent haxing of the radar
-	int size = scheme()->GetProportionalScaledValue( 64 ) + m_iSideBuff + m_iSideBuff;
+	int size = scheme()->GetProportionalScaledValue( 76 ) + m_iSideBuff + m_iSideBuff;
 	SetBounds( x, y, size, size );
 
 	m_flRadarDiameter = size - m_iSideBuff - m_iSideBuff;
@@ -268,12 +289,7 @@ void CGERadar::Reset( void )
 
 void CGERadar::FireGameEvent( IGameEvent *event )
 {
-	if ( !Q_strcmp( event->GetName(), "round_start" ) )
-	{
-		// Purge all our contacts at the start of a round
-		ClearAllContacts();
-	}
-	else if ( !Q_strcmp( event->GetName(), "player_team" ) )
+	if ( !Q_strcmp( event->GetName(), "player_team" ) )
 	{
 		// Figure out which background we should use
 		// TODO: This should probably be in real-time code to catch observer team...
@@ -290,6 +306,11 @@ void CGERadar::FireGameEvent( IGameEvent *event )
 		}
 
 		Reset();
+	}
+	else if ( !Q_strcmp( event->GetName(), "round_start" ) )
+	{
+		// Purge all our contacts at the start of a round
+		ClearAllContacts();
 	}
 }
 
@@ -546,8 +567,10 @@ void CGERadar::Paint()
 
 	Color bgcol = m_BackgroundColor;
 
+	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+
 	// Draw the radar background.
-	if ( C_BasePlayer::GetLocalPlayer() && C_BasePlayer::GetLocalPlayer()->IsObserver() )
+	if ( pLocalPlayer && pLocalPlayer->IsObserver() )
 	{
 		int r, g, b, a;
 		bgcol.GetColor(r, g, b, a);
@@ -555,6 +578,27 @@ void CGERadar::Paint()
 	}
 
 	m_Background->DrawSelf(m_iSideBuff, m_iSideBuff, m_flRadarDiameter, m_flRadarDiameter, bgcol);
+
+	CGEMPPlayer *pLocalGEPlayer = ToGEMPPlayer(pLocalPlayer);
+
+	if (pLocalGEPlayer)
+	{
+		float sweepTime = pLocalGEPlayer->GetSweepTime();
+
+		if (sweepTime + BG_SWEEP_TIME > gpGlobals->curtime)
+		{
+			int r, g, b, a;
+			Color sweepcol = bgcol;
+
+			// Fraction from 0 to 1 relating to how much of the sweep interval has passed.
+			float timefrac = (gpGlobals->curtime - sweepTime) / BG_SWEEP_TIME;
+
+			sweepcol.GetColor(r, g, b, a);
+			sweepcol.SetColor(r, g, b, BG_SWEEP_ALPHA * (1 - max(timefrac - 0.5, 0)*2)); // Full alpha for half of the sweep interval that then fades out.
+
+			m_BackgroundSweep->DrawSelfRotated(m_iSideBuff, m_iSideBuff, m_flRadarDiameter, m_flRadarDiameter, timefrac * M_TWOPI * 2, sweepcol);
+		}
+	}
 
 	// Now go through the list of radar targets and represent them on the radar screen
 	// by drawing their icons on top of the background.
@@ -571,7 +615,6 @@ void CGERadar::Paint()
 
 			if ( GEMPRules()->IsTeamplay() )
 			{
-				CBasePlayer *pLocalPlayer = CBasePlayer::GetLocalPlayer();
 				int team = GEPlayerRes()->GetTeam( pContact->GetEntindex() );
 
 				// Set the color to their team
@@ -579,10 +622,6 @@ void CGERadar::Paint()
 					col.SetRawColor( s_ColorMI6.GetRawColor() );
 				else
 					col.SetRawColor( s_ColorJanus.GetRawColor() );
-
-				// Enemies are higher opacity so they stand out
-				if ( team != pLocalPlayer->GetTeamNumber() )
-					alpha = 200;
 			}
 			else
 			{
@@ -635,6 +674,7 @@ void CGERadar::DrawIconOnRadar( CGERadarContact *contact, Color col )
 	int width, height;
 
 	float floorheight = GEMPRules()->GetMapFloorHeight();
+	CBasePlayer *pLocalPlayer = CBasePlayer::GetLocalPlayer();
 
 	// Get the correct icon for this type of contact
 	CHudTexture *icon = NULL;
@@ -664,6 +704,18 @@ void CGERadar::DrawIconOnRadar( CGERadarContact *contact, Color col )
 		width = max( icon->EffectiveWidth(m_flScaleX), 8 );
 		height = max( icon->EffectiveHeight(m_flScaleY), 8 );
 	}
+	else if (GEMPRules()->IsTeamplay() && contact->m_iType == RADAR_TYPE_PLAYER && GEPlayerRes()->GetTeam( contact->GetEntindex() ) == pLocalPlayer->GetTeamNumber())
+	{
+		if ( z_delta > floorheight )
+			icon = m_IconBlipAboveFriendly;
+		else if ( z_delta < floorheight * -1 )
+			icon = m_IconBlipBelowFriendly;
+		else
+			icon = m_IconBlipFriendly;
+
+		width = max( icon->EffectiveWidth(m_flScaleX), 8 );
+		height = max( icon->EffectiveHeight(m_flScaleY), 8 );
+	}
 	else
 	{
 		if ( z_delta > floorheight )
@@ -687,6 +739,10 @@ void CGERadar::DrawIconOnRadar( CGERadarContact *contact, Color col )
 		vgui::surface()->DrawSetColor( col[0], col[1], col[2], col[3]*contact->m_flAlphaMod );
 		vgui::surface()->DrawSetTexture( icon->textureId );
 		vgui::surface()->DrawTexturedRect(x, y, x + width, y + height);
+
+		// For contact token overlay
+		// vgui::surface()->DrawSetTexture( m_BackgroundSweep->textureId );
+		// vgui::surface()->DrawTexturedRect(x, y, x + width, y + height);
 	}
 }
 

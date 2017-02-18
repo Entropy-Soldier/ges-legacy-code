@@ -463,40 +463,16 @@ public:
 		TRYFUNC( this->get_override("OnCaptureAreaExited")(bp::ptr(pCapture), bp::ptr(pPlayer)) );
 	}
 
-	virtual void OnWeaponSpawned( CGEWeapon *pWeapon )
+	virtual void OnItemTracked( CBaseEntity *pItem, int trackerList )
 	{
-		PY_CALLHOOKS( FUNC_GP_WEAPONSPAWNED, bp::make_tuple(bp::ptr(pWeapon)) );
-		TRYFUNC( this->get_override("OnWeaponSpawned")(bp::ptr(pWeapon)) );
+		PY_CALLHOOKS( FUNC_GP_ITEMTRACKED, bp::make_tuple(bp::ptr(pItem), trackerList) );
+		TRYFUNC( this->get_override("OnItemTracked")(bp::ptr(pItem), trackerList) );
 	}
 
-	virtual void OnWeaponRemoved( CGEWeapon *pWeapon )
+	virtual void OnItemUntracked( CBaseEntity *pItem, int trackerList )
 	{
-		PY_CALLHOOKS( FUNC_GP_WEAPONREMOVED, bp::make_tuple(bp::ptr(pWeapon)) );
-		TRYFUNC( this->get_override("OnWeaponRemoved")(bp::ptr(pWeapon)) );
-	}
-
-	virtual void OnArmorSpawned( CBaseEntity *pArmor )
-	{
-		PY_CALLHOOKS( FUNC_GP_ARMORSPAWNED, bp::make_tuple(bp::ptr(pArmor)) );
-		TRYFUNC( this->get_override("OnArmorSpawned")(bp::ptr(pArmor)) );
-	}
-
-	virtual void OnArmorRemoved( CBaseEntity *pArmor )
-	{
-		PY_CALLHOOKS( FUNC_GP_ARMORREMOVED, bp::make_tuple(bp::ptr(pArmor)) );
-		TRYFUNC( this->get_override("OnArmorRemoved")(bp::ptr(pArmor)) );
-	}
-
-	virtual void OnAmmoSpawned( CBaseEntity *pAmmo )
-	{
-		PY_CALLHOOKS( FUNC_GP_AMMOSPAWNED, bp::make_tuple(bp::ptr(pAmmo)) );
-		TRYFUNC( this->get_override("OnAmmoSpawned")(bp::ptr(pAmmo)) );
-	}
-
-	virtual void OnAmmoRemoved( CBaseEntity *pAmmo )
-	{
-		PY_CALLHOOKS( FUNC_GP_AMMOREMOVED, bp::make_tuple(bp::ptr(pAmmo)) );
-		TRYFUNC( this->get_override("OnAmmoRemoved")(bp::ptr(pAmmo)) );
+		PY_CALLHOOKS( FUNC_GP_ITEMUNTRACKED, bp::make_tuple(bp::ptr(pItem), trackerList) );
+		TRYFUNC( this->get_override("OnItemUntracked")(bp::ptr(pItem), trackerList) );
 	}
 
 	virtual void OnTokenSpawned( CGEWeapon *pToken )

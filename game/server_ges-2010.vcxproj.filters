@@ -3554,6 +3554,9 @@
     <ClInclude Include="ges\server\mp\ge_entitytracker.h">
       <Filter>GES\Gameplay</Filter>
     </ClInclude>
+    <ClInclude Include="ges\shared\ge_webpassword.h">
+      <Filter>GES\Shared</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\lib\public\choreoobjects.lib">

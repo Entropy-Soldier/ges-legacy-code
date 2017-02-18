@@ -106,7 +106,7 @@ int C_GEPlayerResource::GetFrags( int index )
 	return m_iFrags[index];
 }
 
-const int C_GEPlayerResource::GetScoreBoardColor( int index )
+const int C_GEPlayerResource::GetHudColor( int index )
 {
 	if ( !IsConnected( index ) )
 		return 0;

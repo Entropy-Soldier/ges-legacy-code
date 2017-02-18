@@ -82,8 +82,8 @@ public:
 	float GetDamageMultiplier()				{ return m_flDamageMultiplier; }
 	void  SetMaxArmor( int armor )			{ m_iMaxArmor = armor; }
 	int   GetMaxArmor( void )				{ return m_iMaxArmor; }
-	int   GetScoreBoardColor( void )		{ return m_iScoreBoardColor; }
-	void  SetScoreBoardColor( int color )	{ m_iScoreBoardColor = color; }
+	int   GetHudColor( void )				{ return m_iScoreBoardColor; }
+	void  SetHudColor( int color )			{ m_iScoreBoardColor = color; }
 
 	// These are accessors to the Accuracy and Efficiency statistics for this player (set by GEStats)
 	int  GetFavoriteWeapon( void )		{ return m_iFavoriteWeapon; }
@@ -159,6 +159,9 @@ public:
 
 	void CheckAimMode(void);
 
+	virtual float GetRadarSweepTime()					{ return m_flSweepTime; }
+	virtual void  SetRadarSweepTime(float newtime)		{ m_flSweepTime = newtime; }
+
 protected:
 	// Purely GE Functions & Variables
 	bool ShouldRunRateLimitedCommand( const CCommand &args );
@@ -166,7 +169,7 @@ protected:
 	void NotifyPickup( const char *classname, int type );
 
 	void StartInvul( float time );
-	void StopInvul( void );
+	virtual void StopInvul( void );
 
 	int CalcInvul(int damage, CGEPlayer *pAttacker, int weapid);
 
@@ -214,6 +217,9 @@ protected:
 
 	// Let's us know when we are officially in aim mode
 	CNetworkVar(float, m_flFullZoomTime);
+
+	// Let us know when to display the radar sweep animation.
+	CNetworkVar( float, m_flSweepTime );
 
 	CNetworkHandle( CBaseCombatWeapon,	m_hActiveLeftWeapon );
 	CNetworkHandle( CBaseEntity,		m_hHat );

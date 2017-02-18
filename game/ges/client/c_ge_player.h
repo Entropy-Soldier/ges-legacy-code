@@ -83,6 +83,8 @@ public:
 
 	C_BaseEntity *GetHat()		{ return m_hHat.Get(); };
 
+	virtual float GetSweepTime()	{ return m_flSweepTime; }
+
 	virtual void		FireBullets( const FireBulletsInfo_t &info );
 	virtual bool		Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex = GE_RIGHT_HAND );
 
@@ -104,6 +106,8 @@ private:
 
 	// Used to tell clientthink what to set the zoom to.
 	int m_iNewZoomOffset;
+
+	float m_flSweepTime;
 
 	bool m_bInSpecialMusic;
 	float m_flEndSpecialMusic;

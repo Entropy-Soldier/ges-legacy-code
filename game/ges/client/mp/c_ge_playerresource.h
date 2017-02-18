@@ -31,7 +31,7 @@ public:
 	virtual const int GetFavoriteWeapon( int index );
 	virtual const int GetDevStatus( int index );
 	virtual const int GetCampingPercent( int index );
-	virtual const int GetScoreBoardColor( int index );
+	virtual const int GetHudColor( int index );
 	virtual int GetFrags( int index );
 	virtual const bool IsActive( int index );
 

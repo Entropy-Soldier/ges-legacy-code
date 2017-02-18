@@ -44,6 +44,7 @@ IMPLEMENT_SERVERCLASS_ST(CGEPlayer, DT_GE_Player)
 	SendPropInt( SENDINFO( m_iMaxHealth ) ),
 
 	SendPropFloat(SENDINFO(m_flFullZoomTime)),
+	SendPropFloat(SENDINFO(m_flSweepTime)),
 
 	SendPropEHandle( SENDINFO( m_hHat ) ),
 	SendPropInt( SENDINFO( m_takedamage ) ),
@@ -1144,10 +1145,31 @@ void CGEPlayer::StartInvul( float time )
 	m_flEndInvulTime = gpGlobals->curtime + time;
 }
 
+extern ConVar ge_radar_range;
+
 // This is pretty much just used for stopping spawn invuln now
 void CGEPlayer::StopInvul(void)
 {
-	DevMsg("%s lost invulnerability...\n", GetPlayerName());
+	if (m_bInSpawnInvul) // Don't trigger radar spin if we're already not invulnerable.
+	{
+		float RadarRange = ge_radar_range.GetFloat();
+
+		// Do radar sweep when you come out of spawn invuln
+		SetRadarSweepTime(gpGlobals->curtime);
+
+		// Do radar sweep for other players coming out of spawn invuln
+		/*
+		FOR_EACH_PLAYER(pGEPlayer)
+			if ( pGEPlayer == this || (GEMPRules()->IsTeamplay() && pGEPlayer->GetTeam() == this->GetTeam()) )
+				continue;
+
+			if ( pGEPlayer->GetAbsOrigin().DistTo(GetAbsOrigin()) < RadarRange )
+				pGEPlayer->SetRadarSweepTime(gpGlobals->curtime);
+		END_OF_PLAYER_LOOP()*/
+
+		DevMsg("%s lost invulnerability...\n", GetPlayerName());
+	}
+
 	m_takedamage = DAMAGE_YES;
 	m_bInSpawnInvul = false;
 }

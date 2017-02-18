@@ -45,6 +45,7 @@ IMPLEMENT_CLIENTCLASS_DT(C_GEPlayer, DT_GE_Player, CGEPlayer)
 	RecvPropInt( RECVINFO( m_iMaxHealth ) ),
 
 	RecvPropFloat( RECVINFO( m_flFullZoomTime ) ),
+	RecvPropFloat( RECVINFO( m_flSweepTime ) ),
 
 	RecvPropEHandle( RECVINFO( m_hHat ) ),
 	RecvPropInt( RECVINFO( m_takedamage ) ),
@@ -52,6 +53,7 @@ END_RECV_TABLE()
 
 BEGIN_PREDICTION_DATA( C_GEPlayer )
 DEFINE_PRED_FIELD( m_flFullZoomTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_flSweepTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 
 extern ConVar v_viewmodel_fov;
@@ -72,6 +74,8 @@ C_GEPlayer::C_GEPlayer()
 	m_flEndSpecialMusic = 0.0f;
 	m_iMaxArmor = MAX_ARMOR;
 	m_iMaxHealth = MAX_HEALTH;
+
+	m_flSweepTime = 0;
 
 	m_iNewZoomOffset = 0;
 	m_bSentUnlockCode = false;

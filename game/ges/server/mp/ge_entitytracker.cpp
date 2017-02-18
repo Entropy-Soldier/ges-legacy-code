@@ -81,6 +81,10 @@ bool CGEEntityTracker::AddItemToTracker( CBaseEntity *pEntity, char list /*== ET
 
 //	Warning("Added %s to item tracker, tracking count is now %d\n", pEntity->GetClassname(), m_vGamemodeEntList.Count() + m_vMapEntList.Count() + m_vArmorList.Count() + m_vAmmoList.Count() + m_vWeaponList.Count() );
 
+	// Notify python of our newly tracked item.
+	if ( GetScenario() )
+		GetScenario()->OnItemTracked( pEntity,  targetlist );
+
 	pEntity->NotifyOfTracking();
 	return true;
 }
@@ -92,6 +96,10 @@ bool CGEEntityTracker::RemoveItemFromTracker( CBaseEntity *pEntity, char list /*
 		DevWarning("Tried to remove non-existant entity from entity tracker!");
 		return false;
 	}
+
+	// Notify Python about the item being removed from the tracker.
+	if ( GetScenario() )
+		GetScenario()->OnItemUntracked( pEntity,  list );
 
 	// Success will increment for each successful search.
 	int success = 0;
