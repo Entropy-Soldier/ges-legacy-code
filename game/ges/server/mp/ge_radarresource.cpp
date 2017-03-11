@@ -28,6 +28,8 @@ IMPLEMENT_SERVERCLASS_ST( CGERadarResource, DT_GERadarResource )
 	SendPropArray3( SENDINFO_ARRAY3(m_bAllVisible), SendPropBool( SENDINFO_ARRAY(m_bAllVisible) ) ),
 	SendPropArray( SendPropStringT( SENDINFO_ARRAY( m_szIcon ) ), m_szIcon ),
 	SendPropArray3( SENDINFO_ARRAY3(m_Color), SendPropInt( SENDINFO_ARRAY(m_Color), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt ) ),
+	SendPropArray( SendPropStringT( SENDINFO_ARRAY( m_szOverlay ) ), m_szOverlay ),
+	SendPropArray3( SENDINFO_ARRAY3(m_OverlayColor), SendPropInt( SENDINFO_ARRAY(m_OverlayColor), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt ) ),
 
 	SendPropArray3( SENDINFO_ARRAY3(m_ObjStatus), SendPropBool( SENDINFO_ARRAY(m_ObjStatus) ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_ObjTeam), SendPropInt( SENDINFO_ARRAY(m_ObjTeam), 4 ) ),
@@ -135,6 +137,8 @@ void CGERadarResource::DropRadarContact( CBaseEntity *pEnt )
 			m_flRangeMod.Set( pos, 1.0f );
 			m_szIcon.Set( pos, AllocPooledString("") );
 			m_Color.Set( pos, col32 );
+			m_szOverlay.Set( pos, AllocPooledString("") );
+			m_OverlayColor.Set( pos, col32 );
 		}
 		else
 		{
@@ -150,6 +154,42 @@ void CGERadarResource::DropRadarContact( CBaseEntity *pEnt )
 bool CGERadarResource::IsRadarContact( CBaseEntity *pEnt )
 {
 	return FindEntity( pEnt ) != -1;
+}
+
+
+void CGERadarResource::AddRadarOverlay( CBaseEntity *pEnt, const char *icon, Color color )
+{
+	int pos = FindEntity( pEnt );
+
+	if (pos == -1)
+		return;
+
+	m_szOverlay.Set( pos, AllocPooledString(icon) );
+
+	color32 col32 = { color.r(), color.g(), color.b(), color.a() };
+	m_OverlayColor.Set( pos, col32 );
+}
+
+void CGERadarResource::DropRadarOverlay( CBaseEntity *pEnt )
+{
+	int pos = FindEntity( pEnt );
+
+	if (pos == -1)
+		return;
+
+	m_szOverlay.Set( pos, AllocPooledString("") );
+	m_OverlayColor.Set( pos, { 0, 0, 0, 0 } );
+}
+
+bool CGERadarResource::HasRadarOverlay( CBaseEntity *pEnt )
+{
+	int pos = FindEntity( pEnt );
+
+	// If we have a posistion and our overlay string is NOT "", we've got an overlay
+	if (pos != -1 && Q_strcmp(m_szOverlay.Get(pos).ToCStr(), ""))
+		return true;
+
+	return false;
 }
 
 void CGERadarResource::SetupObjective( CBaseEntity *pEnt, int team_filter /*=TEAM_UNASSIGNED*/, const char *token_filter /*=""*/, const char *text /*=""*/, Color color /*=Color()*/, int min_dist /*=0*/, bool pulse /*=false*/ )
@@ -343,7 +383,9 @@ void CGERadarResource::ResetContact( int pos )
 	m_iState.Set( pos, RADAR_STATE_NONE );
 	m_bAllVisible.Set( pos, false );
 	m_szIcon.Set( pos, AllocPooledString("") );
+	m_szOverlay.Set( pos, AllocPooledString("") );
 	m_Color.Set( pos, col32 );
+	m_OverlayColor.Set( pos, col32 );
 }
 
 void CGERadarResource::ResetObjective( int pos )

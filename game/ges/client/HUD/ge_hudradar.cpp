@@ -37,13 +37,15 @@ struct CGERadarContact
 	}
 
 	int			m_iSerial;
+	CHudTexture	*m_Overlay;
+	Color	m_OverlayColorOverride;
+
 	CHudTexture	*m_Icon;
 	CHudTexture	*m_IconAbove;
 	CHudTexture	*m_IconBelow;
 	Color	m_ColorOverride;
 	int		m_iType;			// What are we?
 	bool	m_bAlwaysVisible;	// Used by Python if we want to ignore the max distance
-	int		m_iCampingPercent;	// For player types only
 	Vector	m_vScaledPos;		// World to Radar scaled position
 	float	m_flAlphaMod;		// Modulation on the alpha based on position to player [0-1.0]
 	float	m_flBlinkMod;		// Modulation of the camping blink [0-1.0]
@@ -89,6 +91,7 @@ private:
 	Vector GetContactPosition( CGERadarContact *contact );
 	float GetRadarRange( void );
 	void ResolveContactIcons( const char *szIcon, CGERadarContact *contact );
+	void ResolveContactOverlay( const char *szIcon, CGERadarContact *contact );
 
 	void MoveContact( int oldpos, int newpos );
 	void ResetContact( int pos );
@@ -419,7 +422,10 @@ void CGERadar::UpdateContact( int iEntSerial, int type, bool bAlwaysVisible /*= 
 		m_iNumContacts++;
 	}
 	
-	ResolveContactIcons( g_RR->GetIcon( g_RR->FindEntityIndex(iEntSerial) ), &m_radarContacts[id] );
+	ResolveContactIcons( g_RR->GetIcon( g_RR->FindEntityIndex(iEntSerial) ), &m_radarContacts[id]);
+	ResolveContactOverlay( g_RR->GetOverlay( g_RR->FindEntityIndex(iEntSerial) ), &m_radarContacts[id]);
+
+	m_radarContacts[id].m_OverlayColorOverride = g_RR->GetOverlayColor( g_RR->FindEntityIndex(iEntSerial) );
 
 	m_radarContacts[id].m_iSerial = iEntSerial;
 	m_radarContacts[id].m_iType = type;
@@ -427,10 +433,7 @@ void CGERadar::UpdateContact( int iEntSerial, int type, bool bAlwaysVisible /*= 
 
 	// Resolve their scaled position on the radar
 	WorldToRadar( &m_radarContacts[id] );
-
-	// For camping checks
-	m_radarContacts[id].m_iCampingPercent = GEPlayerRes()->GetCampingPercent( m_radarContacts[id].GetEntindex() );
-	m_radarContacts[id].m_bAlwaysVisible = (m_radarContacts[id].m_iCampingPercent >= RADAR_CAMP_ALLVIS_PERCENT) ? true : bAlwaysVisible;
+	m_radarContacts[id].m_bAlwaysVisible = bAlwaysVisible;
 }
 
 //---------------------------------------------------------
@@ -623,30 +626,6 @@ void CGERadar::Paint()
 				else
 					col.SetRawColor( s_ColorJanus.GetRawColor() );
 			}
-			else
-			{
-				// Calculate our display for campers (only non-teamplay!)
-				if ( pContact->m_iCampingPercent > 0 )
-				{
-					alpha = RemapValClamped( pContact->m_iCampingPercent, 0, RADAR_CAMP_ALLVIS_PERCENT, alpha, 255 );
-
-					if ( pContact->m_iCampingPercent > RADAR_CAMP_ALLVIS_PERCENT )
-					{
-						// Make the dot more intensely colored green
-						float blink = SmoothCurve( pContact->m_flBlinkMod );
-						col[1] = col[1] + blink * (255-col[1]);
-
-						// Modulate the blink
-						pContact->m_flBlinkMod += 0.5f * gpGlobals->frametime;
-						if ( pContact->m_flBlinkMod > 1.0f )
-							pContact->m_flBlinkMod = 0;
-					}
-				}
-				else
-				{
-					pContact->m_flBlinkMod = 0;
-				}
-			}
 		}
 
 		col[3] = alpha;
@@ -741,8 +720,14 @@ void CGERadar::DrawIconOnRadar( CGERadarContact *contact, Color col )
 		vgui::surface()->DrawTexturedRect(x, y, x + width, y + height);
 
 		// For contact token overlay
-		// vgui::surface()->DrawSetTexture( m_BackgroundSweep->textureId );
-		// vgui::surface()->DrawTexturedRect(x, y, x + width, y + height);
+		if ( contact->m_Overlay )
+		{
+			vgui::surface()->DrawSetColor( contact->m_OverlayColorOverride[0], contact->m_OverlayColorOverride[1], contact->m_OverlayColorOverride[2], contact->m_OverlayColorOverride[3]*contact->m_flAlphaMod );
+			vgui::surface()->DrawSetTexture( contact->m_Overlay->textureId );
+			vgui::surface()->DrawTexturedRect(x, y, x + width, y + height);
+
+			//contact->m_Overlay->DrawSelfRotated(x, y, x + width, y + height, gpGlobals->curtime, contact->m_OverlayColorOverride);
+		}
 	}
 }
 
@@ -794,7 +779,7 @@ float CGERadar::GetRadarRange( void )
 	return ge_radar_range.GetFloat() * flMod;
 }
 
-void CGERadar::ResolveContactIcons( const char *szIcon, CGERadarContact *contact )
+void CGERadar::ResolveContactIcons( const char *szIcon, CGERadarContact *contact)
 {
 	if ( !contact ) return;
 
@@ -882,6 +867,58 @@ void CGERadar::ResolveContactIcons( const char *szIcon, CGERadarContact *contact
 	}
 }
 
+void CGERadar::ResolveContactOverlay( const char *szIcon, CGERadarContact *contact )
+{
+	if ( !contact ) return;
+
+	char fn[64];
+	Q_FileBase( szIcon, fn, 64 );
+
+	if ( !szIcon || szIcon[0] == '\0' )
+	{
+		contact->m_Overlay = NULL;
+		return;
+	}
+	else if ( contact->m_Overlay && !Q_stricmp( contact->m_Overlay->szShortName, fn ) )
+	{
+		// We didn't change our icon
+		return;
+	}
+
+	// Try to find it with it's name
+	CHudTexture *pIcon = gHUD.GetIcon( szIcon );
+	if ( pIcon )
+	{
+		contact->m_Overlay = pIcon;
+		return;
+	}
+	
+	// See if we previously registered this icon from a file input
+	pIcon = gHUD.GetIcon( fn );
+	if ( pIcon )
+	{
+		contact->m_Overlay = pIcon;
+		return;
+	}
+
+	// We failed to find it, so add it as a new icon to the system
+	// Get our dimensions
+	int id, wide, tall;
+	id = vgui::surface()->CreateNewTextureID();
+	vgui::surface()->DrawSetTextureFile( id, szIcon, false, false );
+	vgui::surface()->DrawGetTextureSize( id, wide, tall );
+
+	// We must have sent a texture path, try to make it
+	CHudTexture icon;
+	icon.rc.right = wide;
+	icon.rc.bottom = tall;
+
+	Q_strncpy( icon.szTextureFile, szIcon, sizeof(icon.szTextureFile) );
+	Q_strncpy( icon.szShortName, fn, 64 );
+	contact->m_Overlay = gHUD.AddSearchableHudIconToList( icon );
+}
+
+
 //---------------------------------------------------------
 // Purpose: Search the contact list for a specific contact
 //---------------------------------------------------------
@@ -907,7 +944,8 @@ void CGERadar::MoveContact( int oldpos, int newpos )
 	m_radarContacts[newpos].m_iType = m_radarContacts[oldpos].m_iType;
 	m_radarContacts[newpos].m_bAlwaysVisible = m_radarContacts[oldpos].m_bAlwaysVisible;
 	m_radarContacts[newpos].m_ColorOverride = m_radarContacts[oldpos].m_ColorOverride;
-	m_radarContacts[newpos].m_iCampingPercent = m_radarContacts[oldpos].m_iCampingPercent;
+	m_radarContacts[newpos].m_Overlay = m_radarContacts[oldpos].m_Overlay;
+	m_radarContacts[newpos].m_OverlayColorOverride = m_radarContacts[oldpos].m_OverlayColorOverride;
 	m_radarContacts[newpos].m_Icon = m_radarContacts[oldpos].m_Icon;
 	m_radarContacts[newpos].m_IconAbove = m_radarContacts[oldpos].m_IconAbove;
 	m_radarContacts[newpos].m_IconBelow = m_radarContacts[oldpos].m_IconBelow;
@@ -934,10 +972,11 @@ void CGERadar::ResetContact( int pos )
 	m_radarContacts[pos].m_iType = 0;
 	m_radarContacts[pos].m_bAlwaysVisible = false;
 	m_radarContacts[pos].m_ColorOverride = Color(0,0,0,0);
-	m_radarContacts[pos].m_iCampingPercent = 0;
 	m_radarContacts[pos].m_Icon = NULL;
 	m_radarContacts[pos].m_IconAbove = NULL;
 	m_radarContacts[pos].m_IconBelow = NULL;
+	m_radarContacts[pos].m_Overlay = NULL;
+	m_radarContacts[pos].m_OverlayColorOverride = Color(0,0,0,0);
 	m_radarContacts[pos].m_vScaledPos = vec3_origin;
 	m_radarContacts[pos].m_flAlphaMod = 1.0f;
 	m_radarContacts[pos].m_flBlinkMod = 0;

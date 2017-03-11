@@ -97,10 +97,6 @@ bool CGEEntityTracker::RemoveItemFromTracker( CBaseEntity *pEntity, char list /*
 		return false;
 	}
 
-	// Notify Python about the item being removed from the tracker.
-	if ( GetScenario() )
-		GetScenario()->OnItemUntracked( pEntity,  list );
-
 	// Success will increment for each successful search.
 	int success = 0;
 	int targetList = list;
@@ -133,6 +129,10 @@ bool CGEEntityTracker::RemoveItemFromTracker( CBaseEntity *pEntity, char list /*
 		case ET_LIST_MAP : targetIndex = m_vMapEntList.Find( pEntity ); targetIndex > -1 ? m_vMapEntList.FastRemove(targetIndex) : success--; success++; break;
 		case ET_LIST_GAMEMODE : targetIndex = m_vGamemodeEntList.Find( pEntity ); targetIndex > -1 ? m_vGamemodeEntList.FastRemove(targetIndex) : success--; success++; break;
 	}
+
+	// Notify Python about the item being removed from the tracker.
+	if ( success > 0 && GetScenario() )
+		GetScenario()->OnItemUntracked( pEntity,  list );
 
 //	Warning("Removed %s from item tracker, tracking count is now %d\n", pEntity->GetClassname(), m_vGamemodeEntList.Count() + m_vMapEntList.Count() + m_vArmorList.Count() + m_vAmmoList.Count() + m_vWeaponList.Count() );
 

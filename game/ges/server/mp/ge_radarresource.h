@@ -33,6 +33,10 @@ public:
 	void DropRadarContact( CBaseEntity *pEnt );
 	bool IsRadarContact( CBaseEntity *pEnt );
 
+	void AddRadarOverlay( CBaseEntity *pEnt, const char *icon = "", Color color = Color() );
+	void DropRadarOverlay( CBaseEntity *pEnt );
+	bool HasRadarOverlay( CBaseEntity *pEnt );
+
 	void SetupObjective( CBaseEntity *pEnt, int team_filter = TEAM_UNASSIGNED, const char *token_filter = "", const char *text = "", Color color = Color(), int min_dist = 0, bool pulse = false );
 	void SetupObjective2( CBaseEntity *pEnt, int *team_filter, const char *token_filter, const char *icon, Color *color, int *min_dist, bool *pulse );
 	void ClearObjective( CBaseEntity *pEnt );
@@ -63,6 +67,8 @@ public:
 	CNetworkArray( bool,		m_bAllVisible,	MAX_NET_RADAR_ENTS );
 	CNetworkArray( string_t,	m_szIcon,		MAX_NET_RADAR_ENTS );
 	CNetworkArray( color32,		m_Color,		MAX_NET_RADAR_ENTS );
+	CNetworkArray( string_t,	m_szOverlay,	MAX_NET_RADAR_ENTS );
+	CNetworkArray( color32,		m_OverlayColor,	MAX_NET_RADAR_ENTS );
 
 	CNetworkArray( bool,		m_ObjStatus,	MAX_NET_RADAR_ENTS );
 	CNetworkArray( int,			m_ObjTeam,		MAX_NET_RADAR_ENTS );

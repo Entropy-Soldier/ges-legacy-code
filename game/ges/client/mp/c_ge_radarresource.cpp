@@ -27,6 +27,8 @@ IMPLEMENT_CLIENTCLASS_DT(C_GERadarResource, DT_GERadarResource, CGERadarResource
 	RecvPropArray3( RECVINFO_ARRAY(m_bAllVisible), RecvPropBool( RECVINFO(m_bAllVisible[0]) ) ),
 	RecvPropArray3( RECVINFO_ARRAY(m_Color), RecvPropInt( RECVINFO(m_Color[0]), 0, RecvProxy_IntToColor32 ) ),
 	RecvPropArray( RecvPropString( RECVINFO( m_szIcon[0]) ), m_szIcon ),
+	RecvPropArray3( RECVINFO_ARRAY(m_OverlayColor), RecvPropInt( RECVINFO(m_OverlayColor[0]), 0, RecvProxy_IntToColor32 ) ),
+	RecvPropArray( RecvPropString( RECVINFO( m_szOverlay[0]) ), m_szOverlay ),
 
 	RecvPropArray3( RECVINFO_ARRAY(m_ObjStatus), RecvPropBool( RECVINFO(m_ObjStatus[0]) ) ),
 	RecvPropArray3( RECVINFO_ARRAY(m_ObjTeam), RecvPropInt( RECVINFO(m_ObjTeam[0]) ) ),
@@ -54,6 +56,8 @@ C_GERadarResource::C_GERadarResource( void )
 	memset( m_bAllVisible, 0, sizeof( m_bAllVisible ) );
 	memset( m_szIcon, '\0', sizeof( m_szIcon ) );
 	memset( m_Color, 0, sizeof( m_Color ) );
+	memset( m_szOverlay, '\0', sizeof( m_szIcon ) );
+	memset( m_OverlayColor, 0, sizeof( m_Color ) );
 
 	memset( m_ObjStatus, 0, sizeof( m_ObjStatus ) );
 	memset( m_ObjTeam, TEAM_UNASSIGNED, sizeof( m_ObjTeam ) );
@@ -149,6 +153,27 @@ Color C_GERadarResource::GetColor( int idx )
 		return col;
 
 	color32 col32 = m_Color[ idx ];
+
+	col.SetColor( col32.r, col32.g, col32.b, col32.a );
+	return col;
+}
+
+const char *C_GERadarResource::GetOverlay( int idx )
+{
+	if ( idx < 0 || idx >= MAX_NET_RADAR_ENTS )
+		return "";
+
+	return m_szOverlay[ idx ];
+}
+
+Color C_GERadarResource::GetOverlayColor( int idx )
+{
+	Color col;
+
+	if ( idx < 0 || idx >= MAX_NET_RADAR_ENTS )
+		return col;
+
+	color32 col32 = m_OverlayColor[ idx ];
 
 	col.SetColor( col32.r, col32.g, col32.b, col32.a );
 	return col;

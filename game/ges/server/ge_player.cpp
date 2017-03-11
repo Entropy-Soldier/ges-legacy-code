@@ -1152,7 +1152,7 @@ void CGEPlayer::StopInvul(void)
 {
 	if (m_bInSpawnInvul) // Don't trigger radar spin if we're already not invulnerable.
 	{
-		float RadarRange = ge_radar_range.GetFloat();
+		// float RadarRange = ge_radar_range.GetFloat();
 
 		// Do radar sweep when you come out of spawn invuln
 		SetRadarSweepTime(gpGlobals->curtime);

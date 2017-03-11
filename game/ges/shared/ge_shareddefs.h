@@ -150,7 +150,7 @@ const int AMMO_GRENADE_CRATE		=	3;
 const int AMMO_ROCKET_CRATE			=	2;
 const int AMMO_SHELL_CRATE			=	4;
 const int AMMO_MOONRAKER_CRATE		=	0;
-const int AMMO_WATCHLASER_CRATE		=   0;
+const int AMMO_WATCHLASER_CRATE		=   80;
 
 //--------------------------------------------------------------------------------------------------------
 // Weapon IDs for all GoldenEye Game weapons

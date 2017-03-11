@@ -38,6 +38,8 @@ public:
 	bool		GetAlwaysVisible( int idx );
 	const char *GetIcon( int idx );
 	Color		GetColor( int idx );
+	const char *GetOverlay( int idx );
+	Color		GetOverlayColor( int idx );
 
 	bool		IsObjective( int idx );
 	int			GetObjectiveTeam( int idx );
@@ -62,6 +64,8 @@ protected:
 	bool		m_bAllVisible	[MAX_NET_RADAR_ENTS];
 	color32		m_Color			[MAX_NET_RADAR_ENTS];
 	char		m_szIcon		[MAX_NET_RADAR_ENTS][255];
+	color32		m_OverlayColor	[MAX_NET_RADAR_ENTS];
+	char		m_szOverlay		[MAX_NET_RADAR_ENTS][255];
 
 	bool		m_ObjStatus		[MAX_NET_RADAR_ENTS];
 	int			m_ObjTeam		[MAX_NET_RADAR_ENTS];

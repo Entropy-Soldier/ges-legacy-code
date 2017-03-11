@@ -149,6 +149,7 @@ void CGEWeaponWatchLaser::Precache(void)
 bool CGEWeaponWatchLaser::Deploy(void)
 {
 #ifdef GAME_DLL
+#ifdef RECHARGE
 	CGEMPPlayer *pOwner = ToGEMPPlayer(GetOwner());
 
 	if (pOwner && gpGlobals->curtime > m_flNextRecharge)
@@ -157,12 +158,14 @@ bool CGEWeaponWatchLaser::Deploy(void)
 		m_flNextRecharge = gpGlobals->curtime + RECHARGE_INTERVAL;
 	}
 #endif
+#endif
 	return BaseClass::Deploy();
 }
 
 void CGEWeaponWatchLaser::ItemPostFrame(void)
 {
 #ifdef GAME_DLL
+#ifdef RECHARGE
 	CGEMPPlayer *pOwner = ToGEMPPlayer(GetOwner());
 	if (pOwner && m_flNextRecharge && m_flNextRecharge < gpGlobals->curtime)
 	{
@@ -172,6 +175,7 @@ void CGEWeaponWatchLaser::ItemPostFrame(void)
 		if (pOwner->GetAmmoCount(m_iPrimaryAmmoType) == AMMO_WATCHLASER_MAX)
 			m_flNextRecharge = 0;
 	}
+#endif
 #endif
 
 	BaseClass::ItemPostFrame();
