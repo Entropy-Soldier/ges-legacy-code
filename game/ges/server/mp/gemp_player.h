@@ -102,6 +102,13 @@ public:
 	virtual int			 GetDevStatus()			{ return m_iDevStatus; }
 	virtual int			 GetSkinsCode()			{ return m_iSkinsCode; }
 
+	virtual void		 SetDevStatus( int newDevStatus )	{ m_iDevStatus = newDevStatus; }
+	virtual void		 SetSkinsCode( uint64 newSkinCode )	{ m_iSkinsCode = newSkinCode; }
+
+	virtual void		OnWebDataRetreived( GEPlayerWebInfo *webInfo );
+	virtual void		OnFailedSkinPromoAuth() { m_bFailedPromoSkinCodeAuth = true; };
+	
+
 	virtual void		 SetPlayerName( const char *name );
 	virtual const char  *GetCleanPlayerName()	{ return m_szCleanName; }
 
@@ -212,6 +219,10 @@ protected:
 	int m_iDevStatus;
 	uint64 m_iSkinsCode;
 	uint64 m_iClientSkinsCode;
+
+	bool m_bFailedPromoSkinCodeAuth;
+
+	float m_flNextWebDataRequest;
 
 	// This vector keeps track of all the objects thrown by the player
 	// so they don't overpopulate the world

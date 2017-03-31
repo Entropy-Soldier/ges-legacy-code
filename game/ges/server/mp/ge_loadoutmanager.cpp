@@ -594,6 +594,7 @@ bool CGELoadoutManager::SpawnWeapons( void )
 	CUtlVector<EHANDLE> spawners;
 	spawners.AddVectorToTail( *(GERules()->GetSpawnersOfType( SPAWN_WEAPON )) );
 	spawners.AddVectorToTail( *(GERules()->GetSpawnersOfType( SPAWN_AMMO )) );
+	spawners.AddVectorToTail( *(GERules()->GetSpawnersOfType( SPAWN_ARMOR )) );
 
 	for ( int i=0; i < spawners.Count(); i++ )
 	{

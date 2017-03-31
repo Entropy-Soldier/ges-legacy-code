@@ -11,12 +11,12 @@
 #ifndef GE_ARMORVEST_H
 #define GE_ARMORVEST_H
 
-#include "items.h"
+#include "ge_pickupitem.h"
 
-class CGEArmorVest : public CItem														
+class CGEArmorVest : public CGEPickupItem
 {																					
 public:																				
-	DECLARE_CLASS( CGEArmorVest, CItem );
+	DECLARE_CLASS( CGEArmorVest, CGEPickupItem );
 	DECLARE_DATADESC();
 
 	CGEArmorVest();
@@ -24,13 +24,12 @@ public:
 	virtual void Spawn( void );																																			
 	virtual void Precache( void );
 
+	virtual void Materialize( void );
 	virtual CBaseEntity *Respawn( void );
 	virtual void RespawnThink( void );
-	virtual void Materialize( void );
 
-	virtual void AliveThink();
-	virtual void ItemTouch( CBaseEntity *pEntity );
 	virtual bool MyTouch( CBasePlayer *pPlayer );
+
 	int CalcSpawnProgress();
 	void AddSpawnProgressMod(CBasePlayer *pPlayer, int amount);
 	void ClearSpawnProgressMod(CBasePlayer *pPlayer);
@@ -38,24 +37,14 @@ public:
 
 	void DEBUG_ShowProgress(float duration, int progress);
 
-	void SetEnabled( bool state );
-	bool IsEnabled() { return m_bEnabled; }
-
-	// Input handlers
-	void InputEnable( inputdata_t &inputdata );
-	void InputDisable( inputdata_t &inputdata );
-	void InputToggle( inputdata_t &inputdata );	
+	void SetAmount( int newAmount );
+	void SetSpawnCheckRadius( int newRadius );
 
 	int	m_iSpawnCheckRadius;
 	int m_iSpawnCheckRadiusSqr;
 	int m_iSpawnCheckHalfRadiusSqr;
 
 	int m_iPlayerPointContribution[MAX_PLAYERS];
-	bool m_bEnabled;
-
-protected:
-	void OnEnabled();
-	void OnDisabled();
 
 private:
 	int		m_iAmount;

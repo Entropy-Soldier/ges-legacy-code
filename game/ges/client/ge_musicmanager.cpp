@@ -18,6 +18,7 @@
 #include "filesystem.h"
 #include "ge_musicmanager.h"
 #include "ge_shareddefs.h"
+#include "gemp_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -73,6 +74,7 @@ CGEMusicManager::CGEMusicManager() : CAutoGameSystem( "GEMusicManager" )
 	m_bRun = false;
 	m_bFMODRunning = false;
 	m_bLoadPlaylist = false;
+	m_bPlayingXMusic = false;
 	m_bVolumeDirty = true;
 	m_iState = STATE_STOPPED;
 
@@ -239,6 +241,9 @@ int CGEMusicManager::Run()
 		// Load the soundscape
 		InternalLoadSoundscape();
 
+		// Check to see if it's time to play X Music.
+		InternalPlayXMusic();
+
 		// Check if we need to go to the next song
 		if ( m_iState != STATE_PAUSED && CurrTime() >= m_fNextSongTime )
 			NextSong();
@@ -340,9 +345,57 @@ void CGEMusicManager::EnforcePlaylist( bool force /*= false*/ )
 	}
 }
 
+
+void CGEMusicManager::InternalPlayXMusic()
+{
+	if ( !m_bPlayingXMusic && GEMPRules() && GEMPRules()->IsMatchTimeRunning() && GEMPRules()->GetMatchTimeRemaining() < 60 && GEMPRules()->GetRoundTimeRemaining() < 60 )
+	{
+		m_Lock.Lock();
+
+		// Cache this bad boy away
+		CUtlVector<char*> *oldlist = m_CurrPlaylist;
+
+		int idx = m_Playlists.Find( "X_Music" );
+		if ( idx != m_Playlists.InvalidIndex() )
+		{
+			// Use the new playlist
+			m_CurrPlaylist = m_Playlists.Element( idx );
+			m_nCurrSongIdx = -1;
+
+			DevMsg( 2, "[FMOD] Playing X Music");
+		}
+		else
+		{
+			// Go back to default
+			EnforcePlaylist( true );
+		}
+
+		m_bPlayingXMusic = true;
+
+		// Load a song from the list if it changed
+		if ( m_CurrPlaylist != oldlist )
+			NextSong();
+
+		m_Lock.Unlock();
+	}
+	else if (m_bPlayingXMusic && (!GEMPRules() || !GEMPRules()->IsMatchTimeRunning() || GEMPRules()->GetMatchTimeRemaining() > 60 ))
+	{
+		m_Lock.Lock();
+
+		// Go back to default
+		EnforcePlaylist( true );
+		NextSong();
+
+		m_bPlayingXMusic = false;
+
+		m_Lock.Unlock();
+	}
+}
+
+
 void CGEMusicManager::InternalLoadSoundscape()
 {
-	if ( m_bLoadSoundscape )
+	if ( !m_bPlayingXMusic && m_bLoadSoundscape )
 	{
 		m_Lock.Lock();
 

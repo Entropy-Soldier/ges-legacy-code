@@ -108,6 +108,11 @@ void pyToggleRoundTimer( bool state )
 	GEMPRules()->SetRoundTimerEnabled( state );
 }
 
+void pySetHUDTimerVisible( bool state )
+{
+	GEMPRules()->SetShouldShowHUDTimer( state );
+}
+
 void pySetSpawnInvulnTime(float duration, bool canbreak)
 {
 	GEMPRules()->SetSpawnInvulnCanBreak(canbreak);
@@ -157,15 +162,19 @@ void pyDisableAmmoSpawns()
 
 void pyDisableArmorSpawns()
 {
-	// Disable armor spawns in the gamerules
 	GEMPRules()->SetArmorSpawnState(false);
 
-	CBaseEntity *pArmor = gEntList.FindEntityByClassname( NULL, "item_armorvest*" );
-	while (pArmor)
+	const CUtlVector<EHANDLE> *vSpawners = GERules()->GetSpawnersOfType( SPAWN_ARMOR );
+	if ( vSpawners )
 	{
-		// Respawn the armor, but it won't materialize
-		pArmor->Respawn();
-		pArmor = gEntList.FindEntityByClassname( pArmor, "item_armorvest*" );
+		CGESpawner *pSpawner = NULL;
+		inputdata_t nullData;
+		for ( int i=0; i < vSpawners->Count(); i++ )
+		{
+			pSpawner = (CGESpawner*) vSpawners->Element(i).Get();
+			if ( pSpawner )
+				pSpawner->SetEnabled( false );
+		}
 	}
 }
 
@@ -174,20 +183,24 @@ void pyEnableArmorSpawns()
 	// Disable armor spawns in the gamerules
 	GEMPRules()->SetArmorSpawnState(true);
 
-	CBaseEntity *pArmor = gEntList.FindEntityByClassname(NULL, "item_armorvest*");
-	while (pArmor)
+	const CUtlVector<EHANDLE> *vSpawners = GERules()->GetSpawnersOfType( SPAWN_ARMOR );
+	if ( vSpawners )
 	{
-		// Respawn the armors
-		pArmor->Respawn();
-		((CGEArmorVest*)pArmor)->Materialize();
-		pArmor = gEntList.FindEntityByClassname(pArmor, "item_armorvest*");
+		CGESpawner *pSpawner = NULL;
+		inputdata_t nullData;
+		for ( int i=0; i < vSpawners->Count(); i++ )
+		{
+			pSpawner = (CGESpawner*) vSpawners->Element(i).Get();
+			if ( pSpawner )
+				pSpawner->SetEnabled( true );
+		}
 	}
 }
 
 void pyStagnateArmorSpawns()
 {
 	// Disable armor spawns in the gamerules, but keep the armor already on the ground.
-	GEMPRules()->SetArmorSpawnState(false);
+	GEMPRules()->SetArmorSpawnState( false );
 }
 
 void pyEnableInfiniteAmmo()
@@ -540,6 +553,8 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 	def("IsIntermission", pyIsIntermission);
 	def("IsGameOver", pyIsGameOver);
 	def("IsTeamplay", pyIsTeamplay);
+
+	def("SetHUDTimerVisible", pySetHUDTimerVisible);
 
 	def("GetNumActivePlayers", pyGetNumActivePlayers);
 	def("GetNumActiveTeamPlayers", pyGetNumActiveTeamPlayers);

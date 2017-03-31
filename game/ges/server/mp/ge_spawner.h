@@ -61,7 +61,7 @@ protected:
 
 	// Overridable "callbacks"
 	virtual void OnInit() { }
-	virtual void OnEntSpawned( const char *szClassname )	{ }
+	virtual bool OnEntSpawned( bool isOverrideEnt );
 	virtual void OnEntOverridden( const char *szClassname ) { }
 	virtual void OnEntPicked();
 	virtual void OnEnabled();

@@ -131,6 +131,8 @@ void CGEPlayer::Precache( void )
 
 bool CGEPlayer::AddArmor( int amount, int maxAmount )
 {
+	maxAmount = min(maxAmount, GetMaxArmor());
+
 	// If player can't carry any more armor return false.
 	if ( ArmorValue() < maxAmount )
 	{

@@ -740,6 +740,9 @@ void CGETokenManager::FindSpawnersForToken( CGETokenDef *token, CUtlVector<EHAND
 	if ( locations & LOC_WEAPON )
 		numToSpawn -= FilterSpawnersForToken( SPAWN_WEAPON, numToSpawn, spawners, bSpecialOnly, search_centroid, search_extent );
 
+	if ( locations & LOC_ARMOR )
+		numToSpawn -= FilterSpawnersForToken( SPAWN_ARMOR, numToSpawn, spawners, bSpecialOnly, search_centroid, search_extent );
+
 	// If we failed all other locations put them in an ammo spawner
 	if ( numToSpawn > 0 )
 		FilterSpawnersForToken( SPAWN_AMMO, numToSpawn, spawners, bSpecialOnly, search_centroid, search_extent );

@@ -128,7 +128,15 @@ bool SimpleLessFunc( const int &lhs, const int &rhs )
 CGEWebRequest *g_pStatusListWebRequest = NULL;
 CGEWebRequest *g_pVersionWebRequest = NULL;
 
-void OnVersionLoad( const char *result, const char *error )
+void OnTestRequestFinished( const char *result, const char *error )
+{
+	if ( !error || error[0] == '\0' )
+	{
+		Warning("Got result of %s", result);
+	}
+}
+
+void OnVersionLoad( const char *result, const char *error, const char *internalData )
 {
 	if ( !error || error[0] == '\0' )
 	{
@@ -416,7 +424,7 @@ void CGERules::LevelInitPostEntity()
 
 	// We only do this once per server run cycle
 	if ( engine->IsDedicatedServer() && !g_pVersionWebRequest )
-		g_pVersionWebRequest = new CGEWebRequest( GES_VERSION_URL, OnVersionLoad );
+		g_pVersionWebRequest = new CGEWebRequest( GES_VERSION_URL, OnVersionLoad );	
 
 	BaseClass::LevelInitPostEntity();
 }
@@ -904,6 +912,26 @@ void CGERules::UpdateSpawnerLocations()
 	CBaseEntity *pEnt = NULL;
 	CUtlVector<EHANDLE> *vEnts = NULL;
 	SpawnerStats *pStats = NULL;
+
+
+	//--------------------------------------------------------------------------------------------
+	// Temp fix for the test while I figure out a better way to obtain backwards compatability.
+	CGESpawner *pSpawner = (CGESpawner*)gEntList.FindEntityByClassname( NULL, "item_armorvest" );
+	while( pSpawner )
+	{
+		pSpawner->Init(); // Init sets up the armor as it should be and sets the classname to ge_armorvest for later.
+		pSpawner = (CGESpawner*)gEntList.FindEntityByClassname( pSpawner, "item_armorvest" );
+	}
+
+	pSpawner = (CGESpawner*)gEntList.FindEntityByClassname( NULL, "item_armorvest_half" );
+	while( pSpawner )
+	{
+		pSpawner->Init();
+		pSpawner = (CGESpawner*)gEntList.FindEntityByClassname( pSpawner, "item_armorvest_half" );
+	}
+	// End Temp Fix
+	//--------------------------------------------------------------------------------------------
+
 
 	for ( int i=SPAWN_NONE+1; i < SPAWN_MAX; i++ )
 	{

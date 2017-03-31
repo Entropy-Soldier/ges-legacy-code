@@ -27,13 +27,13 @@ public:
 
 	virtual bool IsSpecial(void) { return ( m_bAllowSpecial || BaseClass::IsSpecial() ); };
 	virtual bool IsVerySpecial() { return m_bAllowSpecial; } // Spawns we've marked are very special and will be used over ones that aren't marked.
-	virtual bool KeyValue( const char *szKeyName, const char *szValue );
+
+	virtual bool OnEntSpawned( bool isOverrideEnt ) { return true; } // We don't need to do anything for weapons.
 
 protected:
 	virtual void OnInit( void );
 
 	virtual int  ShouldRespawn( void );
-	virtual float GetRespawnInterval( void );
 
 private:
 	bool m_bAllowSpecial;		// Explicitly allow a special token to spawn here
@@ -48,19 +48,6 @@ END_DATADESC();
 CGEWeaponSpawner::CGEWeaponSpawner( void )
 {
 	m_bAllowSpecial = false;
-}
-
-bool CGEWeaponSpawner::KeyValue( const char *szKeyName, const char *szValue )
-{
-	if ( !Q_stricmp(szKeyName, "allowgg") )
-	{
-		if ( atoi(szValue) != 0 ) {
-			m_bAllowSpecial = true;
-			return true;
-		}
-	}
-
-	return BaseClass::KeyValue( szKeyName, szValue );
 }
 
 void CGEWeaponSpawner::OnInit( void )
@@ -78,13 +65,8 @@ int CGEWeaponSpawner::ShouldRespawn( void )
 		return 2;
 
 	// Obey our game rules
-	if ( !GEMPRules()->WeaponShouldRespawn(GetBaseClass()) )
+	if ( !GEMPRules()->WeaponShouldRespawn( GetBaseClass() ) )
 		return 0;
 
 	return basestate;
-}
-
-float CGEWeaponSpawner::GetRespawnInterval( void )
-{ 
-	return 10;
 }

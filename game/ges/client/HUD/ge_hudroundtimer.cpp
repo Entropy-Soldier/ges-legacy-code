@@ -61,6 +61,7 @@ CGEHudRoundTimer::CGEHudRoundTimer( const char *pElementName ) :
 	SetParent( pParent );
 
 	SetIsTime(true);
+
 	m_flNextAnim = 0;
 	m_flNextThink = 0;
 	m_iPrevValue = 0;
@@ -78,7 +79,7 @@ bool CGEHudRoundTimer::ShouldDraw()
 		return false;
 
 	// Don't show if we are in intermission time!
-	if ( GEMPRules() && GEMPRules()->IsIntermission() )
+	if ( GEMPRules() && ( GEMPRules()->IsIntermission() || !GEMPRules()->ShouldShowHUDTimer()) )
 	{
 		m_flNextAnim = 0;
 		return false;

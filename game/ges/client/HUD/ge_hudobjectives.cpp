@@ -41,8 +41,8 @@ struct GEObjective
 	Vector		last_pos;
 	Vector		curr_pos;
 	Color		color;
-	char		refText[32];
-	wchar_t		text[16];
+	char		refText[OBJ_TEXT_MAX_LENGTH];
+	wchar_t		text[OBJ_TEXT_MAX_LENGTH];
 	int			txtW, txtH;
 	float		min_dist;
 	bool		pulse;
@@ -199,8 +199,8 @@ void CGEObjectives::OnThink( void )
 			// Ensure text is the same
 			if ( Q_strcmp( obj->refText, g_RR->GetObjectiveText(i) ) )
 			{
-				Q_strncpy( obj->refText, g_RR->GetObjectiveText(i), 32 );
-				GEUTIL_ParseLocalization( obj->text, 16, g_RR->GetObjectiveText(i) );
+				Q_strncpy( obj->refText, g_RR->GetObjectiveText(i), OBJ_TEXT_MAX_LENGTH );
+				GEUTIL_ParseLocalization( obj->text, OBJ_TEXT_MAX_LENGTH, g_RR->GetObjectiveText(i) );
 				GEUTIL_GetTextSize( obj->text, text_font, obj->txtW, obj->txtH );
 			}
 			

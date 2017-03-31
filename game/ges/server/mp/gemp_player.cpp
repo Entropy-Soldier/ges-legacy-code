@@ -63,9 +63,11 @@ extern ConVar ge_debug_playerspawns;
 #define MODEL_CHANGE_INTERVAL	4.0f
 #define TEAM_CHANGE_INTERVAL	4.0f
 #define GE_MIN_CAMP_DIST		36.0f	// 3 ft
-#define GE_MAX_THROWN_OBJECTS	10
+#define GE_MAX_THROWN_OBJECTS	20
 #define GE_CLEARSPAWN_DIST		512.0f
 #define GEPLAYER_PHYSDAMAGE_SCALE 1.0f
+
+#define GEPLAYER_WEBREQUEST_RETRYINTERVAL 60.0f
 
 struct GESpawnLoc
 {
@@ -88,7 +90,10 @@ CGEMPPlayer::CGEMPPlayer()
 	m_iDevStatus = 0;
 	m_iSkinsCode = 0;
 	m_iClientSkinsCode = 0;
+	m_bFailedPromoSkinCodeAuth = false;
 	m_iCampingState = 0;
+
+	m_flNextWebDataRequest = 0; // Ask as soon as possible when player first created.
 
 	m_szCleanName[0] = '\0';
 	m_szAchList[0] = '\0';
@@ -149,6 +154,15 @@ void CGEMPPlayer::Precache()
 // the world
 void CGEMPPlayer::AddThrownObject( CBaseEntity *pObj )
 {
+	// "Check our ownership of thrown objects and update the vector if necessary"
+	// Not entirely sure if this is needed but it used to be in PreThink which seemed unneccecery.  
+	// Not really sure how this could even happen but who knows, it could be stopping some weird bug.
+	for ( int i=0; i < m_hThrownObjects.Count(); i++ )
+	{
+		if ( !m_hThrownObjects[i].Get() )
+			m_hThrownObjects.Remove(i);
+	}
+
 	if ( m_hThrownObjects.Count() >= GE_MAX_THROWN_OBJECTS )
 	{
 		CBaseEntity *pEnt = (CBaseEntity*)m_hThrownObjects[0].Get();
@@ -381,6 +395,16 @@ void CGEMPPlayer::Spawn()
 			return;
 		}
 
+		if (m_bFailedPromoSkinCodeAuth && GEMPRules()->IsCurrentlyPromoSkinOffer())
+		{
+			CRecipientFilter *filter = new CSingleUserRecipientFilter(this);
+			UTIL_ClientPrintFilter(*filter, 3, "You're eligible to receive a promo skin, but this server is");
+			UTIL_ClientPrintFilter(*filter, 3, "not configured correctly.  Try playing on another server and");
+			UTIL_ClientPrintFilter(*filter, 3, "coming back once you've got the skin.");
+			m_bFailedPromoSkinCodeAuth = false; // Don't spam them.
+		}
+
+
 		int noSkins = atoi(engine->GetClientConVarValue(entindex(), "cl_ge_nowepskins"));
 
 		// Create a dummy skin list, fill it out, and then transmit anything that changed.
@@ -400,7 +424,7 @@ void CGEMPPlayer::Spawn()
 		// Then look at the server authenticated skin code, this overwrites the client skins.
 		if (m_iSkinsCode && noSkins <= 1)
 		{
-			DevMsg( "Parsing server skin code of %d\n", m_iSkinsCode );
+			DevMsg( "Parsing server skin code of %llu\n", m_iSkinsCode );
 			uint64 shiftvalue = 0;
 
 			for ( int i = 0; i < WEAPON_RANDOM; i++ )
@@ -1219,7 +1243,7 @@ bool CGEMPPlayer::ClientCommand( const CCommand &args )
 		DevMsg("Filtered it to be %llu\n", sendbits);
 
 		if (sendbits != unlockcode)
-			Warning("%s requested skins they aren't allowed to have using code %llu!\n", GetPlayerName(), unlockcode);
+			DevWarning("%s requested skins they aren't allowed to have using code %llu!\n", GetPlayerName(), unlockcode);
 
 		m_iClientSkinsCode = sendbits;
 
@@ -1364,7 +1388,7 @@ void CGEMPPlayer::PreThink()
 					engine->ServerCommand(command);
 				}
 
-				if (IsOnList(LIST_SKINS, m_iSteamIDHash))
+				if ( IsOnList(LIST_SKINS, m_iSteamIDHash) )
 				{
 					DevMsg("OWNS AUTHED SKIN: %s (%s)\n", GetPlayerName(), steamID);
 
@@ -1374,42 +1398,41 @@ void CGEMPPlayer::PreThink()
 			}
 		}
 	}
-	else if ( m_iSteamIDHash != 0 && m_bAchReportPending )
+	else if ( m_iSteamIDHash != 0 )
 	{
-		m_bAchReportPending = false;
-
-		// Send this information off to any plugins listening (NOT TO CLIENTS)
-		IGameEvent *event = gameeventmanager->CreateEvent( "achievement_progressreport" );
-		if( event )
+		if (m_bAchReportPending)
 		{
-			event->SetInt( "userid", GetUserID() );
-			event->SetInt( "count", m_iAchCount );
-			event->SetString( "achieved", m_szAchList );
-			gameeventmanager->FireEvent( event, true );
+			m_bAchReportPending = false;
+
+			// Send this information off to any plugins listening (NOT TO CLIENTS)
+			IGameEvent *event = gameeventmanager->CreateEvent("achievement_progressreport");
+			if (event)
+			{
+				event->SetInt("userid", GetUserID());
+				event->SetInt("count", m_iAchCount);
+				event->SetString("achieved", m_szAchList);
+				gameeventmanager->FireEvent(event, true);
+			}
+
+			if (atoi(engine->GetClientConVarValue(entindex(), "cl_ge_hidetags")))
+				m_iDevStatus = 0; // Maybe we don't want anyone to know we have all the acheivements.
 		}
 
-		if (atoi(engine->GetClientConVarValue(entindex(), "cl_ge_hidetags")))
-			m_iDevStatus = 0; // Maybe we don't want anyone to know we have all the acheivements.
+		if ( m_flNextWebDataRequest != -1 && m_flNextWebDataRequest < gpGlobals->curtime )
+		{
+			m_flNextWebDataRequest = gpGlobals->curtime + GEPLAYER_WEBREQUEST_RETRYINTERVAL; // Do this first in case of cache retreival.
+			GEMPRules()->GetPlayerWebData(this);
+		}
 	}
+
 
 	// If we are waiting to spawn and have passed our wait time, try again!
 	if ( (IsSpawnState( SS_BLOCKED_NO_SPOT ) || IsSpawnState( SS_BLOCKED_GAMEPLAY ) ) && gpGlobals->curtime >= m_flNextSpawnTry )
 		Spawn();
 
-	// Check our ownership of thrown objects and update the vector if necessary
-	for ( int i=0; i < m_hThrownObjects.Count(); i++ )
-	{
-		if ( !m_hThrownObjects[i].Get() )
-			m_hThrownObjects.Remove(i);
-	}
-
 	// Display our hint messages if they are queded
 	if ( Hints() )
-	{
 		Hints()->Update();
-	}
-
-	//UpdateJumpPenalty();
 
 	BaseClass::PreThink();
 }
@@ -1420,6 +1443,30 @@ void CGEMPPlayer::PostThink()
 	
 	// Check our camping status
 	UpdateCampingTime();
+}
+
+void CGEMPPlayer::OnWebDataRetreived( GEPlayerWebInfo *webInfo )
+{
+	// Now that we've got it we'll never have to ask again!
+	// There is a slight chance that things go to hell and the initial, single call to the web database fails
+	// which then triggers the failsafe 3 web calls of which only one gets through, triggering this callback.
+
+	// Because of this we're going to need to make sure we've got all of our data before proceeding.
+
+	if (webInfo->devStatus == -1 || webInfo->skinCode == 1)
+		return; // Don't have all of our relevant data yet!
+
+	Warning("Got devStatus of %d and skinCode of %llu for %s\n", webInfo->devStatus, webInfo->skinCode, GetPlayerName());
+
+	m_flNextWebDataRequest = -1; // If we make it here though, we do have all of our webdata and never need to ask again
+
+
+	// Hardcoded developers are always developers.
+	if (!IsOnList(LIST_DEVELOPERS, GetSteamHash()))
+		SetDevStatus( webInfo->devStatus );
+
+	// Hardcoded skins are based off of devstatus, so the web skincode is always applied.
+	SetSkinsCode( webInfo->skinCode );
 }
 
 void CGEMPPlayer::Event_Killed( const CTakeDamageInfo &info )

@@ -1438,8 +1438,13 @@ bool CBaseCombatWeapon::DefaultDeploy( char *szViewModel, char *szWeaponModel, i
 	}
 
 	// Can't shoot again until we've finished deploying
+#ifdef GE_DLL
+	m_flNextPrimaryAttack	= max(gpGlobals->curtime + SequenceDuration(), m_flNextPrimaryAttack);
+	m_flNextSecondaryAttack	= max(gpGlobals->curtime + SequenceDuration(), m_flNextSecondaryAttack);
+#else
 	m_flNextPrimaryAttack	= gpGlobals->curtime + SequenceDuration();
 	m_flNextSecondaryAttack	= gpGlobals->curtime + SequenceDuration();
+#endif
 	m_flHudHintMinDisplayTime = 0;
 
 	m_bAltFireHudHintDisplayed = false;

@@ -20,26 +20,12 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-LINK_ENTITY_TO_CLASS( item_armorvest, CGEArmorVest );
-LINK_ENTITY_TO_CLASS( item_armorvest_half, CGEArmorVest );
-PRECACHE_REGISTER( item_armorvest );
-PRECACHE_REGISTER( item_armorvest_half );
+LINK_ENTITY_TO_CLASS( ge_armorvest, CGEArmorVest );
+PRECACHE_REGISTER( ge_armorvest );
 
 BEGIN_DATADESC( CGEArmorVest )
-	// Parameters
-	DEFINE_KEYFIELD( m_iSpawnCheckRadius, FIELD_INTEGER, "CheckRadius"),
-	DEFINE_KEYFIELD( m_bEnabled, FIELD_BOOLEAN, "StartDisabled"),
-	// Function Pointers
-	DEFINE_ENTITYFUNC( ItemTouch ),
-	DEFINE_THINKFUNC( AliveThink ),
 	DEFINE_THINKFUNC( RespawnThink ),
-	// Inputs
-	DEFINE_INPUTFUNC(FIELD_VOID, "Enable", InputEnable),
-	DEFINE_INPUTFUNC(FIELD_VOID, "Disable", InputDisable),
-	DEFINE_INPUTFUNC(FIELD_VOID, "Toggle", InputToggle),
 END_DATADESC();
-
-#define AliveThinkInterval		1.0f
 
 ConVar ge_armorrespawntime("ge_armorrespawntime", "14", FCVAR_REPLICATED | FCVAR_NOTIFY, "Minimum time in seconds before armor respawns.");
 ConVar ge_armorrespawn_pc_scale("ge_armorrespawn_pc_scale", "15.0", FCVAR_REPLICATED, "Multiplier applied to playercount. ge_armorrespawntime * 10 - ge_armorrespawn_pc_scale * (playercount - 1)^ge_armorrespawn_pc_pow is the full equation.");
@@ -51,55 +37,19 @@ ConVar ge_limithalfarmorpickup("ge_limithalfarmorpickup", "0", FCVAR_GAMEDLL | F
 
 CGEArmorVest::CGEArmorVest( void )
 {
-	m_bEnabled = false;
-	m_iAmount = MAX_ARMOR;
 	m_iSpawnCheckRadius = 512;
+	m_iSpawnCheckRadiusSqr = 262144;
+	m_iSpawnCheckHalfRadiusSqr = 65536;
 }
 
 void CGEArmorVest::Spawn( void )
 {
-	m_bEnabled = !m_bEnabled; // Flip this due to our shoddy "StartDisabled" hammer fix.
 	Precache();
-
-	if ( !Q_strcmp(GetClassname(), "item_armorvest_half") )
-	{
-		SetModel("models/weapons/halfarmor/halfarmor.mdl");
-		m_iAmount = MAX_ARMOR / 2.0f;
-	}
-	else
-		SetModel("models/weapons/armor/armor.mdl");
-
-	SetOriginalSpawnOrigin( GetAbsOrigin() );
-	SetOriginalSpawnAngles( GetAbsAngles() );
-
-	SetCollisionGroup( COLLISION_GROUP_WEAPON ); // Might as well treat this the same way we do weapons.
 
 	BaseClass::Spawn();
 
-	// So NPC's can "see" us
-	AddFlag( FL_OBJECT );
-
-	m_iSpawnCheckRadiusSqr = m_iSpawnCheckRadius * m_iSpawnCheckRadius;
-	m_iSpawnCheckHalfRadiusSqr = m_iSpawnCheckRadiusSqr * 0.25;
-
-	for (int i = 0; i < MAX_PLAYERS; i++)
-	{
-		m_iPlayerPointContribution[i] = 0;
-	}
-
 	// Add us to the approperate entity tracker list
 	GEEntityTracker()->AddItemToTracker( this, ET_LIST_ARMOR );
-
-	// Override base's ItemTouch for NPC's
-	SetTouch( &CGEArmorVest::ItemTouch );
-
-	// Start thinking like a healthy, alive armorvest.
-	SetThink(&CGEArmorVest::AliveThink);
-	SetNextThink(gpGlobals->curtime + AliveThinkInterval);
-
-	// Except we might be delusional and really a DEAD, UNHEALTHY ARMORVEST.
-	if (!m_bEnabled)
-		OnDisabled();
 }
 
 void CGEArmorVest::Precache( void )
@@ -112,25 +62,61 @@ void CGEArmorVest::Precache( void )
 	BaseClass::Precache();
 }
 
+void CGEArmorVest::Materialize( void )
+{
+	// Spawners handle most of our enabled/disabled logic,
+	// but stagnate armor functionality used in certain gamemodes requires that the armor vest
+	// not be disabled until it is picked up.
+
+	if ( GEMPRules()->ArmorShouldRespawn() )
+		BaseClass::Materialize();
+	else
+		Remove(); // Delete us so the spawner knows it is disabled.
+}
+
 CBaseEntity *CGEArmorVest::Respawn(void)
 {
 	BaseClass::Respawn();
 
+	// Stops despawned armor from blocking attempts to detonate mines by shooting them.
 	SetSolid( SOLID_NONE );
 	RemoveSolidFlags( FSOLID_TRIGGER );
 
 	m_iSpawnpointsgoal = (int)(ge_armorrespawntime.GetInt() * 10 - ge_armorrespawn_pc_scale.GetFloat() * pow(max((float)GEMPRules()->GetNumAlivePlayers() - 1, 0), ge_armorrespawn_pc_pow.GetFloat()));
 
 	// Let interested developers know our new goal.
-
-	Vector curPos = GetAbsOrigin();
-	DevMsg("Spawnpoints goal for armor at location %f, %f, %f set to %d\n", curPos.x, curPos.y, curPos.z, m_iSpawnpointsgoal);
+	if (ge_debug_armorspawns.GetBool())
+	{
+		Vector curPos = GetAbsOrigin();
+		DevMsg("Spawnpoints goal for armor at location %f, %f, %f set to %d\n", curPos.x, curPos.y, curPos.z, m_iSpawnpointsgoal);
+	}
 
 	ClearAllSpawnProgress();
 
 	SetThink(&CGEArmorVest::RespawnThink);
 	SetNextThink(gpGlobals->curtime + 1);
 	return this;
+}
+
+void CGEArmorVest::SetAmount(int newAmount)
+{
+	newAmount = clamp( newAmount, 0, MAX_ARMOR );
+
+	m_iAmount = newAmount;
+
+	if ( newAmount <= MAX_ARMOR / 2 )
+		SetModel("models/weapons/halfarmor/halfarmor.mdl");
+	else
+		SetModel("models/weapons/armor/armor.mdl");
+}
+
+void CGEArmorVest::SetSpawnCheckRadius(int newRadius)
+{
+	newRadius = max( newRadius, 0 );
+
+	m_iSpawnCheckRadius = newRadius;
+	m_iSpawnCheckRadiusSqr = m_iSpawnCheckRadius * m_iSpawnCheckRadius;
+	m_iSpawnCheckHalfRadiusSqr = m_iSpawnCheckRadiusSqr * 0.25;
 }
 
 void CGEArmorVest::RespawnThink(void)
@@ -147,74 +133,6 @@ void CGEArmorVest::RespawnThink(void)
 		Materialize();
 	else
 		SetNextThink(gpGlobals->curtime + 1);
-}
-
-void CGEArmorVest::AliveThink(void)
-{
-	float distfromspawnersqr = (GetOriginalSpawnOrigin() - GetAbsOrigin()).LengthSqr();
-
-	// If we're too far from our spawn location, instantly respawn.
-	if (distfromspawnersqr > 65536)
-	{
-		// Destroy and remake the vphysics object to prevent oddities.
-		VPhysicsDestroyObject();
-
-		UTIL_SetOrigin( this, GetOriginalSpawnOrigin() );
-		SetAbsAngles( GetOriginalSpawnAngles() );
-
-		CreateItemVPhysicsObject();
-	}
-
-	if (ge_debug_armorspawns.GetBool())
-		DEBUG_ShowProgress(1, 10);
-
-	SetNextThink(gpGlobals->curtime + AliveThinkInterval);
-}
-
-void CGEArmorVest::Materialize(void)
-{
-	// Only materialize if we are enabled and allowed
-	if (GEMPRules()->ArmorShouldRespawn() && m_bEnabled)
-	{
-		BaseClass::Materialize();
-
-		// Override base's ItemTouch for NPC's
-		SetTouch(&CGEArmorVest::ItemTouch);
-
-		SetThink(&CGEArmorVest::AliveThink);
-		SetNextThink(gpGlobals->curtime + AliveThinkInterval);
-	}
-}
-
-void CGEArmorVest::ItemTouch( CBaseEntity *pOther )
-{
-	if ( pOther->IsNPC() )
-	{
-		// If the NPC is a Bot hand it off to it's proxy, normal NPC's don't use armor
-		CBaseCombatCharacter *pNPC = pOther->MyCombatCharacterPointer();
-		CGEBotPlayer *pBot = ((CNPC_GEBase*)pOther)->GetBotPlayer();
-
-		if ( pBot && pNPC )
-		{
-			// ok, a player is touching this item, but can he have it?
-			if ( !g_pGameRules->CanHaveItem( pBot, this ) )
-				return;
-
-			if ( MyTouch( pBot ) )
-			{
-				SetTouch( NULL );
-				SetThink( NULL );
-
-				// player grabbed the item. 
-				g_pGameRules->PlayerGotItem( pBot, this );
-				Respawn();
-			}
-		}
-	}
-	else
-	{
-		BaseClass::ItemTouch( pOther );
-	}
 }
 
 bool CGEArmorVest::MyTouch( CBasePlayer *pPlayer )
@@ -319,46 +237,6 @@ void CGEArmorVest::ClearAllSpawnProgress()
 	}
 }
 
-void CGEArmorVest::OnEnabled( void )
-{
-	// Respawn and instantly materialize
-	Respawn();
-	Materialize();
-}
-
-void CGEArmorVest::OnDisabled( void )
-{
-	// "Respawn", but we won't materialize
-	Respawn();
-}
-
-void CGEArmorVest::SetEnabled( bool state )
-{
-	inputdata_t nullData;
-	if ( state )
-		InputEnable( nullData );
-	else
-		InputDisable( nullData );
-}
-
-void CGEArmorVest::InputEnable( inputdata_t &inputdata )
-{
-	m_bEnabled = true;
-	OnEnabled();
-}
-
-void CGEArmorVest::InputDisable( inputdata_t &inputdata )
-{
-	m_bEnabled = false;
-	OnDisabled();
-}
-
-void CGEArmorVest::InputToggle( inputdata_t &inputdata )
-{
-	m_bEnabled = !m_bEnabled;
-	m_bEnabled ? OnEnabled() : OnDisabled();
-}
-
 // Just going to recycle the one from the playerspawns because it is so good.
 void CGEArmorVest::DEBUG_ShowProgress(float duration, int progress)
 {
@@ -380,13 +258,7 @@ void CGEArmorVest::DEBUG_ShowProgress(float duration, int progress)
 	Q_snprintf(tempstr, 64, "%s", GetClassname());
 	EntityText(++line, tempstr, duration);
 
-	if (!IsEnabled())
-	{
-		// We are disabled
-		Q_snprintf(tempstr, 64, "DISABLED", progress);
-		EntityText(++line, tempstr, duration);
-	}
-	else if (!IsEffectActive(EF_NODRAW))
+	if (!IsEffectActive(EF_NODRAW))
 	{
 		// We've spawned
 		Q_snprintf(tempstr, 64, "SPAWNED", progress);

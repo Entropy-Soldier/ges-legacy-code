@@ -71,7 +71,7 @@ protected:
 	int			m_ObjTeam		[MAX_NET_RADAR_ENTS];
 	color32		m_ObjColor		[MAX_NET_RADAR_ENTS];
 	char		m_ObjToken		[MAX_NET_RADAR_ENTS][255];
-	char		m_ObjText		[MAX_NET_RADAR_ENTS][32];
+	char		m_ObjText		[MAX_NET_RADAR_ENTS][OBJ_TEXT_MAX_LENGTH];
 	int			m_ObjMinDist	[MAX_NET_RADAR_ENTS];
 	bool		m_ObjPulse		[MAX_NET_RADAR_ENTS];
 };

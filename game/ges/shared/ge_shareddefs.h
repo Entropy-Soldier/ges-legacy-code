@@ -320,6 +320,8 @@ enum RadarType
 #define RADAR_BAD_CAMP_TIME			75.0f	// Seconds
 #define RADAR_CAMP_ALLVIS_PERCENT	75		// Percent
 
+#define OBJ_TEXT_MAX_LENGTH 32
+
 // Functions defined in ge_weapon.cpp to get weapon id to entity name
 extern const char *WeaponIDToAlias( int id );
 extern int AliasToWeaponID( const char *alias );
@@ -375,6 +377,7 @@ const float MAX_ARMOR = 160;
 		SPAWN_FIRST_GESPAWNER = 1,
 			SPAWN_AMMO = SPAWN_FIRST_GESPAWNER,
 			SPAWN_WEAPON,
+			SPAWN_ARMOR,
 			SPAWN_TOKEN,
 			SPAWN_TOKEN_MI6,
 			SPAWN_TOKEN_JANUS,
@@ -405,6 +408,7 @@ const float MAX_ARMOR = 160;
 
 		{SPAWN_AMMO,				"ge_ammospawner"		},
 		{SPAWN_WEAPON,				"ge_weaponspawner"		},
+		{SPAWN_ARMOR,				"ge_armorspawner"		},
 		{SPAWN_TOKEN,				"ge_tokenspawner"		},
 		{SPAWN_TOKEN_MI6,			"ge_tokenspawner_mi6"	},
 		{SPAWN_TOKEN_JANUS,			"ge_tokenspawner_janus"	},
@@ -516,6 +520,17 @@ extern int iAwardEventCode; // Code for giving special event rewards.
 extern uint64 iAllowedClientSkins;
 extern int iAlertCode; // Code for giving special event rewards.
 extern int iVotekickThresh; // Code for giving special event rewards.
+
+
+typedef struct
+{
+	int steamHash;
+	uint64 skinCode;
+	short devStatus;
+} GEPlayerWebInfo;
+
+#define PLAYERWEBINFO_CACHESIZE 64 // Ideally greater than 16, or there's not a whole lot of point to it.
+extern GEPlayerWebInfo g_PlayerWebInfo[PLAYERWEBINFO_CACHESIZE]; // Stores the player info recently retrieved from the web database.
 
 static const int LIST_DEVELOPERS = 1;
 static const int LIST_TESTERS = 2;

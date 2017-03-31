@@ -67,6 +67,7 @@ public:
 
 	virtual void Equip( CBaseCombatCharacter *pOwner );
 	virtual bool Deploy( void );
+	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
 	virtual void Drop( const Vector &vecVelocity );
 	virtual void PreOwnerDeath(); //Fired when owner dies but before anything else.
 
@@ -221,6 +222,22 @@ bool CGEWeaponGrenade::Deploy( void )
 	m_flPrimedTime = -1;
 
 	return BaseClass::Deploy();
+}
+
+bool CGEWeaponGrenade::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	CBaseCombatCharacter *pOwner = GetOwner();
+	if (!pOwner)
+		return false;
+
+	// Throw the grenade if the player was about to before they switched away.
+	if (m_bSpawnWait || m_bPreThrow)
+	{
+		ThrowGrenade(GE_GRENADE_THROW_FORCE / 5);
+		m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate(); // To prevent rapid grenade drops.
+	}
+
+	return BaseClass::Holster(pSwitchingTo); // This actually always returns true as far as I can tell.
 }
 
 void CGEWeaponGrenade::PreOwnerDeath()

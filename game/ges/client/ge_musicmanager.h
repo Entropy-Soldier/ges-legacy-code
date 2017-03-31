@@ -65,6 +65,8 @@ protected:
 	// Soundscape functions
 	void InternalLoadSoundscape();
 
+	void InternalPlayXMusic();
+
 	enum {
 		STATE_STOPPED = 0,
 		STATE_PAUSED,
@@ -82,6 +84,8 @@ private:
 	// Soundscape transitions
 	char	m_szSoundscape[64];
 	bool	m_bLoadSoundscape;
+
+	bool	m_bPlayingXMusic;
 
 	// Music playlist controls
 	char	m_szPlayList[64];

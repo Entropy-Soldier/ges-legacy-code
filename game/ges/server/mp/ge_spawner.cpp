@@ -186,6 +186,25 @@ float CGESpawner::GetRespawnInterval( void )
 	return 10.0f;
 }
 
+bool CGESpawner::OnEntSpawned( bool isOverrideEnt )
+{
+	if ( isOverrideEnt ) // We can't be sure what the override entity is, but it won't be using normal spawner behavior.
+		return false; // We didn't spawn our normal entity.
+
+	// if we failed to spawn a CItem just ragequit because CItem implements all of our needed spawner behavior.
+	CItem *pItem = (CItem*) GetEnt();
+	if ( !pItem )
+		return false; // Still didn't manage to spawn our normal entity.
+
+	// If we did, give it the correct original posistion and collision group.
+	pItem->SetOriginalSpawnOrigin( GetAbsOrigin() );
+	pItem->SetOriginalSpawnAngles( GetAbsAngles() );
+
+	pItem->SetCollisionGroup( COLLISION_GROUP_WEAPON );
+
+	return true;
+}
+
 void CGESpawner::SetOverride( const char *szClassname, float secToSpawn /*=0*/ )
 {
 	if ( !szClassname )
@@ -244,7 +263,7 @@ void CGESpawner::SpawnEnt( int spawnstate )
 		if ( CanCreateEntityClass( m_szOverrideEntity ) )
 		{
 			m_hCurrentEntity = CBaseEntity::Create( m_szOverrideEntity, GetAbsOrigin(), GetAbsAngles(), this );
-			OnEntSpawned( m_szOverrideEntity );
+			OnEntSpawned( true );
 			EmitSound("GEItem.Materialize");
 		}
 		// Don't try again even if we fail
@@ -258,7 +277,7 @@ void CGESpawner::SpawnEnt( int spawnstate )
 		if ( CanCreateEntityClass( m_szBaseEntity ) )
 		{
 			m_hCurrentEntity = CBaseEntity::Create( m_szBaseEntity, GetAbsOrigin(), GetAbsAngles(), this );	
-			OnEntSpawned( m_szBaseEntity );
+			OnEntSpawned( false );
 			EmitSound("GEItem.Materialize");
 		}
 		// Don't try again even if we fail

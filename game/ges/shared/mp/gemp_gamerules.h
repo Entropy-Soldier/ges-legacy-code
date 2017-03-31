@@ -122,6 +122,9 @@ public:
 	void ResetPlayerScores( bool resetmatch = false );
 	void ResetTeamScores( bool resetmatch = false );
 
+	void NotifyOfPromoSkinOffer() { m_bPromoStatus = true; };
+	bool IsCurrentlyPromoSkinOffer() { return m_bPromoStatus; };
+
 	void BalanceTeams();
 	void EnforceTeamplay();
 	void EnforceBotCount();
@@ -165,6 +168,9 @@ public:
 	bool  IsRoundTimePaused();
 	float GetRoundTimeRemaining();
 
+	void SetShouldShowHUDTimer( bool newState );
+	bool ShouldShowHUDTimer();
+
 	int   GetTeamplayMode() { return m_iTeamplayMode; }
 
 	void  SetGlobalInfAmmoState( bool newstate )  { m_bGlobalInfAmmo = newstate; };
@@ -200,6 +206,12 @@ public:
 	virtual const char *GetChatPrefix( bool bTeamOnly, CBasePlayer *pPlayer );
 	virtual const char *GetGameDescription();
 	virtual void		GetTaggedConVarList( KeyValues *pCvarTagList );
+
+	// Get the data associated with a player's particular account on the GE:S online database.
+	// First attempts to retreive the data from the server's webinfo cache, and if that fails it queries the
+	// online database itself.  Will fire the OnWebDataRetreived callback on the target player object when successful.
+	// Will fire OnWebDataRetreivalFromWebServerFailed if not successful.
+	virtual void GetPlayerWebData( CGEMPPlayer *pPlayer );
 
 	virtual void HandleTimeLimitChange( void );
 
@@ -256,6 +268,8 @@ private:
 	char  m_szNextLevel[64];
 	char  m_szGameDesc[32];
 
+	bool  m_bPromoStatus;
+
 	bool  m_bUseTeamSpawns;
 	bool  m_bSwappedTeamSpawns;
 	bool  m_bInTeamBalance;
@@ -276,6 +290,7 @@ private:
 	CNetworkVar( bool,	m_bTeamPlayDesired );
 	CNetworkVar( bool,  m_bGlobalInfAmmo );
 	CNetworkVar( bool,  m_bGamemodeInfAmmo );
+	CNetworkVar( bool,  m_bShouldShowHUDTimer );
 	CNetworkVar( int,	m_iTeamplayMode );
 	CNetworkVar( int, m_iScoreboardMode );
 	CNetworkVar( int, m_iAwardEventCode );

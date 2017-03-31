@@ -471,6 +471,10 @@ CBaseEntity* CItem::Respawn( void )
 	SetTouch( NULL );
 	AddEffects( EF_NODRAW );
 
+#ifdef GE_DLL
+	AddEffects( EF_NOSHADOW );
+#endif
+
 	VPhysicsDestroyObject();
 
 	SetMoveType( MOVETYPE_NONE );
@@ -499,6 +503,7 @@ void CItem::Materialize( void )
 	CreateItemVPhysicsObject();
 
 #ifdef GE_DLL
+	RemoveEffects( EF_NOSHADOW );
 //	UTIL_DropToFloor( this, MASK_SOLID );
 #endif
 

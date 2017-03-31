@@ -28,7 +28,7 @@ public:
 
 protected:
 	virtual void OnInit( void );
-	virtual void OnEntSpawned( const char *szClassname );
+	virtual bool OnEntSpawned( bool isOverrideEnt );
 	
 	virtual int  ShouldRespawn( void );
 	virtual float GetRespawnInterval( void );
@@ -54,24 +54,30 @@ void CGEAmmoSpawner::OnInit( void )
 	SetBaseEnt( "ge_ammocrate" );
 }
 
-void CGEAmmoSpawner::OnEntSpawned( const char *szClassname )
+bool CGEAmmoSpawner::OnEntSpawned( bool isOverrideEnt )
 {
 	// If we are not spawning an ammo crate ignore
-	if ( IsOverridden() )
-		return;
+	if ( isOverrideEnt )
+		return false;
 
-	// if we failed to spawn just stop right now
-	CGEAmmoCrate *pCrate = (CGEAmmoCrate*) GetEnt();
-	if ( !pCrate )
-		return;
+	// Don't do 2 isOverrideEnt checks if we don't have to.
+	if (BaseClass::OnEntSpawned(isOverrideEnt))
+	{
+		CGEAmmoCrate *pCrate = (CGEAmmoCrate*)GetEnt();
 
-	pCrate->SetOriginalSpawnOrigin( GetAbsOrigin() );
-	pCrate->SetOriginalSpawnAngles( GetAbsAngles() );
+		// Might as well check though I'm pretty much certain we can never get to this point without a valid pCrate cast.
+		if (!pCrate)
+			return false; // If we early out here somehow we'll end up with a non-ammo crate entity with normal spawner settings somehow.
 
-	// Load us up with the appropriate ammo
-	int weapid = GEMPRules()->GetLoadoutManager()->GetWeaponInSlot( GetSlot() ); // If this isn't a valid weapon or slot AddAmmoType will not do anything.
-	pCrate->AddAmmoType(weapid, -1); // Adding the first ammo type spawns the crate.
-	GEMPRules()->GetTokenManager()->InsertGlobalAmmo( pCrate ); // Insert global ammo if there is any.
+		// Load us up with the appropriate ammo
+		int weapid = GEMPRules()->GetLoadoutManager()->GetWeaponInSlot(GetSlot()); // If this isn't a valid weapon or slot AddAmmoType will not do anything.
+		pCrate->AddAmmoType(weapid, -1); // Adding the first ammo type spawns the crate.
+		GEMPRules()->GetTokenManager()->InsertGlobalAmmo(pCrate); // Insert global ammo if there is any.
+
+		return true;
+	}
+
+	return false;
 }
 
 int CGEAmmoSpawner::ShouldRespawn( void )

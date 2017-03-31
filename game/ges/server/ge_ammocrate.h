@@ -11,14 +11,12 @@
 #ifndef GE_AMMOCRATE_H
 #define GE_AMMOCRATE_H
 
-#include "items.h"
-#include "player.h"
-#include "ge_shareddefs.h"
+#include "ge_pickupitem.h"
 
-class CGEAmmoCrate : public CItem														
+class CGEAmmoCrate : public CGEPickupItem												
 {																					
 public:																				
-	DECLARE_CLASS( CGEAmmoCrate, CItem );
+	DECLARE_CLASS( CGEAmmoCrate, CGEPickupItem );
 	DECLARE_DATADESC();
 
 	CGEAmmoCrate();
@@ -29,14 +27,9 @@ public:
 	virtual void Precache();
 
 	// CItem functions
-	virtual void ItemTouch( CBaseEntity *pEntity );
 	virtual bool MyTouch( CBasePlayer *pPlayer );
 
-	virtual void Materialize();
 	virtual CBaseEntity *Respawn();
-
-	// Triggers a respawn and makes the crate appear instantly.
-	virtual void RespawnNow( void );
 
 	// Special refill function if we only take partial ammo
 	void RefillThink();

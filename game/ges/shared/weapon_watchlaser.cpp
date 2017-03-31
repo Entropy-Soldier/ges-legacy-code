@@ -68,9 +68,12 @@ public:
 	virtual GEWeaponID GetWeaponID(void) const { return WEAPON_WATCHLASER; }
 	virtual bool	   SwingsInArc()		   { return false; }
 
-	virtual Activity GetDrawActivity(void);
-	virtual void WeaponIdle(void);
-	virtual int		GetStaticHitActivity()							{ return ACT_VM_WATCH_DETONATE; }
+	virtual Activity	GetPrimaryAttackActivity( void )	{	return	ACT_VM_PRIMARYATTACK;	}
+	virtual Activity	GetSecondaryAttackActivity( void )	{	return	ACT_VM_SECONDARYATTACK;	}
+
+	virtual int			GetStaticHitActivity()				{   return ACT_VM_PRIMARYATTACK; }
+
+	virtual void		MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int iTracerType );
 
 	virtual bool Deploy(void);
 
@@ -108,18 +111,25 @@ PRECACHE_WEAPON_REGISTER(weapon_watchlaser);
 
 acttable_t	CGEWeaponWatchLaser::m_acttable[] =
 {
-	{ ACT_MP_STAND_IDLE, ACT_GES_IDLE_WATCH, false },
-	{ ACT_MP_CROUCH_IDLE, ACT_HL2MP_IDLE_CROUCH_SLAM, false },
+	{ ACT_MP_STAND_IDLE,				ACT_GES_IDLE_PISTOL,						false },
+	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_PISTOL,				false },
 
-	{ ACT_MP_RUN, ACT_GES_RUN_WATCH, false },
-	{ ACT_MP_WALK, ACT_GES_WALK_WATCH, false },
-	{ ACT_MP_CROUCHWALK, ACT_HL2MP_WALK_CROUCH_SLAM, false },
+	{ ACT_MP_RUN,						ACT_GES_RUN_PISTOL,							false },
+	{ ACT_MP_WALK,						ACT_GES_WALK_PISTOL,						false },
+	{ ACT_MP_CROUCHWALK,				ACT_HL2MP_WALK_CROUCH_PISTOL,				false },
 
-	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE, ACT_GES_GESTURE_RANGE_ATTACK_WATCH, true },
-	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE, ACT_GES_GESTURE_RANGE_ATTACK_WATCH, true },
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,	ACT_GES_GESTURE_RANGE_ATTACK_PISTOL,		false },
+	{ ACT_GES_ATTACK_RUN_PRIMARYFIRE,	ACT_GES_GESTURE_RANGE_ATTACK_PISTOL,		false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,	ACT_GES_GESTURE_RANGE_ATTACK_PISTOL,		false },
 
-	{ ACT_MP_JUMP, ACT_GES_JUMP_WATCH, false },
-	{ ACT_GES_CJUMP, ACT_GES_CJUMP_WATCH, false },
+	{ ACT_GES_DRAW,						ACT_GES_GESTURE_DRAW_PISTOL,				false },
+	{ ACT_GES_DRAW_RUN,					ACT_GES_GESTURE_DRAW_PISTOL_RUN,			false },
+
+	{ ACT_MP_RELOAD_STAND,				ACT_GES_GESTURE_RELOAD_PISTOL,				false },
+	{ ACT_MP_RELOAD_CROUCH,				ACT_GES_GESTURE_RELOAD_PISTOL,				false },
+
+	{ ACT_MP_JUMP,						ACT_GES_JUMP_PISTOL,						false },
+	{ ACT_GES_CJUMP,					ACT_GES_CJUMP_PISTOL,						false },
 };
 IMPLEMENT_ACTTABLE(CGEWeaponWatchLaser);
 
@@ -142,9 +152,37 @@ void CGEWeaponWatchLaser::Precache(void)
 
 	PrecacheScriptSound("weapon_mines.WatchBeep");
 
+	PrecacheParticleSystem( "tracer_watchlaser" );
+
 	//	m_iWatchModelIndex = CBaseEntity::PrecacheModel( "models/weapons/mines/w_watch.mdl" );
 	BaseClass::Precache();
 }
+
+
+void CGEWeaponWatchLaser::MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int iTracerType )
+{
+	CBaseEntity *pOwner = GetOwner();
+
+	if ( pOwner == NULL )
+	{
+		BaseClass::MakeTracer( vecTracerSrc, tr, iTracerType );
+		return;
+	}
+
+	Vector vNewSrc = vecTracerSrc;
+	int iEntIndex = pOwner->entindex();
+
+	if ( g_pGameRules->IsMultiplayer() )
+	{
+		iEntIndex = entindex();
+	}
+
+	int iAttachment = GetTracerAttachment();
+	UTIL_ParticleTracer( "tracer_watchlaser", vNewSrc, tr.endpos, iEntIndex, iAttachment, false );
+
+	DevWarning("Thinks endpos is %f, %f, %f\n", tr.endpos.x, tr.endpos.y, tr.endpos.z);
+}
+
 
 bool CGEWeaponWatchLaser::Deploy(void)
 {
@@ -199,19 +237,6 @@ float CGEWeaponWatchLaser::GetRange(void)
 void CGEWeaponWatchLaser::AddViewKick(void)
 {
 	return; // No watchlaser viewkick.
-}
-
-Activity CGEWeaponWatchLaser::GetDrawActivity(void)
-{
-	return ACT_VM_WATCH_DRAW;
-}
-
-void CGEWeaponWatchLaser::WeaponIdle(void)
-{
-	if ( HasWeaponIdleTimeElapsed() )
-	{
-		SendWeaponAnim( ACT_VM_WATCH_IDLE );
-	}
 }
 
 // Have to check for ammo with watch laser.

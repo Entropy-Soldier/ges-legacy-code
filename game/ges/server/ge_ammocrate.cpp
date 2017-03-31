@@ -19,6 +19,7 @@
 #include "gemp_gamerules.h"
 #include "ge_loadoutmanager.h"
 
+#include "ge_pickupitem.h"
 #include "ge_ammocrate.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -29,7 +30,6 @@ PRECACHE_REGISTER( ge_ammocrate );
 
 BEGIN_DATADESC( CGEAmmoCrate )
 	// Function Pointers
-	DEFINE_ENTITYFUNC( ItemTouch ),
 	DEFINE_THINKFUNC( RefillThink ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "InsertAmmo", InputInsertAmmo ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "RemoveAmmo", InputRemoveAmmo ),
@@ -54,12 +54,6 @@ void CGEAmmoCrate::Spawn( void )
 
 	SetModel( AMMOCRATE_MODEL );
 	BaseClass::Spawn();
-	
-	// Override base's ItemTouch for NPC's
-	SetTouch( &CGEAmmoCrate::ItemTouch );
-
-	// So NPC's can "see" us
-	AddFlag( FL_OBJECT );
 
 	// Add us to the gameplay item tracker.
 	GEEntityTracker()->AddItemToTracker( this, ET_LIST_AMMO );
@@ -76,14 +70,6 @@ void CGEAmmoCrate::Precache( void )
 	BaseClass::Precache();
 }
 
-void CGEAmmoCrate::Materialize( void )
-{
-	BaseClass::Materialize();
-
-	// Override base's ItemTouch for NPC's
-	SetTouch( &CGEAmmoCrate::ItemTouch );
-}
-
 CBaseEntity *CGEAmmoCrate::Respawn( void )
 {
 	if ( !m_pContents.Count() ) // There's nothing for this crate to give so we shouldn't actually spawn it.
@@ -97,12 +83,6 @@ CBaseEntity *CGEAmmoCrate::Respawn( void )
 	RefillThink();
 
 	return BaseClass::Respawn();
-}
-
-void CGEAmmoCrate::RespawnNow()
-{
-	Respawn();
-	SetNextThink( gpGlobals->curtime );
 }
 
 void CGEAmmoCrate::RefillThink( void )
@@ -304,38 +284,6 @@ bool CGEAmmoCrate::HasAmmo( void )
 
 	// We have ammo if any of our ammo types have ammo left.
 	return amount > 0;
-}
-
-void CGEAmmoCrate::ItemTouch( CBaseEntity *pOther )
-{
-	if ( pOther->IsNPC() )
-	{
-		// If the NPC is a Bot hand it off to it's proxy, normal NPC's don't use ammo crates
-		CBaseCombatCharacter *pNPC = pOther->MyCombatCharacterPointer();
-		CGEBotPlayer *pBot = ((CNPC_GEBase*)pOther)->GetBotPlayer();
-
-		if ( pBot && pNPC )
-		{
-			// ok, a player is touching this item, but can he have it?
-			if ( !g_pGameRules->CanHaveItem( pBot, this ) )
-				return;
-
-			if ( MyTouch( pBot ) )
-			{
-				// Might not need these, let's see if we don't so we can make this as straightforward as possible.
-				// SetTouch( NULL );
-				// SetThink( NULL );
-
-				// player grabbed the item. 
-				g_pGameRules->PlayerGotItem( pBot, this );
-				Respawn();
-			}
-		}
-	}
-	else
-	{
-		BaseClass::ItemTouch( pOther );
-	}
 }
 
 bool CGEAmmoCrate::MyTouch( CBasePlayer *pPlayer )

@@ -160,14 +160,15 @@ public:
 		LOC_NONE		= 0,
 		LOC_AMMO		= 0x1,	 // The default location
 		LOC_WEAPON		= 0x2,
-		LOC_TOKEN		= 0x4,
-		LOC_CAPAREA		= 0x8,
-		LOC_PLAYERSPAWN = 0x10,
-		LOC_MYTEAM		= 0x20,	 // Make an effort to be near our associated team
-		LOC_OTHERTEAM	= 0x40,	 // Make an effort to be near the opposite team
-		LOC_SPECIALONLY = 0x80,	 // Make an effort to be at "special" spawns only
-		LOC_ALWAYSNEW	= 0x100, // Find a new spawn on each respawn
-		LOC_FIXEDMATCH	= 0x200, // The spawn location will remain the same throughout the match
+		LOC_ARMOR		= 0x4,
+		LOC_TOKEN		= 0x8,
+		LOC_CAPAREA		= 0x10,
+		LOC_PLAYERSPAWN = 0x20,
+		LOC_MYTEAM		= 0x40,	 // Make an effort to be near our associated team
+		LOC_OTHERTEAM	= 0x80,	 // Make an effort to be near the opposite team
+		LOC_SPECIALONLY = 0x100,	 // Make an effort to be at "special" spawns only
+		LOC_ALWAYSNEW	= 0x200, // Find a new spawn on each respawn
+		LOC_FIXEDMATCH	= 0x400, // The spawn location will remain the same throughout the match
 		LOC_MAX,
 	};
 

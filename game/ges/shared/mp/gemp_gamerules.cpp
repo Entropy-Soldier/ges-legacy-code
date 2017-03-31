@@ -44,6 +44,7 @@
 	#include "ge_stats_recorder.h"
 	#include "ge_bot.h"
 	#include "ge_entitytracker.h"
+	#include "ge_webrequest.h"
 
 	#include "ge_triggers.h"
 	#include "ge_door.h"
@@ -115,6 +116,9 @@ ConVar ge_infiniteammo( "ge_infiniteammo", "0", FCVAR_REPLICATED | FCVAR_NOTIFY,
 ConVar ge_nextnextmap( "ge_nextnextmap", "", FCVAR_GAMEDLL, "Map to switch to immediately upon loading next map");
 ConVar ge_alertcodeoverride("ge_alertcodeoverride", "-1", FCVAR_GAMEDLL, "Override alert code with this value. bit 1 = desynch spread, bit 2 = use mersine twister, bit 3 = check player speed", GEAlertCode_Callback);
 ConVar ge_votekickpreference("ge_votekickpreference", "-1", FCVAR_GAMEDLL, "-1 = allow alertcode to dictate votekick behavior, 0 = disable, 1 = enable.");
+
+ConVar ge_surpresspromoskinwarnings("ge_surpresspromoskinwarnings", "0", FCVAR_GAMEDLL, "Set to 1 to disable chat warnings that server is not properly set up to auth promo skins.");
+
 
 void GEAlertCode_Callback(IConVar *var, const char *pOldString, float flOldValue)
 {
@@ -310,6 +314,205 @@ CON_COMMAND( ge_bot_remove, "Removes the number of specified bots, if no number 
 	END_OF_PLAYER_LOOP()
 }
 
+// These will need to be updated in gemp_player->OnWebDataRetreived as well.
+#define DEVSTATUS_NULL -1 
+#define SKINCODE_NULL 1
+
+GEPlayerWebInfo g_PlayerWebInfo[PLAYERWEBINFO_CACHESIZE];
+
+// devStatus default value is -1 because it's outside the range of possible dev values.
+// skinCode default value is 1 because bit 0 and bit 1 are reserved for WEAPON_NONE, which cannot get skins.
+void ApplyPlayerWebData(int steamHash, int devStatus = DEVSTATUS_NULL, uint64 skinCode = SKINCODE_NULL)
+{
+	static int webInfoTailIndex = 0;
+
+	int cacheIndex;
+	GEPlayerWebInfo *playerWebInfo = NULL;
+
+	for (cacheIndex = 0; cacheIndex < PLAYERWEBINFO_CACHESIZE; cacheIndex++)
+	{
+		if (g_PlayerWebInfo[cacheIndex].steamHash == steamHash)
+		{
+			playerWebInfo = &g_PlayerWebInfo[cacheIndex];
+			break;
+		}
+	}
+
+	if (playerWebInfo) // We're updating someone so make sure they're at the front of the cache so they'll stay in it longer.
+	{
+		if (cacheIndex != webInfoTailIndex) // Make sure we're not already in the most recent spot.
+		{
+			if (++webInfoTailIndex >= PLAYERWEBINFO_CACHESIZE) webInfoTailIndex = 0; // Increment webInfoTailIndex with wraparound.
+
+			g_PlayerWebInfo[webInfoTailIndex] = g_PlayerWebInfo[cacheIndex]; // Move to our latest index
+			g_PlayerWebInfo[cacheIndex].steamHash = NULL; // Make sure our old index doesn't get used.
+
+			playerWebInfo = &g_PlayerWebInfo[webInfoTailIndex]; // Make sure to update the slot we're writing to.
+		}
+
+		// Insert devStatus and skinCode into their proper places, but be mindful that this function can be
+		// called to update only one of them.  For this reason paramaters with the default value will be ignored.
+
+		if (devStatus != DEVSTATUS_NULL)
+			playerWebInfo->devStatus = devStatus;
+
+		if (skinCode != SKINCODE_NULL)
+			playerWebInfo->skinCode = skinCode;
+	}
+	else // Inserting someone new into the cache.
+	{
+		if (++webInfoTailIndex >= PLAYERWEBINFO_CACHESIZE) webInfoTailIndex = 0; // Increment webInfoTailIndex with wraparound.
+
+		playerWebInfo = &g_PlayerWebInfo[webInfoTailIndex]; // point playerWebInfo to the newly marked array index.
+
+		// Init all the fields, no need to worry about overwriting legitimate data with 
+		// the default parameters because we're initalizing a new index
+		playerWebInfo->steamHash = steamHash;
+		playerWebInfo->devStatus = devStatus;
+		playerWebInfo->skinCode = skinCode;
+	}
+
+	// Give the relevant player an update, since we did just go through the trouble of getting their info.
+	FOR_EACH_MPPLAYER(pGEMPPlayer)
+		if (pGEMPPlayer->GetSteamHash() == steamHash)
+			pGEMPPlayer->OnWebDataRetreived( playerWebInfo );
+	END_OF_PLAYER_LOOP()
+}
+
+#define PROMOSKIN_SETUP_WARNING_INTERVAL 60.0f
+
+void CheckCurrentPromoCode(const char *result, const char *error, const char *internalData)
+{
+	static unsigned int lastHeldPromoCode = RSHash( "None" ); // Init to the message when no promo codes.
+	static float nextWarningTime = 0;
+
+	if (!error || error[0] == '\0')
+	{
+		if ( RSHash(result) != lastHeldPromoCode ) // A skin offer has started sometime between the last time we checked and now!
+		{
+			Msg("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~\n");
+			Msg("Promotion has started for skin %s!\n", result);
+			Msg("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~\n");
+
+			lastHeldPromoCode = RSHash(result);
+
+			// Clean out entire cache and add everyone in the server back into it.
+			// If we don't do this, anyone who stays on the server will never get their new weapon skin!
+
+			for (int i = 0; i < PLAYERWEBINFO_CACHESIZE; i++)
+				g_PlayerWebInfo[i].steamHash = NULL; // If there's no steam hash the rest of the data is as good as zeroed out.
+
+			// Now stick everyone in the server back in.
+			FOR_EACH_MPPLAYER(pGEMPPlayer)
+				GEMPRules()->GetPlayerWebData( pGEMPPlayer );
+			END_OF_PLAYER_LOOP()
+		}
+
+		if ( RSHash(result) != RSHash( "None" ) )
+			GEMPRules()->NotifyOfPromoSkinOffer();
+	}
+	else
+		Warning("Got error of %s when fetching promo code info!\n", error);
+}
+
+void OnPlayerWebDataDevRequestReturned( const char *result, const char *error, const char *internalData )
+{
+	if ( !error || error[0] == '\0' )
+	{
+		int steamHash = RSHash( internalData+8 );
+
+		if (!Q_strcmp(result, "dev"))
+			ApplyPlayerWebData(steamHash, GE_DEVELOPER);
+		else if (!Q_strcmp(result, "bt"))
+			ApplyPlayerWebData(steamHash, GE_BETATESTER);
+		else if (!Q_strcmp(result, "cc"))
+			ApplyPlayerWebData(steamHash, GE_CONTRIBUTOR);
+		else if (!Q_strcmp(result, "banned"))
+		{
+			FOR_EACH_MPPLAYER(pGEMPPlayer)
+				if (pGEMPPlayer->GetSteamHash() == steamHash)
+				{
+					Warning("Want to ban %d\n", pGEMPPlayer->GetPlayerName());
+				}
+			END_OF_PLAYER_LOOP()
+		}
+	}
+	else
+		Warning("Got error of %s when fetching player data for %s.\n", error, internalData);
+}
+
+void OnPlayerWebDataSkinRequestReturned( const char *result, const char *error, const char *internalData )
+{
+	if ( !error || error[0] == '\0' )
+		ApplyPlayerWebData(RSHash( internalData+8 ), DEVSTATUS_NULL, atoll(result));
+	else
+		Warning("Got error of %s when fetching player data for %s.\n", error, internalData);
+}
+
+void OnPlayerWebDataRequestReturned( const char *result, const char *error, const char *internalData )
+{
+	if ( !error || error[0] == '\0' )
+	{
+		Warning("Got player web data request result of %s for %s\n", result, internalData);
+
+		int steamHash = RSHash( internalData+8 );
+		int devStatus = 0; // 0 means just a normal player.
+		int skinCode = 0; // 0 means this player doesn't own any skins.
+
+		if (Q_strstr(result, "getPlayerRole=dev"))
+			devStatus = GE_DEVELOPER;
+		else if (Q_strstr(result, "getPlayerRole=bt"))
+			devStatus = GE_BETATESTER;
+		else if (Q_strstr(result, "getPlayerRole=cc"))
+			devStatus = GE_CONTRIBUTOR;
+
+		char *numStart = Q_strstr(result, "getPlayerWeaponSkins=") + Q_strlen("getPlayerWeaponSkins=");
+		char *numEnd = Q_strstr(numStart, "&");
+		int numLength = 0;
+
+		if (!numEnd)
+			numLength = Q_strlen(numStart);
+		else
+			numLength = numEnd - numStart;
+
+		char numBuffer[32];
+
+
+		Q_strncpy(numBuffer, numStart, numLength + 1);
+
+		//Warning("Set dev status to %d\n", newInfo.devStatus);
+
+		//Warning("Skin code length is %d\n", numLength);
+		//Warning("Skin code buffer is %s\n", numBuffer);
+
+		skinCode = atoll(numBuffer);
+
+
+		//Warning("Set skin code to %llu\n", newInfo.skinCode);
+
+		ApplyPlayerWebData(steamHash, devStatus, skinCode);
+	}
+	else
+	{
+		Warning("Got error of %s when fetching player data for %s.\n", error, internalData);
+
+		if ( Q_strstr(error, "403 Forbidden") ) // Check to see if we hit a 403 error, meaning the server is there but our auth failed.
+		{
+			// If so just go huge and shoot off a bunch of info requests instead, since we can't auth ourselves to give out
+			// promo items.
+			new CGETempWebRequest("https://www.geshl2.com/?getPlayerRole&steamid=", OnPlayerWebDataDevRequestReturned, internalData, internalData);
+			new CGETempWebRequest("https://www.geshl2.com/?getPlayerWeaponSkins&format=int64&steamid=", OnPlayerWebDataSkinRequestReturned, internalData, internalData);
+
+			int steamHash = RSHash( internalData + 8 );
+
+			FOR_EACH_MPPLAYER(pGEMPPlayer)
+				if (pGEMPPlayer->GetSteamHash() == steamHash)
+					pGEMPPlayer->OnFailedSkinPromoAuth();
+			END_OF_PLAYER_LOOP()
+		}
+	}
+}
+
 #endif // GAME_DLL
 
 
@@ -326,6 +529,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CGEMPRules, DT_GEMPRules )
 	RecvPropBool( RECVINFO( m_bTeamPlayDesired ) ),
 	RecvPropBool( RECVINFO( m_bGlobalInfAmmo )),
 	RecvPropBool( RECVINFO( m_bGamemodeInfAmmo )),
+	RecvPropBool( RECVINFO( m_bShouldShowHUDTimer )),
 	RecvPropInt( RECVINFO( m_iTeamplayMode ) ),
 	RecvPropInt( RECVINFO( m_iScoreboardMode )),
 	RecvPropInt( RECVINFO( m_iAwardEventCode )),
@@ -337,6 +541,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CGEMPRules, DT_GEMPRules )
 	SendPropBool( SENDINFO( m_bTeamPlayDesired ) ),
 	SendPropBool( SENDINFO( m_bGlobalInfAmmo ) ),
 	SendPropBool( SENDINFO( m_bGamemodeInfAmmo ) ),
+	SendPropBool( SENDINFO( m_bShouldShowHUDTimer ) ),
 	SendPropInt( SENDINFO( m_iTeamplayMode ) ),
 	SendPropInt( SENDINFO( m_iScoreboardMode ) ),
 	SendPropInt( SENDINFO( m_iAwardEventCode )),
@@ -429,6 +634,8 @@ CGEMPRules::CGEMPRules()
 
 	m_bAllowSuperfluousAreas = true;
 
+	m_bPromoStatus = false;
+
 	m_bEnableAmmoSpawns	 = true;
 	m_bEnableArmorSpawns = true;
 	m_bEnableWeaponSpawns= true;
@@ -468,6 +675,8 @@ CGEMPRules::CGEMPRules()
 	// Create timers
 	m_hMatchTimer = (CGEGameTimer*) CBaseEntity::Create( "ge_game_timer", vec3_origin, vec3_angle );
 	m_hRoundTimer = (CGEGameTimer*) CBaseEntity::Create( "ge_game_timer", vec3_origin, vec3_angle );
+
+	m_bShouldShowHUDTimer = true;
 
 	// Make sure we setup our match time
 	HandleTimeLimitChange();
@@ -576,6 +785,7 @@ void CGEMPRules::OnScenarioInit()
 
 	SetGlobalInfAmmoState( ge_infiniteammo.GetBool() );
 	SetGamemodeInfAmmoState( false );
+	SetShouldShowHUDTimer( true );
 	SetScoreboardMode( 0 ); //Default points.
 
 	SetSpawnInvulnInterval( GES_DEFAULT_SPAWNINVULN );
@@ -608,6 +818,10 @@ void CGEMPRules::OnMatchStart()
 	FOR_EACH_BOTPLAYER( pBot )
 		pBot->LoadBrain();
 	END_OF_PLAYER_LOOP()
+
+	// If we actually have any players in the server, see if maybe we need to refresh them due to a promo deal that just started.
+	if (g_iLastPlayerCount)
+		new CGETempWebRequest("https://www.geshl2.com/?getCurrentPromoCode", CheckCurrentPromoCode);
 
 	// Reset this value since we already checked it in ge_gameplay.cpp
 	g_iLastPlayerCount = 0;
@@ -957,6 +1171,46 @@ void CGEMPRules::GetRankSortedPlayers( CUtlVector<CGEMPPlayer*> &sortedplayers, 
 		sortedplayers.Sort(playerRoundRankSort);
 }
 
+
+void CGEMPRules::GetPlayerWebData( CGEMPPlayer *pPlayer )
+{
+	if (!pPlayer)
+		return;
+
+	GEPlayerWebInfo *playerWebInfo = NULL;
+
+	int targetHash = pPlayer->GetSteamHash();
+
+	// First scan through the game server's cache to see if we've already got our player.
+	// if we do, just return that!
+	for (int i = 0; i < PLAYERWEBINFO_CACHESIZE; i++)
+	{
+		if (g_PlayerWebInfo[i].steamHash == targetHash)
+			playerWebInfo = &g_PlayerWebInfo[i];
+	}
+
+	// Check if we've already cached the webinfo and make sure we got -all- of it.
+	if ( playerWebInfo && playerWebInfo->devStatus != DEVSTATUS_NULL && playerWebInfo->skinCode != SKINCODE_NULL )
+	{
+		Warning("Found web data for %s in cache!  Returning that.\n", pPlayer->GetPlayerName());
+		pPlayer->OnWebDataRetreived(playerWebInfo);
+	}
+	else 
+	{
+		Warning("Could not find web data for %s in cache, asking online database!\n", pPlayer->GetPlayerName());
+		// Looks like we don't have it so we're going to have to ask the webserver.
+		char webRequestURL[256];
+		const char *steamID = pPlayer->GetNetworkIDString();
+
+		Q_snprintf( webRequestURL, sizeof(webRequestURL), "https://www.geshl2.com/?getPlayerRole&getPlayerWeaponSkins&format=int64&steamid=");
+		//Warning("Making request of %s\n", webRequestURL);
+
+		// Make our request, this will fire off the target player's OnWebDataRetreived function if successful.
+		new CGETempWebRequest(webRequestURL, OnPlayerWebDataRequestReturned, steamID, steamID);
+	}
+}
+
+
 void CGEMPRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 {
 	BaseClass::GetTaggedConVarList( pCvarTagList );
@@ -1245,7 +1499,12 @@ void CGEMPRules::ClientDisconnected( edict_t *pEntity )
 		}
 
 		player->RemoveLeftObjects();
-		GetScenario()->ClientDisconnect( player );
+
+		// If we're the host of a listen server, disconnecting means the server is shutting down which
+		// apparantly means the scenario already is starting to shut down.
+		//if (engine->IsDedicatedServer() || player != UTIL_GetListenServerHost())
+		if ( GetScenario() )
+			GetScenario()->ClientDisconnect( player );
 
 		// Stop tracking me if I am a Bot
 		if ( player->IsBotPlayer() )
@@ -2285,6 +2544,16 @@ float CGEMPRules::GetRoundTimeRemaining()
 
 	Warning("Could not find round timer!\n");
 	return 0;
+}
+
+void CGEMPRules::SetShouldShowHUDTimer(bool newState)
+{
+	m_bShouldShowHUDTimer = newState;
+}
+
+bool CGEMPRules::ShouldShowHUDTimer()
+{
+	return m_bShouldShowHUDTimer;
 }
 
 bool CGEMPRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )

@@ -52,6 +52,8 @@ public:
 	virtual bool	SwingsInArc()									{ return true; }
 	virtual int		GetStaticHitActivity()							{ return NULL; }
 
+	virtual void	MakeTracer(const Vector &vecTracerSrc, const trace_t &tr, int iTracerType);
+
 protected:
 	virtual	void	ImpactEffect( trace_t &trace );
 	bool			ImpactWater( const Vector &start, const Vector &end );

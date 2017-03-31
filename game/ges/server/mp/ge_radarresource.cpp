@@ -197,8 +197,9 @@ void CGERadarResource::SetupObjective( CBaseEntity *pEnt, int team_filter /*=TEA
 	int pos = FindEntity( pEnt );
 	if ( pos != -1 )
 	{
-		char text_clip[32];
-		Q_strncpy( text_clip, text, 32 );
+		char text_clip[OBJ_TEXT_MAX_LENGTH];
+		Q_strncpy( text_clip, text, OBJ_TEXT_MAX_LENGTH );
+
 		color32 c32 = { color.r(), color.g(), color.b(), color.a() };
 
 		m_ObjStatus.Set( pos, true );
@@ -229,8 +230,8 @@ void CGERadarResource::SetupObjective2( CBaseEntity *pEnt, int *team_filter, con
 
 		if ( text )
 		{
-			char text_clip[32];
-			Q_strncpy( text_clip, text, 32 );
+			char text_clip[OBJ_TEXT_MAX_LENGTH];
+			Q_strncpy( text_clip, text, OBJ_TEXT_MAX_LENGTH );
 			m_ObjText.Set( pos, AllocPooledString(text_clip) );
 		}
 

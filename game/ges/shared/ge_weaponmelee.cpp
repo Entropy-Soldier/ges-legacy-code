@@ -107,6 +107,11 @@ void CGEWeaponMelee::AddViewKick( void )
 	pPlayer->ViewPunch( viewPunch );
 }
 
+void CGEWeaponMelee::MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int iTracerType )
+{
+	return; // By default we don't have tracers.
+}
+
 #ifdef GAME_DLL
 int CGEWeaponMelee::WeaponMeleeAttack1Condition( float flDot, float flDist )
 {
@@ -541,6 +546,8 @@ void CGEWeaponMelee::Swing( int bIsSecondary )
 		SendWeaponAnim( nHitActivity );
 	else
 		SendWeaponAnim( GetStaticHitActivity() );
+	
+	MakeTracer(swingStart, traceHit, TRACER_LINE);
 
 	if ( pPlayer )
 		ToGEPlayer(pPlayer)->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
