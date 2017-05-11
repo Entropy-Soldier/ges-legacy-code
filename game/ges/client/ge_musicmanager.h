@@ -31,6 +31,9 @@ public:
 	void PauseMusic();
 	void ResumeMusic();
 
+	void SilenceMusic();
+	void UnsilenceMusic();
+
 	const char *CurrentPlaylist() { return m_szPlayList; }
 	void LoadPlayList( const char *levelname );
 
@@ -50,10 +53,10 @@ protected:
 	void StopThread() { m_bRun = false; }
 	void ClearPlayList();
 
-	void StartFade( int type );
+	void StartFade( int type, float duration = 1.5 );
 	void FadeThink();
 	void PauseThink();
-	void NextSong();
+	void NextSong( float fadeDuration = 1.5 );
 	void EndSong( FMOD::Channel *pChannel );
 	void CheckWindowFocus();
 
@@ -81,11 +84,13 @@ private:
 	bool	m_bLoadPlaylist;
 	bool	m_bVolumeDirty;
 	int		m_iState;
+	bool	m_bSilenced;
 	// Soundscape transitions
 	char	m_szSoundscape[64];
 	bool	m_bLoadSoundscape;
 
 	bool	m_bPlayingXMusic;
+	float	m_flNextXMusicCheck;
 
 	// Music playlist controls
 	char	m_szPlayList[64];
@@ -109,10 +114,17 @@ private:
 		FADE_OUT,	// m_pCurrSong and m_pLastSong OUT
 	};
 
+	// Direction we're fading in.  FADE_IN = increase volume, FADE_OUT = decrease volume
 	int		m_iFadeMode;
-	float	m_fLastFadeTime;
-	float	m_fFadeInPercent;
-	float	m_fFadeOutPercent;
+	// Amount that m_fFadeMultiplier changes by every second.
+	float	m_flFadeSpeed;
+	// Track volume as controlled by fade status.  1.0 = no effect from fade and 0.0 = silent.
+	float	m_flFadeMultiplier;
+	// Last time we calculated and applied fade values.
+	float	m_flLastFadeThink;
+
+	// Track volume as controlled by fade status, for previous song.  1.0 = no effect from fade and 0.0 = silent.
+	float	m_flLastSongFadeMultiplier;
 
 	// Current song length in milliseconds
 	unsigned int m_iCurrSongLength;

@@ -66,8 +66,6 @@ CGEWebRequest::~CGEWebRequest()
 		Join();
 	}
 
-	Warning("Deleted webrequest for %s", m_pAddress);
-
 	// Clear the buffers
 	delete [] m_pAddress;
 	delete [] m_pError;

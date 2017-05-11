@@ -45,6 +45,7 @@
 	#include "ge_bot.h"
 	#include "ge_entitytracker.h"
 	#include "ge_webrequest.h"
+	#include "ge_webkeys.h"
 
 	#include "ge_triggers.h"
 	#include "ge_door.h"
@@ -101,6 +102,9 @@ ConVar ge_dynweaponrespawn_scale ( "ge_dynamicweaponrespawn_scale", "1.0", FCVAR
 ConVar ge_radar_range			 ( "ge_radar_range", "1500", FCVAR_REPLICATED|FCVAR_NOTIFY, "Change the radar range (in inches), default is 125ft" );
 ConVar ge_radar_showenemyteam	 ( "ge_radar_showenemyteam", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Allow the radar to show enemies during teamplay (useful for tournaments)" );
 
+ConVar ge_rounddelay( "ge_rounddelay", "10", FCVAR_REPLICATED, "Delay, in seconds, between rounds.", true, 2, true, 40 );
+
+
 #ifdef GAME_DLL
 // Bot related console variables
 ConVar ge_bot_threshold			( "ge_bot_threshold", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Server tries to maintain the number of players given using bots if needed, use anything less than 2 to disable this mechanism", GEBotThreshold_Callback );
@@ -108,7 +112,6 @@ ConVar ge_bot_openslots			( "ge_bot_openslots", "0", FCVAR_REPLICATED, "Number o
 ConVar ge_bot_strict_openslot	( "ge_bot_strict_openslot", "0", FCVAR_REPLICATED, "Count spectators in determining whether to leave an open player slot." );
 
 ConVar ge_roundtime	( "ge_roundtime", "0", FCVAR_REPLICATED, "Round time in seconds that can be played.", true, 0, true, 3000, GERoundTime_Callback );
-ConVar ge_rounddelay( "ge_rounddelay", "10", FCVAR_GAMEDLL, "Delay, in seconds, between rounds.", true, 2, true, 40 );
 ConVar ge_roundcount( "ge_roundcount", "0", FCVAR_REPLICATED, "Number of rounds that should be held in the given match time (calculates ge_roundtime), use 0 to disable", GERoundCount_Callback );
 ConVar ge_teamplay	( "ge_teamplay", "0", FCVAR_REPLICATED, "Turns on team play if the current scenario supports it.", GETeamplay_Callback );
 ConVar ge_velocity	( "ge_velocity", "1.0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Player movement velocity multiplier, applies in multiples of 0.25 [0.7 to 2.0]", true, 0.7, true, 2.0, GEVelocity_Callback );
@@ -500,8 +503,12 @@ void OnPlayerWebDataRequestReturned( const char *result, const char *error, cons
 		{
 			// If so just go huge and shoot off a bunch of info requests instead, since we can't auth ourselves to give out
 			// promo items.
-			new CGETempWebRequest("https://www.geshl2.com/?getPlayerRole&steamid=", OnPlayerWebDataDevRequestReturned, internalData, internalData);
-			new CGETempWebRequest("https://www.geshl2.com/?getPlayerWeaponSkins&format=int64&steamid=", OnPlayerWebDataSkinRequestReturned, internalData, internalData);
+
+			char webRequestURL[512];
+			Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?getPlayerRole&steamid=", GetWebDomain() );
+			new CGETempWebRequest( webRequestURL, OnPlayerWebDataDevRequestReturned, internalData, internalData );
+			Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?getPlayerWeaponSkins&format=int64&steamid=", GetWebDomain() );
+			new CGETempWebRequest( webRequestURL, OnPlayerWebDataSkinRequestReturned, internalData, internalData );
 
 			int steamHash = RSHash( internalData + 8 );
 
@@ -821,8 +828,11 @@ void CGEMPRules::OnMatchStart()
 
 	// If we actually have any players in the server, see if maybe we need to refresh them due to a promo deal that just started.
 	if (g_iLastPlayerCount)
-		new CGETempWebRequest("https://www.geshl2.com/?getCurrentPromoCode", CheckCurrentPromoCode);
-
+	{
+		char webRequestURL[512];
+		Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?getCurrentPromoCode", GetWebDomain() );
+		new CGETempWebRequest( webRequestURL, CheckCurrentPromoCode );
+	}
 	// Reset this value since we already checked it in ge_gameplay.cpp
 	g_iLastPlayerCount = 0;
 }
@@ -1199,10 +1209,16 @@ void CGEMPRules::GetPlayerWebData( CGEMPPlayer *pPlayer )
 	{
 		Warning("Could not find web data for %s in cache, asking online database!\n", pPlayer->GetPlayerName());
 		// Looks like we don't have it so we're going to have to ask the webserver.
-		char webRequestURL[256];
 		const char *steamID = pPlayer->GetNetworkIDString();
 
-		Q_snprintf( webRequestURL, sizeof(webRequestURL), "https://www.geshl2.com/?getPlayerRole&getPlayerWeaponSkins&format=int64&steamid=");
+		// This should get unix time but I honestly am not certain it always will.
+		long unixtime;
+		VCRHook_Time( &unixtime );
+
+		//Warning("Got Unix Time of %ld\n", unixtime );
+
+		char webRequestURL[512];
+		Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?doMulti&1=putCurrentPromoItems&2=getPlayerRole&3=getPlayerWeaponSkins&format=int64&management_api_key=%s&timestamp=%ld&steamid=", GetWebDomain(), GetAPIKey(), unixtime );
 		//Warning("Making request of %s\n", webRequestURL);
 
 		// Make our request, this will fire off the target player's OnWebDataRetreived function if successful.

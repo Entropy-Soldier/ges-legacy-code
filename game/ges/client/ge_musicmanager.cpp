@@ -19,6 +19,7 @@
 #include "ge_musicmanager.h"
 #include "ge_shareddefs.h"
 #include "gemp_gamerules.h"
+#include "c_ge_gameplayresource.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -75,8 +76,10 @@ CGEMusicManager::CGEMusicManager() : CAutoGameSystem( "GEMusicManager" )
 	m_bFMODRunning = false;
 	m_bLoadPlaylist = false;
 	m_bPlayingXMusic = false;
+	m_flNextXMusicCheck = 0;
 	m_bVolumeDirty = true;
 	m_iState = STATE_STOPPED;
+	m_bSilenced = false;
 
 	m_szPlayList[0] = '\0';
 	// Start off with the default soundscape
@@ -86,13 +89,11 @@ CGEMusicManager::CGEMusicManager() : CAutoGameSystem( "GEMusicManager" )
 
 	m_fVolume = 1.0f;
 	m_fNextSongTime = 0;
-	m_fFadeStartTime = 0;
 	m_iCurrSongLength = 0;
 
 	m_iFadeMode = FADE_NONE;
-	m_fLastFadeTime = 0;
-	m_fFadeInPercent = 0;
-	m_fFadeOutPercent = 0;
+	m_flLastFadeThink = 0;
+	m_flFadeMultiplier = 1;
 
 	m_pLastSong = NULL;
 	m_pCurrSong = NULL;
@@ -168,6 +169,24 @@ void CGEMusicManager::SetVolume( float vol )
 {
 	m_fVolume = clamp( vol, 0, 1.0f );
 	m_bVolumeDirty = true;
+}
+
+void CGEMusicManager::SilenceMusic()
+{
+	if ( m_iState == STATE_PLAYING )
+	{
+		StartFade( FADE_OUT );
+		DevMsg( 2, "[FMOD] Music Silenced\n" );
+	}
+}
+
+void CGEMusicManager::UnsilenceMusic()
+{
+	if ( m_iState == STATE_PLAYING )
+	{
+		StartFade( FADE_IN );
+		DevMsg( 2, "[FMOD] Music Unsilenced\n" );
+	}
 }
 
 void CGEMusicManager::PauseMusic()
@@ -345,10 +364,29 @@ void CGEMusicManager::EnforcePlaylist( bool force /*= false*/ )
 	}
 }
 
+extern ConVar ge_rounddelay;
 
 void CGEMusicManager::InternalPlayXMusic()
 {
-	if ( !m_bPlayingXMusic && GEMPRules() && GEMPRules()->IsMatchTimeRunning() && GEMPRules()->GetMatchTimeRemaining() < 60 && GEMPRules()->GetRoundTimeRemaining() < 60 )
+	float curtime = CurrTime();
+
+	if ( !GEMPRules() || !GEGameplayRes() || m_iState != STATE_PLAYING || m_flNextXMusicCheck > curtime )
+		return;
+
+	float roundtime = GEMPRules()->GetRoundTimeRemaining();
+	float maptime = GEMPRules()->GetMatchTimeRemaining();
+	bool isLastRound = false;
+
+	// If rounds are disabled then we basically have one round that's the length of the match timer.
+	if (!GEMPRules()->IsRoundTimeRunning())
+		roundtime = maptime;
+
+	// If the map timer is disabled then this isn't the last round because there is no last round.
+	// If roundtime + round delay is less than maptime, then we're going to have another round and we shouldn't play the X track.
+	if ( !GEGameplayRes()->GetGameplayIntermission() && GEMPRules()->IsMatchTimeRunning() && roundtime + ge_rounddelay.GetInt() > maptime )
+		isLastRound = true;
+
+	if ( !m_bPlayingXMusic && isLastRound && roundtime <= 60 )
 	{
 		m_Lock.Lock();
 
@@ -374,11 +412,11 @@ void CGEMusicManager::InternalPlayXMusic()
 
 		// Load a song from the list if it changed
 		if ( m_CurrPlaylist != oldlist )
-			NextSong();
+			NextSong( 0.1 );
 
 		m_Lock.Unlock();
 	}
-	else if (m_bPlayingXMusic && (!GEMPRules() || !GEMPRules()->IsMatchTimeRunning() || GEMPRules()->GetMatchTimeRemaining() > 60 ))
+	else if ( m_bPlayingXMusic && ( !isLastRound || roundtime > 60 || roundtime == 0)) // We're playing X music but something has changed!
 	{
 		m_Lock.Lock();
 
@@ -386,10 +424,17 @@ void CGEMusicManager::InternalPlayXMusic()
 		EnforcePlaylist( true );
 		NextSong();
 
+		// Terrible bandaid because I realized how much work overhauling this music system to properly fit our
+		// needs will be but I'm already halfway through and there's only one notable issue.
+		if (GEGameplayRes()->GetGameplayIntermission()) // If we're in round intermission, make sure we don't fade back in.
+			StartFade(FADE_OUT);
+
 		m_bPlayingXMusic = false;
 
 		m_Lock.Unlock();
 	}
+
+	m_flNextXMusicCheck = curtime + 0.5;
 }
 
 
@@ -427,7 +472,7 @@ void CGEMusicManager::InternalLoadSoundscape()
 	}
 }
 
-void CGEMusicManager::NextSong( void ) 
+void CGEMusicManager::NextSong( float fadeDuration /* == 1.5 */ ) 
 {
 	// Make sure we are not NULL...
 	EnforcePlaylist();
@@ -470,7 +515,9 @@ void CGEMusicManager::NextSong( void )
 	if ( m_pLastSong )
 		EndSong( m_pLastSong );
 
+	m_flLastSongFadeMultiplier = m_flFadeMultiplier; // Current song is becoming old song so transfer volume over.
 	m_pLastSong = m_pCurrSong;
+	m_flFadeMultiplier = 0; // New song starts at 0 volume.
 
 	// Load the new sound as the current song
 	result = m_pSystem->playSound( FMOD_CHANNEL_FREE, pSound, true, &m_pCurrSong );
@@ -490,8 +537,8 @@ void CGEMusicManager::NextSong( void )
 	m_nCurrSongIdx  = idx;
 	m_iState		= STATE_PLAYING;
 
-	// Start fading us in
-	StartFade( FADE_IN );
+	// Start fading us in, if the song is playing in the first place.
+	StartFade( FADE_IN, fadeDuration );
 
 	DevMsg( 2, "[FMOD] Playing song %s\n", song_entry );
 }
@@ -516,78 +563,81 @@ void CGEMusicManager::CheckWindowFocus( void )
 #endif
 }
 
-void CGEMusicManager::StartFade( int type )
+void CGEMusicManager::StartFade( int type, float duration /* == 1.5 */ )
 {
-	if ( m_iFadeMode != FADE_NONE && m_iFadeMode != type )
-	{
-		// Changed in-progress fade, swap status
-		m_fFadeInPercent = m_fFadeOutPercent;
-	}
-	else if ( m_iFadeMode != type )
-	{
-		// Fresh fade, reset our status
-		m_fFadeInPercent = 0;
-		m_fFadeOutPercent = 1.0f;
-	}
+	// Don't set actual fade progress here so we can smoothly switch from fade in to fade out.
 
+	if (duration > 0) // Make sure duration is a feasable value.
+		m_flFadeSpeed = 1 / duration; // amount every 1 second = 1 second / duration seconds
+	else
+		m_flFadeSpeed = 1000; // Pretty much instant.  Sadly we cannot go into the past and have the song play then for negative values.
+
+
+	m_flFadeSpeed = 1 / duration; // amount every 1 second = 1 second / duration seconds
 	m_iFadeMode = type;
 	m_fFadeStartTime = CurrTime();
-	m_fLastFadeTime = m_fFadeStartTime;
+	m_flLastFadeThink = m_fFadeStartTime;
 }
 
 void CGEMusicManager::FadeThink( void )
 {
-	// Sanity Check
-	if ( m_fLastFadeTime < m_fFadeStartTime )
-		return;
+	if ( !m_pLastSong && ( !m_pCurrSong || m_iFadeMode == FADE_NONE ) ) // No last song to fade out and not fading current song.
+		return; // We've got nothing to do!
 
+	// First calculate relevant values.
 	float now = CurrTime();
-	float fade_delta = (now - m_fLastFadeTime) / FMOD_TRANSITION_TIME;
-	m_fLastFadeTime = now;
+	float dt = now - m_flLastFadeThink; // dt = change in time since last calculation, in seconds.
+	m_flLastFadeThink = now;
 
-	// Linear fade
-	m_fFadeInPercent  = min( m_fFadeInPercent + fade_delta, 1.0f );
-	m_fFadeOutPercent = max( m_fFadeOutPercent - fade_delta, 0 );
+	float df = dt * m_flFadeSpeed; // df = change in volume since last calculation.
 
-	// Fail-safe
-	if ( now > m_fFadeStartTime + FMOD_TRANSITION_TIME )
+
+	// Last song always fades out.
+	if ( m_pLastSong && m_pLastSong != m_pCurrSong )
 	{
-		m_fFadeInPercent = 1.0f;
-		m_fFadeOutPercent = 0;
-	}
+		m_flLastSongFadeMultiplier -= df;
 
-	if ( m_iFadeMode == FADE_IN )
-	{
-		// m_pLastSong OUT, m_pCurrSong IN
-		if ( m_pLastSong )
-			m_pLastSong->setVolume( m_fFadeOutPercent );
-		
-		if ( m_pCurrSong )
-			m_pCurrSong->setVolume( m_fFadeInPercent );
-	}
-	else if ( m_iFadeMode == FADE_OUT )
-	{
-		// m_pLastSong OUT, m_pCurrSong OUT
-		if ( m_pLastSong )
-			m_pLastSong->setVolume( m_fFadeOutPercent );
-
-		if ( m_pCurrSong )
-			m_pCurrSong->setVolume( m_fFadeOutPercent );
-	}
-
-	// Check if we finished fading
-	if ( m_iFadeMode != FADE_NONE && m_fFadeInPercent >= 1.0f && m_fFadeOutPercent <= 0 )
-	{
-		DevMsg( 2, "[FMOD] Fade %s completed\n", m_iFadeMode == FADE_IN ? "IN" : "OUT" );
-
-		m_iFadeMode = FADE_NONE;
-
-		// Stop our last song
-		if ( m_pLastSong )
+		// Finished fading out last song, so destroy it.
+		if ( m_flLastSongFadeMultiplier <= 0 )
 		{
 			EndSong( m_pLastSong );
 			m_pLastSong = NULL;
 		}
+		else
+			m_pLastSong->setVolume( m_flLastSongFadeMultiplier );
+	}
+
+
+	// Everything past this point only deals with the current song, so let's make sure we have one.
+	if (!m_pCurrSong)
+		return;
+
+	if ( m_iFadeMode == FADE_IN )
+	{
+		m_flFadeMultiplier += df;
+		
+		if ( m_flFadeMultiplier >= 1 ) // Finished fading in!
+		{
+			m_flFadeMultiplier = 1;
+			m_iFadeMode = FADE_NONE;
+			DevMsg( 2, "[FMOD] Fade in completed!\n");
+		}
+		
+		m_pCurrSong->setVolume( m_flFadeMultiplier );
+	}
+	else if ( m_iFadeMode == FADE_OUT )
+	{
+		m_flFadeMultiplier = m_flFadeMultiplier - df;
+
+		
+		if ( m_flFadeMultiplier <= 0 ) // Finished fading out!
+		{
+			DevMsg( 2, "[FMOD] Fade out completed!\n");
+			m_flFadeMultiplier = 0;
+			m_iFadeMode = FADE_NONE;
+		}
+			
+		m_pCurrSong->setVolume( m_flFadeMultiplier );
 	}
 }
 

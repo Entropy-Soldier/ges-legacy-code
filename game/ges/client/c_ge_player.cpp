@@ -242,7 +242,7 @@ void C_GEPlayer::FireGameEvent( IGameEvent *event )
 
 void C_GEPlayer::SetupSpecialMusic( float duration )
 {
-	m_flEndSpecialMusic = gpGlobals->curtime + duration;
+	m_flEndSpecialMusic = max( gpGlobals->curtime + duration, m_flEndSpecialMusic );
 }
 
 void C_GEPlayer::CalcPlayerView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov )
@@ -301,7 +301,7 @@ void C_GEPlayer::ItemPreFrame( void )
 		pVar->SetValue( "GE_SpecialMusic" );
 		m_bInSpecialMusic = true;
 
-		GEMusicManager()->PauseMusic();
+		GEMusicManager()->SilenceMusic();
 	}
 	else if ( m_bInSpecialMusic && gpGlobals->curtime >= m_flEndSpecialMusic )
 	{
@@ -311,7 +311,7 @@ void C_GEPlayer::ItemPreFrame( void )
 		pVar->SetValue( "Default_Mix" );
 		m_bInSpecialMusic = false;
 
-		GEMusicManager()->ResumeMusic();
+		GEMusicManager()->UnsilenceMusic();
 	}
 }
 

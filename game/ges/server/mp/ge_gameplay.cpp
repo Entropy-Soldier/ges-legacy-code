@@ -841,12 +841,11 @@ bool CGEBaseGameplayManager::ShouldEndMatch()
 		return true;
 
 	// We must be able to end our round to end the match
-	if ( IsInRound() && GEMPRules()->IsRoundTimeRunning() && !ShouldEndRound() )
+	if ( IsInRound() && !ShouldEndRound() )
 		return false;
 
 	// Check time constraints
-	if ( GEMPRules()->IsMatchTimeRunning() && (GEMPRules()->GetMatchTimeRemaining() <= 0 
-		|| (IsInRoundIntermission() && GEMPRules()->GetMatchTimeRemaining() <= 30.0f)) )
+	if ( GEMPRules()->IsMatchTimeRunning() && GEMPRules()->GetMatchTimeRemaining() <= 0 )
 	{
 		// We ran out of time and our scenario says we can end
 		if ( GetScenario()->CanMatchEnd() )

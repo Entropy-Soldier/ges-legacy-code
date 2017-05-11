@@ -37,6 +37,7 @@ BEGIN_DATADESC( CGETKnife )
 	DEFINE_ENTITYFUNC( PickupTouch ),
 
 	DEFINE_THINKFUNC( SoundThink ),
+	DEFINE_THINKFUNC( PickupEnableThink ),
 	DEFINE_THINKFUNC( RemoveThink ),
 END_DATADESC()
 
@@ -134,12 +135,13 @@ void CGETKnife::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
 //		StopParticleEffects( this );
 //		te->SetSuppressHost( (CBaseEntity*)host );
 
-		SetTouch( &CGETKnife::PickupTouch );
-		SetThink( &CGETKnife::RemoveThink );
+		SetTouch( NULL ); // Don't damage people anymore, but don't allow pickup yet either.  Prevents instant pickups on knives that bounced off the wall or something.
+		SetThink( &CGETKnife::PickupEnableThink );
 
 		g_PostSimulationQueue.QueueCall(this, &CBaseEntity::SetCollisionGroup, COLLISION_GROUP_DROPPEDWEAPON);
 
-		SetNextThink( gpGlobals->curtime + 10.0f );
+		m_flStopFlyingTime = gpGlobals->curtime + 2.0f; // re-use this for the absolute longest time for knife to become pickupable.
+		SetNextThink( gpGlobals->curtime + 0.25f );
 	}
 }
 
@@ -291,6 +293,25 @@ void CGETKnife::SoundThink( void )
 		SetThink( &CGETKnife::RemoveThink );
 		SetNextThink( gpGlobals->curtime + 10.0f );
 	}
+}
+
+void CGETKnife::PickupEnableThink( void )
+{
+	Vector knifeVelocity;
+	VPhysicsGetObject()->GetVelocity( &knifeVelocity, NULL );
+
+	if ( m_flStopFlyingTime <= gpGlobals->curtime || knifeVelocity.LengthSqr() < 64 ) // less than 2/3rds of a foot per second.
+	{
+		SetTouch( &CGETKnife::PickupTouch );
+		SetThink( &CGETKnife::RemoveThink );
+
+		SetNextThink( gpGlobals->curtime + 14.0f );
+	}
+	else
+	{
+		SetNextThink( gpGlobals->curtime + 0.25f ); // Just keep checking until we do.
+	}
+
 }
 
 void CGETKnife::RemoveThink( void )

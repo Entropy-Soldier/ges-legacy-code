@@ -33,3 +33,6 @@ linux_sdk/server_i486.so
 lib/gtest/ServerTest*
 
 build*/
+game/ges/server/ge_textencryptor.cpp
+game/ges/server/ge_textencryptor.h
+game/ges/server/ge_webkeys.h

@@ -66,7 +66,8 @@ void GEWeaponSet_Callback( IConVar *var, const char *pOldString, float flOldValu
 	noreentrant = false;
 }
 
-ConVar ge_weaponset( "ge_weaponset", "random_loadout", FCVAR_GAMEDLL, "Changes the weapon set when the round restarts\nUSAGE: ge_weaponset [identity]", GEWeaponSet_Callback );
+ConVar ge_weaponset( "ge_weaponset", RANDOM_LOADOUT, FCVAR_GAMEDLL, "Changes the weapon set when the round restarts\nUSAGE: ge_weaponset [identity]", GEWeaponSet_Callback );
+ConVar ge_weaponset_mode( "ge_weaponset_mode", "1", FCVAR_GAMEDLL, "If 1, change weaponset back to random_loadout after every round.  If 0, keep the weaponset as whatever it is currently set to.");
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -345,6 +346,8 @@ bool CGELoadoutManager::SpawnWeapons( void )
 	CGELoadout *pNewLoadout = NULL;
 	int iNewGroup = -1;
 
+	bool bUsedFixedLoadout = false;
+
 	if ( m_pCurrentLoadout != NULL && m_bKeepCurrLoadout )
 	{
 		// Keep our current loadout and reset the flag
@@ -545,15 +548,17 @@ bool CGELoadoutManager::SpawnWeapons( void )
 		if ( !IsLoadout( ge_weaponset.GetString() ) )
 		{
 			Warning("[LoadoutMgr] Invalid loadout specified, no weapons will be spawned!\n");
+			ge_weaponset.SetValue( RANDOM_LOADOUT ); // Go back to the default since this clearly didn't work out.
 			return false;
 		}
 
 		pNewLoadout = GetLoadout( ge_weaponset.GetString() );
+		bUsedFixedLoadout = true;
 	}
 
 	if ( !pNewLoadout )
 	{
-		Warning("[LoadoutMgr] Unable to resolve a weapon loadout!\n");
+		Warning("[LoadoutMgr] Unable to resolve a weapon loadout\n");
 		return false;
 	}
 
@@ -563,6 +568,11 @@ bool CGELoadoutManager::SpawnWeapons( void )
 
 	// Make it official
 	m_pCurrentLoadout = pNewLoadout;
+
+	// Have to do this here as opposed to where we set the flag so that the message that prints to chat letting us know
+	// the weaponset will be changed next round happens after the #GES_Weaponset_Changed message.  Otherwise it looks kind of dumb.
+	if (bUsedFixedLoadout && ge_weaponset_mode.GetBool()) // We got our new loadout so let's go back to RANDOM_LOADOUT, if the server owner desires it.
+		ge_weaponset.SetValue( RANDOM_LOADOUT );
 
 	// Shift group list over
 	for (int i = 2; i > 0; i--)

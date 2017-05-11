@@ -31,6 +31,7 @@ public:
 
 	virtual void SoundThink( void );
 	virtual void RemoveThink( void );
+	virtual void PickupEnableThink( void );
 
 	virtual void SetVelocity( const Vector &velocity, const AngularImpulse &angVelocity );
 	virtual void VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );

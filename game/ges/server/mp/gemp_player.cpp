@@ -63,7 +63,7 @@ extern ConVar ge_debug_playerspawns;
 #define MODEL_CHANGE_INTERVAL	4.0f
 #define TEAM_CHANGE_INTERVAL	4.0f
 #define GE_MIN_CAMP_DIST		36.0f	// 3 ft
-#define GE_MAX_THROWN_OBJECTS	20
+#define GE_MAX_THROWN_OBJECTS	25
 #define GE_CLEARSPAWN_DIST		512.0f
 #define GEPLAYER_PHYSDAMAGE_SCALE 1.0f
 

@@ -1421,6 +1421,7 @@
     <ClInclude Include="ges\server\mp\ge_playerspawn.h" />
     <ClInclude Include="ges\server\mp\gebot_player.h" />
     <ClInclude Include="ges\server\py\ge_pyfuncs.h" />
+    <ClInclude Include="ges\server\ge_webkeys.h" />
     <ClInclude Include="ges\shared\ge_webrequest.h" />
     <ClInclude Include="ges\shared\weapon_shotgun.h" />
     <ClInclude Include="resource.h" />
