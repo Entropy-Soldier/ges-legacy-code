@@ -89,7 +89,7 @@ protected:
 private:
 	// check a throw from vecSrc.  If not valid, move the position back along the line to vecEye
 	void	CheckThrowPosition( const Vector &vecEye, Vector &vecSrc );
-	void	ThrowGrenade( float throwforce );
+	void	ThrowGrenade( float throwforce, bool deathThrow = false );
 	void	ExplodeInHand( void );
 	
 	CNetworkVar( bool, m_bDrawNext );
@@ -244,7 +244,7 @@ void CGEWeaponGrenade::PreOwnerDeath()
 {
 	// Throw the grenade if the player was about to before they died.
 	if (m_bSpawnWait || m_bPreThrow)
-		ThrowGrenade(GE_GRENADE_THROW_FORCE/5);
+		ThrowGrenade(GE_GRENADE_THROW_FORCE / 5, true);
 
 	BaseClass::PreOwnerDeath();
 }
@@ -368,7 +368,7 @@ void CGEWeaponGrenade::CheckThrowPosition( const Vector &vecEye, Vector &vecSrc 
 //-----------------------------------------------------------------------------
 // Purpose: Throw a primed grenade with timeleft of (gpGlobals->curtime - m_flPrimedTime)
 //-----------------------------------------------------------------------------
-void CGEWeaponGrenade::ThrowGrenade( float throwforce )
+void CGEWeaponGrenade::ThrowGrenade( float throwforce, bool deathThrow /* == false */ )
 {
 	CBaseCombatCharacter *pOwner = GetOwner();
 	if ( !pOwner )
@@ -411,7 +411,7 @@ void CGEWeaponGrenade::ThrowGrenade( float throwforce )
 		pGrenade->SetDamageRadius( GetGEWpnData().m_flDamageRadius );
 		pGrenade->SetSourceWeapon(this);
 		
-		if (throwforce == GE_GRENADE_THROW_FORCE / 5) // For acheivement tracking.
+		if (deathThrow) // For acheivement tracking.
 			pGrenade->m_bDroppedOnDeath = true;
 
 		// The timer is whatever is left over from the primed time + our fuse minus our 

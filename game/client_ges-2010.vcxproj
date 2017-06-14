@@ -236,6 +236,7 @@
     <ClCompile Include="ges\client\clientmode_ge.cpp" />
     <ClCompile Include="ges\client\c_ge_point_follower.cpp" />
     <ClCompile Include="ges\client\c_npc_gebase.cpp" />
+    <ClCompile Include="ges\client\ge_blacklist.cpp" />
     <ClCompile Include="ges\client\ge_materialproxies.cpp" />
     <ClCompile Include="ges\client\ge_musicmanager.cpp" />
     <ClCompile Include="ges\client\ge_screeneffects.cpp" />
@@ -253,6 +254,7 @@
     <ClCompile Include="ges\client\VGUI\ge_CreditsText.cpp" />
     <ClCompile Include="ges\client\VGUI\ge_HorzListPanel.cpp" />
     <ClCompile Include="ges\client\VGUI\ge_ImageButton.cpp" />
+    <ClCompile Include="ges\client\VGUI\ge_popup.cpp" />
     <ClCompile Include="ges\client\VGUI\ge_scenariohelp.cpp" />
     <ClCompile Include="ges\client\VGUI\ge_VertListPanel.cpp" />
     <ClCompile Include="ges\client\VGUI\ge_creditsvgui.cpp" />
@@ -932,6 +934,7 @@
     <ClInclude Include="ges\client\clientmode_ge.h" />
     <ClInclude Include="ges\client\c_ge_point_follower.h" />
     <ClInclude Include="ges\client\c_npc_gebase.h" />
+    <ClInclude Include="ges\client\ge_blacklist.h" />
     <ClInclude Include="ges\client\ge_musicmanager.h" />
     <ClInclude Include="ges\client\ge_screeneffects.h" />
     <ClInclude Include="ges\client\ge_vieweffects.h" />
@@ -946,6 +949,7 @@
     <ClInclude Include="ges\client\VGUI\ge_CreditsText.h" />
     <ClInclude Include="ges\client\VGUI\ge_HorzListPanel.h" />
     <ClInclude Include="ges\client\VGUI\ge_ImageButton.h" />
+    <ClInclude Include="ges\client\VGUI\ge_popup.h" />
     <ClInclude Include="ges\client\VGUI\ge_scenariohelp.h" />
     <ClInclude Include="ges\client\VGUI\ge_VertListPanel.h" />
     <ClInclude Include="ges\client\VGUI\ge_creditsvgui.h" />
@@ -972,6 +976,7 @@
     <ClInclude Include="ges\shared\ge_player_shared.h" />
     <ClInclude Include="ges\shared\ge_shareddefs.h" />
     <ClInclude Include="ges\shared\ge_utils.h" />
+    <ClInclude Include="ges\shared\ge_webkeys.h" />
     <ClInclude Include="ges\shared\ge_webrequest.h" />
     <ClInclude Include="ges\shared\script_parser.h" />
     <ClInclude Include="ges\shared\mp\gemp_gamerules.h" />

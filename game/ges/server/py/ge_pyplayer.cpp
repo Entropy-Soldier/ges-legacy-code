@@ -169,6 +169,20 @@ void pySetPlayerModel( CGEPlayer *pPlayer, const char *szChar, int nSkin )
 		pPlayer->SetPlayerModel( szChar, nSkin, true );
 }
 
+void pyResetTotalMaxArmorLimit( CGEPlayer *pPlayer )
+{
+	if ( pPlayer )
+		pPlayer->SetTotalArmorPickup(0);
+}
+
+int pyGetRemainingArmorPickupLimit( CGEPlayer *pPlayer )
+{
+	if ( pPlayer )
+		return pPlayer->GetMaxTotalArmor() - pPlayer->GetTotalArmorPickup();
+
+	return -1;
+}
+
 void pyGiveAmmo( CGEMPPlayer *pPlayer, const char *ammo, int amt, bool supressSound = true )
 {
 	if ( pPlayer )
@@ -244,6 +258,10 @@ BOOST_PYTHON_MODULE(GEPlayer)
 		.def("IsObserver", &CGEPlayer::IsObserver)
 		.def("GetMaxArmor", &CGEPlayer::GetMaxArmor)
 		.def("SetMaxArmor", &CGEPlayer::SetMaxArmor)
+		.def("GetTotalAllowedArmorPickup", &CGEPlayer::GetMaxTotalArmor)
+		.def("GetRemainingAllowedArmorPickup", pyGetRemainingArmorPickupLimit)
+		.def("SetTotalAllowedArmorPickup", &CGEPlayer::SetMaxTotalArmor)
+		.def("RenewArmorPickupLimit", pyResetTotalMaxArmorLimit)
 		.def("GetMaxHealth", &CGEPlayer::GetMaxHealth)
 		.def("SetMaxHealth", &CGEPlayer::SetMaxHealth)
 		.def("SetArmor", &CGEPlayer::SetArmorValue)

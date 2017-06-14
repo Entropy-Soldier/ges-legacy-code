@@ -378,7 +378,7 @@ void CGEMusicManager::InternalPlayXMusic()
 	bool isLastRound = false;
 
 	// If rounds are disabled then we basically have one round that's the length of the match timer.
-	if (!GEMPRules()->IsRoundTimeRunning())
+	if ( !GEMPRules()->IsRoundTimeRunning() )
 		roundtime = maptime;
 
 	// If the map timer is disabled then this isn't the last round because there is no last round.
@@ -386,7 +386,7 @@ void CGEMusicManager::InternalPlayXMusic()
 	if ( !GEGameplayRes()->GetGameplayIntermission() && GEMPRules()->IsMatchTimeRunning() && roundtime + ge_rounddelay.GetInt() > maptime )
 		isLastRound = true;
 
-	if ( !m_bPlayingXMusic && isLastRound && roundtime <= 60 )
+	if ( !m_bPlayingXMusic && isLastRound && roundtime <= 60 && GEMPRules()->AllowXMusic() )
 	{
 		m_Lock.Lock();
 
@@ -416,7 +416,7 @@ void CGEMusicManager::InternalPlayXMusic()
 
 		m_Lock.Unlock();
 	}
-	else if ( m_bPlayingXMusic && ( !isLastRound || roundtime > 60 || roundtime == 0)) // We're playing X music but something has changed!
+	else if (m_bPlayingXMusic && ( !isLastRound || roundtime > 60 || roundtime == 0 || !GEMPRules()->AllowXMusic() )) // We're playing X music but something has changed!
 	{
 		m_Lock.Lock();
 

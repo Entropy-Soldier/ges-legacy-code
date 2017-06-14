@@ -113,6 +113,11 @@ void pySetHUDTimerVisible( bool state )
 	GEMPRules()->SetShouldShowHUDTimer( state );
 }
 
+void pyAllowXMusic( bool state )
+{
+	GEMPRules()->SetAllowXMusic( state );
+}
+
 void pySetSpawnInvulnTime(float duration, bool canbreak)
 {
 	GEMPRules()->SetSpawnInvulnCanBreak(canbreak);
@@ -555,6 +560,8 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 	def("IsTeamplay", pyIsTeamplay);
 
 	def("SetHUDTimerVisible", pySetHUDTimerVisible);
+
+	def("SetXMusicCanPlay", pyAllowXMusic);
 
 	def("GetNumActivePlayers", pyGetNumActivePlayers);
 	def("GetNumActiveTeamPlayers", pyGetNumActiveTeamPlayers);

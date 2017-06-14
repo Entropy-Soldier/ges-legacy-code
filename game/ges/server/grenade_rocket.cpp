@@ -199,6 +199,8 @@ void CGERocket::ExplodeTouch( CBaseEntity *pOther )
 
 			m_bHitPlayer = true; // Only deal one direct hit per projectile.
 		}
+
+		EmitSound( "Weapon_RocketLauncher.Impact" ); // Play impact sound.
 		Explode();
 	}
 }

@@ -91,6 +91,7 @@ ConVar ge_paintball			( "ge_paintball",  "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Th
 
 ConVar ge_teamautobalance	( "ge_teamautobalance", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Turns on the auto balancer for teamplay" );
 ConVar ge_tournamentmode	( "ge_tournamentmode",	"0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Turns on tournament mode that disables certain gameplay checks" );
+ConVar ge_allow_unbalanced_teamswitch("ge_allow_unbalanced_teamswitch", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Allow players to switch teams even when that would unbalance them further.");
 ConVar ge_respawndelay		( "ge_respawndelay",	"6", FCVAR_REPLICATED, "Changes the minimum delay between respawns" );
 
 ConVar ge_itemrespawntime	( "ge_itemrespawntime",	  "10", FCVAR_REPLICATED|FCVAR_NOTIFY, "Time in seconds between ammo respawns (ge_dynamicweaponrespawn must be off!)" );
@@ -536,6 +537,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CGEMPRules, DT_GEMPRules )
 	RecvPropBool( RECVINFO( m_bTeamPlayDesired ) ),
 	RecvPropBool( RECVINFO( m_bGlobalInfAmmo )),
 	RecvPropBool( RECVINFO( m_bGamemodeInfAmmo )),
+	RecvPropBool( RECVINFO( m_bAllowXMusic )),
 	RecvPropBool( RECVINFO( m_bShouldShowHUDTimer )),
 	RecvPropInt( RECVINFO( m_iTeamplayMode ) ),
 	RecvPropInt( RECVINFO( m_iScoreboardMode )),
@@ -543,11 +545,14 @@ BEGIN_NETWORK_TABLE_NOBASE( CGEMPRules, DT_GEMPRules )
 	RecvPropFloat(RECVINFO( m_flMapFloorHeight )),
 	RecvPropEHandle( RECVINFO( m_hMatchTimer ) ),
 	RecvPropEHandle( RECVINFO( m_hRoundTimer ) ),
+	RecvPropFloat(RECVINFO( m_flRoundStartTime )),
+	RecvPropFloat(RECVINFO( m_flMatchStartTime )),
 #else
 	SendPropInt( SENDINFO( m_iRandomSeedOffset )),
 	SendPropBool( SENDINFO( m_bTeamPlayDesired ) ),
 	SendPropBool( SENDINFO( m_bGlobalInfAmmo ) ),
 	SendPropBool( SENDINFO( m_bGamemodeInfAmmo ) ),
+	SendPropBool( SENDINFO( m_bAllowXMusic ) ),
 	SendPropBool( SENDINFO( m_bShouldShowHUDTimer ) ),
 	SendPropInt( SENDINFO( m_iTeamplayMode ) ),
 	SendPropInt( SENDINFO( m_iScoreboardMode ) ),
@@ -555,6 +560,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CGEMPRules, DT_GEMPRules )
 	SendPropFloat( SENDINFO( m_flMapFloorHeight )),
 	SendPropEHandle( SENDINFO( m_hMatchTimer ) ),
 	SendPropEHandle( SENDINFO( m_hRoundTimer ) ),
+	SendPropFloat( SENDINFO( m_flRoundStartTime )),
+	SendPropFloat( SENDINFO( m_flMatchStartTime )),
 #endif
 END_NETWORK_TABLE()
 
@@ -599,18 +606,17 @@ CUtlVector<string_t> g_vBotNames;
 
 #define GE_CHANGELEVEL_DELAY 1.0f
 
-static int BalanceTeamSort(  CGEMPPlayer * const *p1, CGEMPPlayer * const *p2 )
+static int MatchScoreSort(  CGEMPPlayer * const *p1, CGEMPPlayer * const *p2 )
 {
-	static const float eps = 5.0f;
-	// Bots get no love
-	if ( (*p1)->IsBot() ) return -1;
-	if ( (*p2)->IsBot() ) return 1;
-	// Otherwise sort by join time, then by # of team swaps if w/i eps
-	float diff = (*p2)->GetTeamJoinTime() - (*p1)->GetTeamJoinTime();
-	if ( abs(diff) < eps )
-		return ( (*p1)->GetAutoTeamSwaps() - (*p2)->GetAutoTeamSwaps() );
+	int score1 = (*p1)->GetMatchScore() + (*p1)->GetRoundScore();
+	int score2 = (*p2)->GetMatchScore() + (*p2)->GetRoundScore();
+
+	if (score1 > score2)
+		return -1;
+	else if (score1 < score2)
+		return 1;
 	else
-		return (int) diff;
+		return 0;
 }
 #endif
 
@@ -665,6 +671,9 @@ CGEMPRules::CGEMPRules()
 	m_flMapFloorHeight = 125.0;
 	m_iRandomSeedOffset = 0;
 
+	m_flRoundStartTime = -1;
+	m_flMatchStartTime = -1;
+
 	m_szNextLevel[0] = '\0';
 	m_szGameDesc[0] = '\0';
 
@@ -684,6 +693,7 @@ CGEMPRules::CGEMPRules()
 	m_hRoundTimer = (CGEGameTimer*) CBaseEntity::Create( "ge_game_timer", vec3_origin, vec3_angle );
 
 	m_bShouldShowHUDTimer = true;
+	m_bAllowXMusic = true;
 
 	// Make sure we setup our match time
 	HandleTimeLimitChange();
@@ -793,6 +803,7 @@ void CGEMPRules::OnScenarioInit()
 	SetGlobalInfAmmoState( ge_infiniteammo.GetBool() );
 	SetGamemodeInfAmmoState( false );
 	SetShouldShowHUDTimer( true );
+	SetAllowXMusic( true );
 	SetScoreboardMode( 0 ); //Default points.
 
 	SetSpawnInvulnInterval( GES_DEFAULT_SPAWNINVULN );
@@ -835,6 +846,8 @@ void CGEMPRules::OnMatchStart()
 	}
 	// Reset this value since we already checked it in ge_gameplay.cpp
 	g_iLastPlayerCount = 0;
+
+	m_flMatchStartTime = gpGlobals->curtime;
 }
 
 void CGEMPRules::OnRoundStart()
@@ -874,6 +887,7 @@ void CGEMPRules::OnRoundStart()
 
 	// Start the round timer
 	StartRoundTimer( ge_roundtime.GetFloat() );
+	m_flRoundStartTime = gpGlobals->curtime;
 
 	// Spawn these once everything is settled
 	GetTokenManager()->SpawnTokens();
@@ -1213,7 +1227,8 @@ void CGEMPRules::GetPlayerWebData( CGEMPPlayer *pPlayer )
 
 		// This should get unix time but I honestly am not certain it always will.
 		long unixtime;
-		VCRHook_Time( &unixtime );
+		VCRHook_Time( &unixtime ); 
+
 
 		//Warning("Got Unix Time of %ld\n", unixtime );
 
@@ -2118,7 +2133,7 @@ void CGEMPRules::BalanceTeams()
 		return;
 
 	// Don't do switches if we have less than a minute left in the round/match!
-	if ( (IsRoundTimeRunning() && GetRoundTimeRemaining() < 45.0f) || (IsMatchTimeRunning() && GetMatchTimeRemaining() < 45.0f) )
+	if ( (IsRoundTimeRunning() && GetRoundTimeRemaining() < 45.0f) || (!IsRoundTimeRunning() && IsMatchTimeRunning() && GetMatchTimeRemaining() < 45.0f) )
 		return;
 
 	// Is it even time to check yet?
@@ -2147,31 +2162,123 @@ void CGEMPRules::BalanceTeams()
 
 		// If the situation hasn't corrected itself in the 5 seconds
 		// we take action!
+
+		// If we get to this point it's probably because people are rage-quitting and we need to 
+		// try and un-stack the teams.  Match score is a decent indicator of performance so let's try using that.
 		if ( pHeavyTeam )
 		{
 			CGEMPPlayer *pPlayer = NULL;
 			CUtlVector<CGEMPPlayer*> players;
+			int matchScoreDifference = 0; // Positive favors heavy team, negative favors light team.
 
 			for ( int i=0; i < pHeavyTeam->GetNumPlayers(); ++i )
 			{
 				pPlayer = ToGEMPPlayer( pHeavyTeam->GetPlayer(i) );
-				if ( !pPlayer || !GetScenario()->CanPlayerChangeTeam( pPlayer, pHeavyTeam->GetTeamNumber(), pLightTeam->GetTeamNumber(), true ) ) // Autobalance is always forced.
+				if ( !pPlayer )
 					continue;
+
+				if (!GetScenario()->CanPlayerChangeTeam(pPlayer, pHeavyTeam->GetTeamNumber(), pLightTeam->GetTeamNumber(), true))
+				{
+					matchScoreDifference += pPlayer->GetMatchScore() + pPlayer->GetRoundScore(); // Won't be counting them later.
+					continue;
+				}
 
 				players.AddToTail( pPlayer );
 			}
 
+			for ( int i = 0; i < pLightTeam->GetNumPlayers(); ++i )
+			{
+				pPlayer = ToGEMPPlayer( pLightTeam->GetPlayer(i) );
+				if ( pPlayer )
+					matchScoreDifference -= pPlayer->GetMatchScore() + pPlayer->GetRoundScore();
+			}
+
+			// Now we have a list of players eligible for team swap, and the total point difference across the teams.
+			// Our objective is to make this point difference as small as possible while switching over the required number of players.
+			// To do this, we'll sort our player list by total match score and pick the required amount of players 
+			// whose total match score is roughly equal to the point difference.
+
+			// How to pick these players is up for debate, in fact even balancing teams by total points is up for debate,
+			// but I will tenatively go for swapping the bottom n - 1 players along with the highest scoring player that will correct
+			// the difference without going too far over.  We want to get the highest scoring player possible without grabbing too many,
+			// with the hope of splitting up the top performers.
+
 			if ( players.Size() > 0 )
 			{
-				players.Sort( BalanceTeamSort );
-				int switches = min( abs(plDiff) - 1, players.Size() );
+				players.Sort( MatchScoreSort ); // Highest first
 
-				// Switch the required number of players to the light team
-				for ( int j=0; j < switches; j++ )
+				// Divide the difference between the two teams by 2 in order to get the correct amount for switch quantities greater than 1.  
+				// The rules of integer division handle odd cases like 3, ensuring that only the minimum amount of players get switched.
+				int switches = min( abs(plDiff) / 2, players.Size() );
+				CUtlVector<int> playerScores;
+				
+				for (int j = 0; j < players.Size(); j++) // Now that players is sorted, let's quickly tally up the scores.
+				{
+					int totalScore = players[j]->GetMatchScore() + players[j]->GetRoundScore();
+
+					playerScores.AddToTail(totalScore); // Same order as players list.
+					matchScoreDifference += totalScore; // After this loop matchScoreDifference will finally be the correct value.
+				}
+
+				/*
+				DevMsg("Players sorted in this order:\n");
+				for (int j = 0; j < players.Size(); j++)
+				{
+					DevMsg("\t%s with score %d\n", players[j]->GetPlayerName(), playerScores[j]);
+				}
+				DevMsg("With match score difference of %d\n", matchScoreDifference);
+
+				DevMsg("Want to switch %d players between %d and %d\n" , switches, pJanus->GetNumPlayers(), pMI6->GetNumPlayers() );
+				*/
+
+				// Switch the n - 1 lowest players to the light team.
+				// In most cases this probably won't be needed but in extreme cases 4+ people can be balanced at once.
+				int switchThresh = (players.Size() - 1) - (switches - 1); // Go backwards for efficiency since we're removing stuff from the vector.
+				for ( int j = players.Size() - 1; j > switchThresh; j--)
 				{
 					players[j]->ChangeTeam( pLightTeam->GetTeamNumber(), true );
-					// tell people that we have switched this player
+					matchScoreDifference -= playerScores[j] * 2; // Just took points off of one team and gave them to the other.
 					UTIL_ClientPrintAll( HUD_PRINTTALK, "#GES_TeamBalanced_Player", players[j]->GetPlayerName() );
+					players.Remove(j);
+					playerScores.Remove(j);
+				}
+
+				// Now find the highest performer we can switch without tipping the scales more than neccecery.
+				// It's possible the teams are already balanced, or even that the smaller team is stronger,
+				// so we want to be careful not to go overboard.  Also keeping in mind there might not be a player
+				// to switch that can correct the difference.
+
+				if ( playerScores[0] * 2 > matchScoreDifference ) // There is at least one player where "playerScores[j] * 2 < matchScoreDifference" will be false.
+				{
+					if ( playerScores[players.Size() - 1] * 2 < matchScoreDifference ) // First case has to be checked by itself to prevent j + 1 from going out of bounds.
+					{
+						for (int j = players.Size() - 2; j >= 0; j--)
+						{
+							if (playerScores[j] * 2 < matchScoreDifference) // Haven't yet located the threshold which we made sure exists.
+								continue;
+
+							if (playerScores[j] * 2 - matchScoreDifference < matchScoreDifference - playerScores[j + 1] * 2)
+							{
+								players[j]->ChangeTeam(pLightTeam->GetTeamNumber(), true);
+								UTIL_ClientPrintAll(HUD_PRINTTALK, "#GES_TeamBalanced_Player", players[j]->GetPlayerName());
+							}
+							else
+							{
+								players[j + 1]->ChangeTeam(pLightTeam->GetTeamNumber(), true);
+								UTIL_ClientPrintAll(HUD_PRINTTALK, "#GES_TeamBalanced_Player", players[j + 1]->GetPlayerName());
+							}
+						}
+					}
+					else // Lowest player still has more than enough points to fix the difference, but we have to switch -someone-.
+					{
+						players[players.Size() - 1]->ChangeTeam(pLightTeam->GetTeamNumber(), true);
+						UTIL_ClientPrintAll(HUD_PRINTTALK, "#GES_TeamBalanced_Player", players[players.Size() - 1]->GetPlayerName());
+					}
+				}
+				else // There isn't a player with more than enough points to correct the difference so just use the highest scoring player.
+				{
+					players[0]->ChangeTeam(pLightTeam->GetTeamNumber(), true);
+					UTIL_ClientPrintAll(HUD_PRINTTALK, "#GES_TeamBalanced_Player", players[0]->GetPlayerName());
 				}
 			}
 			else
@@ -2531,6 +2638,15 @@ float CGEMPRules::GetMatchTimeRemaining()
 	return 0;
 }
 
+float CGEMPRules::GetTimeSinceMatchStart()
+{
+	if (gpGlobals->curtime < m_flMatchStartTime)
+		Warning("Getting invalid match duration time of %f from GetTimeSinceMatchStart()!\n", gpGlobals->curtime - m_flMatchStartTime);
+
+	return gpGlobals->curtime - m_flMatchStartTime;
+}
+
+
 // Round Timer Functions
 bool CGEMPRules::IsRoundTimeEnabled()
 {
@@ -2560,6 +2676,14 @@ float CGEMPRules::GetRoundTimeRemaining()
 
 	Warning("Could not find round timer!\n");
 	return 0;
+}
+
+float CGEMPRules::GetTimeSinceRoundStart()
+{	
+	if (gpGlobals->curtime < m_flRoundStartTime)
+		Warning("Getting invalid round duration time of %f from GetTimeSinceRoundStart()!\n", gpGlobals->curtime - m_flRoundStartTime);
+
+	return gpGlobals->curtime - m_flRoundStartTime;
 }
 
 void CGEMPRules::SetShouldShowHUDTimer(bool newState)

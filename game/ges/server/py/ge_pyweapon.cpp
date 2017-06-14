@@ -146,6 +146,37 @@ void pyWeaponSetAbsAngles( CGEWeapon *weap, QAngle angles )
 	weap->SetAbsAngles( angles );
 }
 
+// Intended for setting the skins of tokens, was used in 5.0 to temporarily give weapon skin rewards out.
+
+// But hey, giving strawberry rocket launchers to janus and blueberry to MI6 was a novel idea.
+// So what the heck, people can do that if they want to, But the KF7 skin must be protected at all costs lest Luchador's legacy become tainted.
+// Yes you can still do this other ways but dang nabit please respect our dinky skin system.
+void pyWeaponSetSkin( CGEWeapon *pWeap, int skin )
+{
+	if ( pWeap )
+	{
+		int WhitelistedWeapons[] = { WEAPON_TOKEN, WEAPON_ROCKET_LAUNCHER }; // Whitelist weapons as needed.  But donchu ever whitelist the klobb or KF7, boy.
+
+		int weaponID = pWeap->GetWeaponID();
+		bool match = false;
+		int whitelistLength = sizeof(WhitelistedWeapons) / sizeof(int);
+
+		for (int i = 0; i < whitelistLength; i++)
+		{
+			if ( WhitelistedWeapons[i] == weaponID )
+			{
+				match = true; 
+				break;
+			}
+		}
+
+		if (match)
+			pWeap->SetSkin(skin);
+		else
+			Warning("Tried to assign invalid skin through python!\n");
+	}
+}
+
 bp::dict pyWeaponInfo( bp::object weap, CBaseCombatCharacter *pOwner = NULL )
 {
 	bp::dict info;
@@ -240,8 +271,11 @@ BOOST_PYTHON_MODULE(GEWeapon)
 		.def("GetDefaultClip", &CGEWeapon::GetDefaultClip1)
 		.def("GetDamage", &CGEWeapon::GetWeaponDamage)
 		.def("GetWeaponId", &CGEWeapon::GetWeaponID)
+		.def("GetSecondsUntilPickupAllowed", &CGEWeapon::GetSecondsUntilPickup)
+		.def("SetSecondsUntilPickupAllowed", &CGEWeapon::SetSecondsUntilPickup)
+		.def("SetRoundSecondsUntilPickupAllowed", &CGEWeapon::SetRoundSecondsUntilPickup)
 		.def("GetWeaponSlot", pyGetWeaponSlot)
-		.def("SetSkin", &CGEWeapon::SetSkin)
+		.def("SetSkin", pyWeaponSetSkin)
 		// The following override CBaseEntity to prevent movement when held
 		.def("SetAbsOrigin", pyWeaponSetAbsOrigin)
 		.def("SetAbsAngles", pyWeaponSetAbsAngles);

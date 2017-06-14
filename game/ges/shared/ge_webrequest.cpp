@@ -159,8 +159,8 @@ void CGETempWebRequest::OnExit()
 
 
 
-// ----------------------TempWebRequest----------------------
-// For the web requests that should retire right after getting their information to us.
+// ----------------------PostWebRequest----------------------
+// For the web requests that post information rather than query it.
 
 CGEPostWebRequest::CGEPostWebRequest( const char *addr, const char *postData ) : CGEWebRequest( addr, NULL )
 {

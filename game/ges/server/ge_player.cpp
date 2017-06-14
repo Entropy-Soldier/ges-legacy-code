@@ -43,6 +43,9 @@ IMPLEMENT_SERVERCLASS_ST(CGEPlayer, DT_GE_Player)
 	SendPropInt( SENDINFO( m_iMaxArmor ) ),
 	SendPropInt( SENDINFO( m_iMaxHealth ) ),
 
+	SendPropInt( SENDINFO( m_iTotalMaxArmor ) ),
+	SendPropInt( SENDINFO( m_iTotalArmorPickup ) ),
+
 	SendPropFloat(SENDINFO(m_flFullZoomTime)),
 	SendPropFloat(SENDINFO(m_flSweepTime)),
 
@@ -129,6 +132,16 @@ void CGEPlayer::Precache( void )
 	BaseClass::Precache();
 }
 
+int CGEPlayer::GetMaxArmor()
+{
+	int maxArmor = m_iMaxArmor;
+
+	if (m_iTotalMaxArmor >= 0)
+		maxArmor = min(maxArmor, m_iTotalMaxArmor - m_iTotalArmorPickup);
+
+	return max(maxArmor, 0);
+}
+
 bool CGEPlayer::AddArmor( int amount, int maxAmount )
 {
 	maxAmount = min(maxAmount, GetMaxArmor());
@@ -136,7 +149,11 @@ bool CGEPlayer::AddArmor( int amount, int maxAmount )
 	// If player can't carry any more armor return false.
 	if ( ArmorValue() < maxAmount )
 	{
-		GEStats()->Event_PickedArmor(this, min(maxAmount - ArmorValue(), amount));
+		int amountAdded = min(maxAmount - ArmorValue(), amount);
+		GEStats()->Event_PickedArmor(this, amountAdded);
+
+		if (m_iTotalMaxArmor >= 0) // Only keep track of total armor picked up if TotalMaxArmor is enabled.
+			m_iTotalArmorPickup += amountAdded;
 
 		const char* pickupSound;
 		const char* itemName;

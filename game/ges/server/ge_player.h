@@ -81,7 +81,11 @@ public:
 	void  SetDamageMultiplier( float mult )	{ m_flDamageMultiplier = clamp( mult, 0, 200.0f ); }
 	float GetDamageMultiplier()				{ return m_flDamageMultiplier; }
 	void  SetMaxArmor( int armor )			{ m_iMaxArmor = armor; }
-	int   GetMaxArmor( void )				{ return m_iMaxArmor; }
+	int   GetMaxArmor( void );
+	void  SetMaxTotalArmor( int armor )		{ m_iTotalMaxArmor = armor; }
+	int   GetMaxTotalArmor( void )			{ return m_iTotalMaxArmor; }
+	void  SetTotalArmorPickup( int armor )	{ m_iTotalArmorPickup = armor; }
+	int   GetTotalArmorPickup( void )		{ return m_iTotalArmorPickup; }
 	int   GetHudColor( void )				{ return m_iScoreBoardColor; }
 	void  SetHudColor( int color )			{ m_iScoreBoardColor = color; }
 
@@ -214,6 +218,8 @@ protected:
 	CUtlDict<float,int>	m_RateLimitLastCommandTimes;
 
 	CNetworkVar( int,	m_iMaxArmor );
+	CNetworkVar( int,	m_iTotalMaxArmor );
+	CNetworkVar( int,	m_iTotalArmorPickup );
 
 	// Let's us know when we are officially in aim mode
 	CNetworkVar(float, m_flFullZoomTime);

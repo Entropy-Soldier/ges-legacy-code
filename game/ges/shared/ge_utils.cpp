@@ -565,8 +565,7 @@ uint64 GEUTIL_GetUniqueSkinData(int steamhash)
 	return value;
 }
 
-// This is just to scare off the people who aren't hardcore, and make it a pain to share the skins.
-// If you're not part of the project and found this on github, congratulations!  You can give yourself some cool skins.
+// Legacy support for ivory DD44.  May or may not be retired after 5.1.
 void GEUTIL_WriteUniqueSkinData( uint64 value, int steamhash )
 {
 	uint64 origbits = GEUTIL_GetUniqueSkinData(steamhash);

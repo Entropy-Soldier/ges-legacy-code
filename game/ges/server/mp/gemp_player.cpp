@@ -305,6 +305,8 @@ void CGEMPPlayer::InitialSpawn()
 
 	SetMaxHealth( MAX_HEALTH );
 	SetMaxArmor( MAX_ARMOR );
+	SetMaxTotalArmor(-1); // Off by default.
+	SetTotalArmorPickup(0);
 
 	m_bPreSpawn = true;
 
@@ -740,6 +742,10 @@ void CGEMPPlayer::SetPlayerTeamModel()
 	BaseClass::SetPlayerModel();
 }
 
+extern ConVar ge_allow_unbalanced_teamswitch;
+extern ConVar ge_teamautobalance;
+extern ConVar ge_tournamentmode;
+
 void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 {
 	// If we haven't waited our change time tell them to slow down
@@ -756,6 +762,40 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 
 	if ( GERules()->IsTeamplay() )
 	{
+		CTeam *pJanus = g_Teams[TEAM_JANUS];
+		CTeam *pMI6 = g_Teams[TEAM_MI6];
+
+		// Deny teamswitch that attempts to unbalance the teams.  Switching to spectator is always allowed but players cannot unbalance the teams from there.
+		if ( !bWasForced && iTeam != TEAM_SPECTATOR && !ge_allow_unbalanced_teamswitch.GetBool() && ge_teamautobalance.GetBool() && !ge_tournamentmode.GetBool() )
+		{
+			int relativePlayercount = pMI6->GetNumPlayers() - pJanus->GetNumPlayers();
+			int relativePlayercountChange = 0; // negative means janus will have more players and positive means MI6 will.
+
+			// Seperating these two steps is important because people might be switching from spectator to a team.
+			if ( GetTeamNumber() == TEAM_JANUS ) //switching away from janus
+				relativePlayercountChange++;
+			else if ( GetTeamNumber() == TEAM_MI6 ) //switching away from MI6
+				relativePlayercountChange--;
+
+			if ( iTeam == TEAM_JANUS ) //switching to janus
+				relativePlayercountChange--; // Increase janus's lead
+			else if ( iTeam == TEAM_MI6 ) //switching to MI6
+				relativePlayercountChange++; // Increase MI6's lead
+
+			if ( abs(relativePlayercount + relativePlayercountChange) > 1 ) // This change will result in an unbalanced state!
+			{
+				if (relativePlayercount * relativePlayercountChange >= 0) // Same sign or relativePlayercount == 0 meaning teams were balanced before.  We're not making the situation better.
+				{
+					UTIL_SayText("This server does not allow teams to be unbalanced by that much!\n", this);
+
+					if ( m_bPreSpawn || GetTeamNumber() == TEAM_SPECTATOR ) // Spectators should be presented with the menu again since they have nothing better to do.
+						engine->ClientCommand(edict(), "teamselect");
+
+					return;
+				}
+			}
+		}
+
 		// Only suicide the player if they are switching teams and not observing and not forced to switch
 		if (GetTeamNumber() != TEAM_UNASSIGNED && !IsObserver() && !bWasForced)
 			bKill = true;
@@ -763,9 +803,11 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 		// The player is trying to Auto Join a team so set them up!
 		if ( iTeam == MAX_GE_TEAMS )
 		{
-			CTeam *pJanus = g_Teams[TEAM_JANUS];
-			CTeam *pMI6 = g_Teams[TEAM_MI6];
-			if ( pJanus->GetNumPlayers() > pMI6->GetNumPlayers() )
+			if (GetTeamNumber() == TEAM_MI6) // We're already on MI6!
+				iTeam = TEAM_MI6;
+			else if (GetTeamNumber() == TEAM_JANUS) // We're already on Janus!
+				iTeam = TEAM_JANUS;
+			else if ( pJanus->GetNumPlayers() > pMI6->GetNumPlayers() )
 				iTeam = TEAM_MI6;
 			else if ( pJanus->GetNumPlayers() < pMI6->GetNumPlayers() )
 				iTeam = TEAM_JANUS;
@@ -1829,6 +1871,8 @@ void CGEMPPlayer::OnGameplayEvent( GPEvent event )
 		SetSpeedMultiplier( 1.0f );
 		SetMaxHealth( MAX_HEALTH );
 		SetMaxArmor( MAX_ARMOR );
+		SetMaxTotalArmor(-1); // Off by default.
+		SetTotalArmorPickup(0);
 		SetInitialSpawn();  // Next time we spawn will be the "first" time
 		HintMessage( "", 0 );  // Reset hint messages
 	}

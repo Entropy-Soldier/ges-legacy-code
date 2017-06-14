@@ -29,6 +29,8 @@
 #include "gemp_gamerules.h"
 #include "ge_utils.h"
 
+#include "c_ge_playerresource.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -90,6 +92,8 @@ CGETeamMenu::CGETeamMenu(IViewPort *pViewPort) : Frame(NULL, PANEL_TEAM )
 	m_pServerOptList->SetHeaderFont( 0, pScheme->GetFont("TypeWriter", true) );
 
 	ListenForGameEvent( "game_newmap" );
+	ListenForGameEvent( "player_team" );
+	ListenForGameEvent( "player_disconnect" );
 	
 	m_szGameMode[0] = '\0';
 	m_szWeaponSet[0] = '\0';
@@ -97,6 +101,10 @@ CGETeamMenu::CGETeamMenu(IViewPort *pViewPort) : Frame(NULL, PANEL_TEAM )
 
 	m_bTeamplay = false;
 	m_flNextUpdateTime = 0;
+
+	m_iMI6Offset = 0;
+	m_iJanusOffset = 0;
+	m_iSpecOffset = 0;
 }
 
 void CGETeamMenu::OnGameplayDataUpdate( void )
@@ -116,7 +124,59 @@ void CGETeamMenu::OnGameplayDataUpdate( void )
 
 void CGETeamMenu::FireGameEvent( IGameEvent *pEvent )
 {
-	SetMapName( pEvent->GetString("mapname") );
+	if ( !Q_strcmp(pEvent->GetName(),"game_newmap"))
+		SetMapName( pEvent->GetString("mapname") );
+	else if ( !Q_strcmp(pEvent->GetName(),"player_team") ) // Someone joined a team so remake the team buttons.
+	{
+		m_iMI6Offset = 0; // Calculate offsets since the join event arives before the client team counters are updated.
+		m_iJanusOffset = 0; // Don't really need to do this since they always reset at the end, but could be a bit of future-proofing.
+		m_iSpecOffset = 0;
+
+		int newTeam = pEvent->GetInt("team");
+		int oldTeam = pEvent->GetInt("oldteam");
+
+		// Seperating these two steps is important because spectator might be involved.
+		if ( newTeam == TEAM_JANUS ) //switching to janus
+			m_iJanusOffset++;
+		else if ( newTeam == TEAM_MI6 ) //switching to MI6
+			m_iMI6Offset++;
+		else if ( newTeam == TEAM_SPECTATOR )
+			m_iSpecOffset++;
+
+		if ( oldTeam == TEAM_JANUS ) //switching away from janus
+			m_iJanusOffset--;
+		else if ( oldTeam == TEAM_MI6 ) //switching away from MI6
+			m_iMI6Offset--;
+		else if ( oldTeam == TEAM_SPECTATOR )
+			m_iSpecOffset--;
+
+		MakeTeamButtons();
+
+		m_iMI6Offset = 0; // Reset the offsets now that we've finished updating the buttons.
+		m_iJanusOffset = 0;
+		m_iSpecOffset = 0;
+	}
+	else // Someone is disconnecting so remake the buttons.
+	{
+		m_iMI6Offset = 0; // Calculate offsets since the disconnect event arives before the client team counters are updated.
+		m_iJanusOffset = 0; // Don't really need to do this since they always reset at the end, but could be a bit of future-proofing.
+		m_iSpecOffset = 0;
+
+		int team = GEPlayerRes()->GetTeam(engine->GetPlayerForUserID(pEvent->GetInt("userid")));
+
+		if ( team == TEAM_JANUS ) //switching away from janus
+			m_iJanusOffset--;
+		else if ( team == TEAM_MI6 ) //switching away from MI6
+			m_iMI6Offset--;
+		else if ( team == TEAM_SPECTATOR )
+			m_iSpecOffset--;
+
+		MakeTeamButtons();
+
+		m_iMI6Offset = 0; // Reset the offsets now that we've finished updating the buttons.
+		m_iJanusOffset = 0;
+		m_iSpecOffset = 0;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -204,7 +264,7 @@ void CGETeamMenu::OnCommand( const char *command )
 //-----------------------------------------------------------------------------
 // Purpose: sets the text on and displays the team buttons
 //-----------------------------------------------------------------------------
-void CGETeamMenu::MakeTeamButtons(void)
+void CGETeamMenu::MakeTeamButtons()
 {
 	// We can't make the team buttons until we have game resources!
 	if ( !GameResources() || !GetNumberOfTeams() )
@@ -222,7 +282,13 @@ void CGETeamMenu::MakeTeamButtons(void)
 		// Now create the buttons for the teams if we need them
 		for (int i=FIRST_GAME_TEAM; i < MAX_GE_TEAMS; i++)
 		{
-			Q_snprintf( szLabel, 32, "%s (%i)", GameResources()->GetTeamName(i), GetGlobalTeam(i)->Get_Number_Players() );
+			int offset = 0; // In case we need to predict team counts before they actually update.
+			if (i == TEAM_JANUS)
+				offset = m_iJanusOffset;
+			else if (i == TEAM_MI6)
+				offset = m_iMI6Offset;
+
+			Q_snprintf( szLabel, 32, "%s (%i)", GameResources()->GetTeamName(i), GetGlobalTeam(i)->Get_Number_Players() + offset );
 			AddButton( szLabel, i );
 		}
 	} else {
@@ -231,9 +297,12 @@ void CGETeamMenu::MakeTeamButtons(void)
 
 	// Lastly create the Spectator button (always last)
 	wchar_t specs[64];
-	GEUTIL_ParseLocalization( specs, 64, VarArgs( "#TM_Spectator\r%i", GetGlobalTeam(TEAM_SPECTATOR)->Get_Number_Players() ) );
+	GEUTIL_ParseLocalization( specs, 64, VarArgs( "#TM_Spectator\r%i", GetGlobalTeam(TEAM_SPECTATOR)->Get_Number_Players() + m_iSpecOffset ) );
 	AddButton( specs, TEAM_SPECTATOR );
 }
+
+extern ConVar ge_allow_unbalanced_teamswitch;
+extern ConVar ge_teamautobalance;
 
 vgui::Button *CGETeamMenu::AddButton( const char* label, int iTeam )
 {
@@ -246,13 +315,54 @@ vgui::Button *CGETeamMenu::AddButton( const char* label, int iTeam )
 	pImage->SetBounds( 0, 0, pPanel->GetWide(), pPanel->GetTall() );
 	pImage->SetAutoResize( Panel::PIN_TOPLEFT, Panel::AUTORESIZE_DOWNANDRIGHT, 0, 0, 0, 0 );
 
+	int thisTeam = TEAM_UNASSIGNED;
+	int thisTeamCount = 0;
+	int otherTeam = TEAM_INVALID;
+	int otherTeamCount = 0;
+	int currentTeam = TEAM_INVALID;
+	bool allowClick = true;
+
 	// Setup our background based on the team
 	if ( iTeam == TEAM_MI6 )
+	{
+		thisTeam = TEAM_MI6;
+		thisTeamCount = GetGlobalTeam(TEAM_MI6)->Get_Number_Players() + m_iMI6Offset;
+		otherTeam = TEAM_JANUS;
+		otherTeamCount = GetGlobalTeam(TEAM_JANUS)->Get_Number_Players() + m_iJanusOffset;
 		pImage->SetImage( "teamselect/button_mi6" );
+	}
 	else if ( iTeam == TEAM_JANUS )
+	{
+		thisTeam = TEAM_JANUS;
+		thisTeamCount = GetGlobalTeam(TEAM_JANUS)->Get_Number_Players() + m_iJanusOffset;
+		otherTeam = TEAM_MI6;
+		otherTeamCount = GetGlobalTeam(TEAM_MI6)->Get_Number_Players() + m_iMI6Offset;
 		pImage->SetImage( "teamselect/button_janus" );
+	}
 	else
 		pImage->SetImage( "teamselect/button_normal" );
+
+	CBasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pPlayer )
+		currentTeam = pPlayer->GetTeamNumber();
+
+	if ( otherTeam != TEAM_INVALID && currentTeam != thisTeam && !ge_allow_unbalanced_teamswitch.GetBool() && ge_teamautobalance.GetBool() )
+	{
+		if (currentTeam == otherTeam) // Switching across team boundaries, should not be able to switch when teams are equal.
+		{
+			if ( thisTeamCount >= otherTeamCount )
+				allowClick = false;
+			else
+				allowClick = true;
+		}
+		else // Joining from no team, can join when teams are equal.
+		{
+			if ( thisTeamCount > otherTeamCount )
+				allowClick = false;
+			else
+				allowClick = true;
+		}
+	}
 
 	char command[32];
 	Q_snprintf( command, sizeof(command), "jointeam %i", iTeam );
@@ -261,7 +371,15 @@ vgui::Button *CGETeamMenu::AddButton( const char* label, int iTeam )
 	pButton->SetContentAlignment( vgui::Label::a_center );
 	pButton->SetBounds( 0, 0, pPanel->GetWide(), pPanel->GetTall() );
 	pButton->SetAutoResize( Panel::PIN_TOPLEFT, Panel::AUTORESIZE_DOWNANDRIGHT, 0, 0, 0, 0 );
-	pButton->SetCommand( command );
+	pButton->SetCommand(command);
+	if (allowClick)
+	{
+		pButton->DisableMouseInputForThisPanel(false);
+	}
+	else
+	{
+		pButton->DisableMouseInputForThisPanel(true);
+	}
 	pButton->SetFont( scheme()->GetIScheme(GetScheme())->GetFont("TypeWriter", true) );
 	pButton->SetPaintBackgroundEnabled( false );
 	pButton->SetPaintBorderEnabled( false );
@@ -283,13 +401,54 @@ vgui::Button *CGETeamMenu::AddButton( const wchar_t* label, int iTeam )
 	pImage->SetBounds( 0, 0, pPanel->GetWide(), pPanel->GetTall() );
 	pImage->SetAutoResize( Panel::PIN_TOPLEFT, Panel::AUTORESIZE_DOWNANDRIGHT, 0, 0, 0, 0 );
 
+	int thisTeam = TEAM_UNASSIGNED;
+	int thisTeamCount = 0;
+	int otherTeam = TEAM_INVALID;
+	int otherTeamCount = 0;
+	int currentTeam = TEAM_INVALID;
+	bool allowClick = true;
+
 	// Setup our background based on the team
 	if ( iTeam == TEAM_MI6 )
+	{
+		thisTeam = TEAM_MI6;
+		thisTeamCount = GetGlobalTeam(TEAM_MI6)->Get_Number_Players() + m_iMI6Offset;
+		otherTeam = TEAM_JANUS;
+		otherTeamCount = GetGlobalTeam(TEAM_JANUS)->Get_Number_Players() + m_iJanusOffset;
 		pImage->SetImage( "teamselect/button_mi6" );
+	}
 	else if ( iTeam == TEAM_JANUS )
+	{
+		thisTeam = TEAM_JANUS;
+		thisTeamCount = GetGlobalTeam(TEAM_JANUS)->Get_Number_Players() + m_iJanusOffset;
+		otherTeam = TEAM_MI6;
+		otherTeamCount = GetGlobalTeam(TEAM_MI6)->Get_Number_Players() + m_iMI6Offset;
 		pImage->SetImage( "teamselect/button_janus" );
+	}
 	else
 		pImage->SetImage( "teamselect/button_normal" );
+
+	CBasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pPlayer )
+		currentTeam = pPlayer->GetTeamNumber();
+
+	if ( otherTeam != TEAM_INVALID && currentTeam != thisTeam && !ge_allow_unbalanced_teamswitch.GetBool() && ge_teamautobalance.GetBool() )
+	{
+		if (currentTeam == otherTeam) // Switching across team boundaries, should not be able to switch when teams are equal.
+		{
+			if ( thisTeamCount >= otherTeamCount )
+				allowClick = false;
+			else
+				allowClick = true;
+		}
+		else // Joining from no team, can join when teams are equal.
+		{
+			if ( thisTeamCount > otherTeamCount )
+				allowClick = false;
+			else
+				allowClick = true;
+		}
+	}
 
 	char command[32];
 	Q_snprintf( command, sizeof(command), "jointeam %i", iTeam );
@@ -299,6 +458,14 @@ vgui::Button *CGETeamMenu::AddButton( const wchar_t* label, int iTeam )
 	pButton->SetBounds( 0, 0, pPanel->GetWide(), pPanel->GetTall() );
 	pButton->SetAutoResize( Panel::PIN_TOPLEFT, Panel::AUTORESIZE_DOWNANDRIGHT, 0, 0, 0, 0 );
 	pButton->SetCommand( command );
+	if (allowClick)
+	{
+		pButton->DisableMouseInputForThisPanel(false);
+	}
+	else
+	{
+		pButton->DisableMouseInputForThisPanel(true);
+	}
 	pButton->SetFont( scheme()->GetIScheme(GetScheme())->GetFont("TypeWriter", true) );
 	pButton->SetPaintBackgroundEnabled( false );
 	pButton->SetPaintBorderEnabled( false );

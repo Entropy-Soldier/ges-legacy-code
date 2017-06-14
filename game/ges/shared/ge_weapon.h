@@ -79,6 +79,10 @@ public:
 	virtual float	GetHeldTime() { return gpGlobals->curtime - m_flDeployTime; };
 	virtual bool	CanEquip( CBaseCombatCharacter *pOther ) { return true; };
 
+	virtual float	GetSecondsUntilPickup() { return (m_flPickupAllowedTime > gpGlobals->curtime) ? (m_flPickupAllowedTime - gpGlobals->curtime) : 0; }
+	virtual void	SetSecondsUntilPickup( float timeDelay ) { if (timeDelay <= 0) m_flPickupAllowedTime = 0; else m_flPickupAllowedTime = gpGlobals->curtime + timeDelay; }
+	virtual void	SetRoundSecondsUntilPickup( float timeDelay );
+
 	// NPC Functions
 	virtual void	FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles );
 	virtual void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
@@ -210,6 +214,8 @@ private:
 	QAngle			m_vOriginalSpawnAngles;
 
 	float			m_flDeployTime;
+
+	float			m_flPickupAllowedTime;
 #endif
 
 	CGEWeapon( const CGEWeapon & );

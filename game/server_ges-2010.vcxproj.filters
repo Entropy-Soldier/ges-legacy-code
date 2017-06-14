@@ -3570,7 +3570,7 @@
     <ClInclude Include="ges\server\mp\ge_pickupitem.h">
       <Filter>GES\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="ges\server\ge_webkeys.h">
+    <ClInclude Include="ges\shared\ge_webkeys.h">
       <Filter>GES</Filter>
     </ClInclude>
   </ItemGroup>

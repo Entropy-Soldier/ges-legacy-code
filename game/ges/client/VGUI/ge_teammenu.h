@@ -91,6 +91,10 @@ protected:
 	ButtonCode_t	m_iJumpKey;
 	ButtonCode_t	m_iScoreBoardKey;
 
+	int m_iMI6Offset;
+	int m_iJanusOffset;
+	int m_iSpecOffset;
+
 	char m_szMapName[ MAX_PATH ];
 };
 

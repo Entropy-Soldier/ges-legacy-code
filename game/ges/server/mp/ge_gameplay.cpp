@@ -840,8 +840,9 @@ bool CGEBaseGameplayManager::ShouldEndMatch()
 	if ( IsGameOver() )
 		return true;
 
-	// We must be able to end our round to end the match
-	if ( IsInRound() && !ShouldEndRound() )
+	// We must be able to end our round to end the match.  
+	// IsInRound() and IsRoundTimeRunning() are not redundant.  IsInRound() can be true when ge_roundtime is 0 but mp_timelimit is not.  
+	if ( IsInRound() && GEMPRules()->IsRoundTimeRunning() && !ShouldEndRound() )
 		return false;
 
 	// Check time constraints

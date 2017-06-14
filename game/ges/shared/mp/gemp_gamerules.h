@@ -161,12 +161,17 @@ public:
 	bool  IsMatchTimeRunning();
 	bool  IsMatchTimePaused();
 	float GetMatchTimeRemaining();
+	float GetTimeSinceMatchStart();
 
 	// Round Timing
 	bool  IsRoundTimeEnabled();
 	bool  IsRoundTimeRunning();
 	bool  IsRoundTimePaused();
 	float GetRoundTimeRemaining();
+	float GetTimeSinceRoundStart();
+
+	bool  AllowXMusic() { return m_bAllowXMusic; };
+	void  SetAllowXMusic( bool newstate ) { m_bAllowXMusic = newstate; };
 
 	void SetShouldShowHUDTimer( bool newState );
 	bool ShouldShowHUDTimer();
@@ -290,10 +295,14 @@ private:
 	CNetworkVar( bool,	m_bTeamPlayDesired );
 	CNetworkVar( bool,  m_bGlobalInfAmmo );
 	CNetworkVar( bool,  m_bGamemodeInfAmmo );
+	CNetworkVar( bool,  m_bAllowXMusic );
 	CNetworkVar( bool,  m_bShouldShowHUDTimer );
 	CNetworkVar( int,	m_iTeamplayMode );
 	CNetworkVar( int, m_iScoreboardMode );
 	CNetworkVar( int, m_iAwardEventCode );
+
+	CNetworkVar( float, m_flRoundStartTime );
+	CNetworkVar( float, m_flMatchStartTime );
 
 	CNetworkHandle( CGEGameTimer, m_hMatchTimer );
 	CNetworkHandle( CGEGameTimer, m_hRoundTimer );

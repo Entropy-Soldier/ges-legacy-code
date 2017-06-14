@@ -117,6 +117,7 @@ CGEWeapon::CGEWeapon()
 
 #ifdef GAME_DLL
 	m_flDeployTime = 0.0f;
+	m_flPickupAllowedTime = 0.0f;
 
 	color32 col32 = { 255, 255, 255, 100 };
 	m_GlowColor.Set( col32 );
@@ -569,6 +570,10 @@ void CGEWeapon::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharac
 
 void CGEWeapon::DefaultTouch( CBaseEntity *pOther )
 {
+	// Can't pick up if we're not allowed yet.
+	if ( gpGlobals->curtime < m_flPickupAllowedTime )
+		return;
+
 	// Handle NPC's touching us
 	if ( pOther->IsNPC() )
 	{
@@ -610,6 +615,14 @@ int CGEWeapon::UpdateTransmitState()
 		return SetTransmitState(FL_EDICT_ALWAYS);
 	else
 		return BaseClass::UpdateTransmitState();
+}
+
+void CGEWeapon::SetRoundSecondsUntilPickup( float timeDelay )
+{ 
+	if (timeDelay - GEMPRules()->GetTimeSinceRoundStart() <= 0)
+		m_flPickupAllowedTime = 0;
+	else
+		m_flPickupAllowedTime = gpGlobals->curtime + timeDelay - GEMPRules()->GetTimeSinceRoundStart();
 }
 #endif
 

@@ -44,6 +44,9 @@ IMPLEMENT_CLIENTCLASS_DT(C_GEPlayer, DT_GE_Player, CGEPlayer)
 	RecvPropInt( RECVINFO( m_iMaxArmor ) ),
 	RecvPropInt( RECVINFO( m_iMaxHealth ) ),
 
+	RecvPropInt( RECVINFO( m_iTotalMaxArmor ) ),
+	RecvPropInt( RECVINFO( m_iTotalArmorPickup ) ),
+
 	RecvPropFloat( RECVINFO( m_flFullZoomTime ) ),
 	RecvPropFloat( RECVINFO( m_flSweepTime ) ),
 
@@ -74,6 +77,9 @@ C_GEPlayer::C_GEPlayer()
 	m_flEndSpecialMusic = 0.0f;
 	m_iMaxArmor = MAX_ARMOR;
 	m_iMaxHealth = MAX_HEALTH;
+
+	m_iTotalMaxArmor = -1;
+	m_iTotalArmorPickup = 0;
 
 	m_flSweepTime = 0;
 
@@ -250,6 +256,16 @@ void C_GEPlayer::CalcPlayerView( Vector& eyeOrigin, QAngle& eyeAngles, float& fo
 	BaseClass::CalcPlayerView( eyeOrigin, eyeAngles, fov );
 
 	GEViewEffects()->ApplyBreath();
+}
+
+int C_GEPlayer::GetMaxArmor()
+{
+	int maxArmor = m_iMaxArmor;
+
+	if (m_iTotalMaxArmor >= 0)
+		maxArmor = min(maxArmor, m_iTotalMaxArmor - m_iTotalArmorPickup);
+
+	return max(maxArmor, 0);
 }
 
 void C_GEPlayer::AdjustCollisionBounds( bool inflate )

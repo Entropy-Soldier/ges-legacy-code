@@ -78,7 +78,9 @@ public:
 	virtual void  AdjustCollisionBounds( bool inflate );
 
 	virtual int GetArmor()		{ return m_ArmorValue; };
-	virtual int GetMaxArmor()	{ return m_iMaxArmor;  };
+
+	// Get the maximum amount of armor that the player can currently pick up.  Might be lower than the value of iMaxArmor.
+	virtual int GetMaxArmor();
 	virtual int GetMaxHealth()	{ return m_iMaxHealth; };
 
 	C_BaseEntity *GetHat()		{ return m_hHat.Get(); };
@@ -114,6 +116,9 @@ private:
 	int m_ArmorValue;
 	int m_iMaxArmor;
 	int m_iMaxHealth;
+
+	int m_iTotalMaxArmor;
+	int m_iTotalArmorPickup;
 
 	bool m_bSentUnlockCode;
 };
