@@ -76,6 +76,9 @@ public:
 
 	void ClearAllContacts();
 
+	void SetInvisState( bool greyScale );
+	void SetToTeamColor( int team );
+
 	// Static colors!
 	static Color	s_ColorDM;
 	static Color	s_ColorJanus;
@@ -108,6 +111,8 @@ private:
 	float			m_flScaleY;
 	float			m_flRadarDiameter;
 	int				m_iSideBuff;
+
+	bool			m_bGreyScale;
 
 	// Textures!
 	CHudTexture		*m_Background;
@@ -232,8 +237,10 @@ CGERadar::CGERadar( const char *pElementName ) :
 	m_iSideBuff = 8;
 	m_flRadarDiameter = 1.0f;
 
+	m_bGreyScale = false;
+
 	ListenForGameEvent( "round_start" );
-	ListenForGameEvent( "player_team" );
+	//ListenForGameEvent( "player_team" );
 	ListenForGameEvent( "player_spawn" );
 }
 
@@ -302,32 +309,26 @@ void CGERadar::FireGameEvent( IGameEvent *event )
 		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 		if (pPlayer && pPlayer->GetUserID() == event->GetInt("userid"))
 		{
-			m_BackgroundColor = BG_COLOR_SPAWNING;
+			int radarIndex = g_RR->FindEntityIndex(pPlayer->GetRefEHandle().ToInt());
 
-			// For tweaking during development
-			int r, g, b, a;
-			m_BackgroundColor.GetColor(r, g, b, a);
-			m_BackgroundColor.SetColor(r, g, b, DEBUG_cl_ge_radarSAValue.GetInt());
+			// If we're in spawn invulnerability, reflect that on our radar.
+			if (radarIndex != -1 && g_RR->GetState(radarIndex) == RADAR_STATE_NODRAW)
+				SetInvisState(true);
+			else // Otherwise make sure it's off and our correct team color is assigned.
+				SetInvisState(false);
 		}
 	}
-	else if ( !Q_strcmp( event->GetName(), "player_team" ) )
+	/*else if ( !Q_strcmp( event->GetName(), "player_team" ) )
 	{
 		// Figure out which background we should use
 		// TODO: This should probably be in real-time code to catch observer team...
 		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	
 		if ( pPlayer && pPlayer->GetUserID() == event->GetInt("userid") )
-		{
-			int team = event->GetInt( "team" );
-			if ( team == TEAM_MI6 )
-				m_BackgroundColor = BG_COLOR_MI6;
-			else if ( team == TEAM_JANUS )
-				m_BackgroundColor = BG_COLOR_JANUS;
-			else
-				m_BackgroundColor = BG_COLOR_FFA;
-		}
+			SetToTeamColor(event->GetInt( "team" ));
 
 		Reset();
-	}
+	}*/  // No need for this now since we check this on player spawn.
 	else if ( !Q_strcmp( event->GetName(), "round_start" ) )
 	{
 		// Purge all our contacts at the start of a round
@@ -386,14 +387,18 @@ void CGERadar::OnThink( void )
 	for( int i=0; i < MAX_NET_RADAR_ENTS; ++i )
 	{
 		iEntSerial = g_RR->GetEntSerial(i);
+
+		// Don't add yourself, but do check for a change in your own radar invis status.
+		if ( iEntSerial == iLocalSerial )
+		{
+			SetInvisState( g_RR->GetState(i) != RADAR_STATE_DRAW );
+			continue;
+		}
+
 		if ( iEntSerial != INVALID_EHANDLE_INDEX && g_RR->GetState(i) == RADAR_STATE_DRAW )
 		{
 			// Don't add enemy teams if the convar isn't set
 			if ( GEMPRules()->IsTeamplay() && !ge_radar_showenemyteam.GetBool() && g_RR->GetEntTeam(i) != pLocalPlayer->GetTeamNumber() && g_RR->GetType(i) == RADAR_TYPE_PLAYER )
-				continue;
-
-			// Don't add yourself
-			if ( iEntSerial == iLocalSerial )
 				continue;
 
 			// Don't add the current observed target
@@ -402,11 +407,6 @@ void CGERadar::OnThink( void )
 				if ( pLocalPlayer->GetObserverTarget()->GetRefEHandle().ToInt() == iEntSerial )
 					continue;
 			}
-
-			// DO LATER:
-			// Don't show contacts the gamerules say we shouldn't.
-
-
 
 			// Never add a contact that is out of range initially or set to not draw on the radar (don't include campers!)
 			if ( !g_RR->GetAlwaysVisible(i) && !IsContactCamping(iEntSerial) && !IsContactInRange(g_RR->GetOrigin(i)) )
@@ -576,6 +576,43 @@ void CGERadar::WorldToRadar( CGERadarContact *contact )
 		contact->m_flAlphaMod = 1.0f;
 }
 
+// Set the radar to either display in the spawn invuln state or not.
+void CGERadar::SetInvisState(bool greyScale)
+{
+	if ( greyScale == m_bGreyScale ) // We're already in this state.
+		return;
+
+	CGEMPPlayer *pLocalGEPlayer = ToGEMPPlayer(C_BasePlayer::GetLocalPlayer());
+
+	if (!pLocalGEPlayer)
+		return;
+
+	if (greyScale)
+	{
+		m_BackgroundColor = BG_COLOR_SPAWNING;
+
+		// For tweaking during development
+		int r, g, b, a;
+		m_BackgroundColor.GetColor(r, g, b, a);
+		m_BackgroundColor.SetColor(r, g, b, DEBUG_cl_ge_radarSAValue.GetInt());
+	}
+	else
+		SetToTeamColor(pLocalGEPlayer->GetTeamNumber());
+
+	m_bGreyScale = greyScale;
+}
+
+void CGERadar::SetToTeamColor(int team)
+{
+	switch (team)
+	{ 
+		case TEAM_MI6: m_BackgroundColor = BG_COLOR_MI6; break;
+		case TEAM_JANUS: m_BackgroundColor = BG_COLOR_JANUS; break;
+		case TEAM_UNASSIGNED: m_BackgroundColor = BG_COLOR_FFA; break;
+		default: m_BackgroundColor = BG_COLOR_SPAWNING; break;
+	}
+}
+
 //---------------------------------------------------------
 // Purpose: Draw the radar panel.
 //			We're probably doing too much other work in here
@@ -608,17 +645,6 @@ void CGERadar::Paint()
 
 		if (sweepTime + BG_SWEEP_TIME > gpGlobals->curtime)
 		{
-			if (m_BackgroundColor == BG_COLOR_SPAWNING)
-			{
-				switch (pLocalGEPlayer->GetTeamNumber())
-				{ 
-					case TEAM_MI6: m_BackgroundColor = BG_COLOR_MI6; break;
-					case TEAM_JANUS: m_BackgroundColor = BG_COLOR_JANUS; break;
-					case TEAM_UNASSIGNED: m_BackgroundColor = BG_COLOR_FFA; break;
-					default: m_BackgroundColor = BG_COLOR_SPAWNING; break;
-				}
-			}
-
 			int r, g, b, a;
 			Color sweepcol = bgcol;
 
