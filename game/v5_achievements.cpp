@@ -815,7 +815,7 @@ private:
 DECLARE_GE_ACHIEVEMENT(CAchLastManHiding, ACHIEVEMENT_GES_LASTMANHIDING, "GES_LASTMANHIDING", 100, GE_ACH_UNLOCKED);
 
 
-// Frags to Riches: Trade the grenade for the golden gun in Investment Losses
+// Frags to Riches: Trade the grenade for the golden gun or gold PP7 in GunTrade
 class CAchFragsToRiches : public CGEAchievement
 {
 protected:
@@ -1268,7 +1268,7 @@ private:
 DECLARE_GE_ACHIEVEMENT(CAchLicenceToSpreeKill, ACHIEVEMENT_GES_LICENCETOSPREEKILL, "GES_LICENCETOSPREEKILL", 100, GE_ACH_UNLOCKED);
 
 
-// View to no kills: Win VTAK without killing anyone
+// View to no kills: Survive 3 minutes in VTAK without killing anyone.
 class CAchViewToNoKills : public CGEAchievement
 {
 protected:
@@ -1281,7 +1281,7 @@ protected:
 
 	virtual void VarInit()
 	{
-		m_bKilledSomeone = false;
+		m_flLastKillTime = 0;
 	}
 
 	virtual void ListenForEvents()
@@ -1289,6 +1289,7 @@ protected:
 		ListenForGameEvent("player_death");
 		ListenForGameEvent("round_end");
 		ListenForGameEvent("round_start");
+		ListenForGameEvent("player_spawn");
 		VarInit();
 	}
 
@@ -1298,26 +1299,38 @@ protected:
 		if (!pPlayer)
 			return;
 
+		if (!IsScenario("viewtoakill", false))
+			return;
+
 		if (!Q_stricmp(event->GetName(), "player_death"))
 		{
-			// If this isn't us doing the killing we don't care
-			if (event->GetInt("attacker") != pPlayer->GetUserID())
+			// If this isn't us doing the killing or dying we don't care
+			if ( event->GetInt("attacker") != pPlayer->GetUserID() && event->GetInt("userid") != pPlayer->GetUserID() )
 				return;
 
 			// But if it is...
-			m_bKilledSomeone = true;
-		}
-		else if (!Q_stricmp(event->GetName(), "round_start"))
-			m_bKilledSomeone = false; //Reset our kill flag.
-		else if (!Q_stricmp(event->GetName(), "round_end"))
-		{
-			if (!m_bKilledSomeone && pPlayer->entindex() == event->GetInt("winnerid") && IsScenario("viewtoakill")
-				&& event->GetInt("roundlength") > 120 && CalcPlayerCount() >= 4)
+			if ( gpGlobals->curtime - m_flLastKillTime > 180 && CalcPlayerCount() >= 6 ) // 180 seconds = 3 minutes.
 				IncrementCount();
+
+			m_flLastKillTime = gpGlobals->curtime;
+		}
+		else if ( !Q_stricmp(event->GetName(), "player_spawn") )
+		{
+			if ( event->GetInt("userid") == pPlayer->GetUserID() )
+				m_flLastKillTime = gpGlobals->curtime;
+		}
+		else if ( !Q_stricmp(event->GetName(), "round_start") )
+			m_flLastKillTime = gpGlobals->curtime; //Reset our kill flag.
+		else if ( !Q_stricmp(event->GetName(), "round_end") )
+		{
+			if ( gpGlobals->curtime - m_flLastKillTime > 180 && CalcPlayerCount() >= 6 ) // 180 seconds = 3 minutes.
+				IncrementCount();
+
+			m_flLastKillTime = gpGlobals->curtime;
 		}
 	}
 private:
-	bool m_bKilledSomeone;
+	float m_flLastKillTime;
 };
 DECLARE_GE_ACHIEVEMENT(CAchViewToNoKills, ACHIEVEMENT_GES_VIEWTONOKILLS, "GES_VIEWTONOKILLS", 100, GE_ACH_UNLOCKED);
 

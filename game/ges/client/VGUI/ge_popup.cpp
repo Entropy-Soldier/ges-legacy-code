@@ -1,12 +1,9 @@
-///////////// Copyright © 2010 LodleNet. All rights reserved. /////////////
+///////////// Copyright © 2017, Goldeneye: Source. All rights reserved. /////////////
 //
 //   Project     : Client
-//   File        : ge_updatechecker.cpp
-//   Description :
-//      [TODO: Write the purpose of ge_updatechecker.cpp.]
+//   File        : ge_popup.cpp
+//   Description : Generic popup box with a message since I couldn't seem to find one that already existed.
 //
-//   Created On: 3/6/2010 4:44:17 PM
-//   Created By: Mark Chandler <mailto:mark@moddb.com>
 ////////////////////////////////////////////////////////////////////////////
 
 #include "cbase.h"

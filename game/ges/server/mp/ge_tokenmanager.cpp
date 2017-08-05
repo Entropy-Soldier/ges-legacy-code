@@ -334,11 +334,11 @@ bool CGETokenManager::GetTokenRespawnDelay( const char *szClassName, float *flDe
 	return true;
 }
 
-void CGETokenManager::OnTokenSpawned( CGEWeapon *pToken )
+bool CGETokenManager::OnTokenSpawned( CGEWeapon *pToken )
 {
 	CGETokenDef *ttype = GetTokenDef( pToken->GetClassname() );
 	if ( !ttype )
-		return;
+		return true; // Still return true since we are not deleting an invalid token.
 
 	// Checks to make sure we are a valid token
 	CGESpawner *pSpawner = dynamic_cast<CGESpawner*>( pToken->GetOwnerEntity() );
@@ -358,13 +358,14 @@ void CGETokenManager::OnTokenSpawned( CGEWeapon *pToken )
 			GEGameplay()->GetScenario()->OnTokenSpawned( pToken );
 
 			// We're done!
-			return;
+			return true;
 		}
 	}
 
 	// We are invalid, remove us and issue a warning
 	RemoveTokenEnt( pToken, false );
-	DevWarning( "[TknMgr] Token (%s) spawned outside of a valid spawner!\n", pToken->GetClassname() );	
+	Warning( "[TknMgr] Token (%s) spawned outside of a valid spawner!\n", pToken->GetClassname() );	
+	return false;
 }
 
 void CGETokenManager::OnTokenRemoved( CGEWeapon *pToken )

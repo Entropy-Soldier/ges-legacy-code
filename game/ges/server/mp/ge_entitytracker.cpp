@@ -79,7 +79,7 @@ bool CGEEntityTracker::AddItemToTracker( CBaseEntity *pEntity, char list /*== ET
 		default: return false; // Invalid list.
 	}
 
-//	Warning("Added %s to item tracker, tracking count is now %d\n", pEntity->GetClassname(), m_vGamemodeEntList.Count() + m_vMapEntList.Count() + m_vArmorList.Count() + m_vAmmoList.Count() + m_vWeaponList.Count() );
+	//Warning("Added %s to item tracker, tracking count is now %d\n", pEntity->GetClassname(), m_vGamemodeEntList.Count() + m_vMapEntList.Count() + m_vArmorList.Count() + m_vAmmoList.Count() + m_vWeaponList.Count() );
 
 	// Notify python of our newly tracked item.
 	if ( GetScenario() )

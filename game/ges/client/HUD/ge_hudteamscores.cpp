@@ -25,7 +25,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-DECLARE_HUDELEMENT( CHudTeamScores );
+//DECLARE_HUDELEMENT( CHudTeamScores );
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor

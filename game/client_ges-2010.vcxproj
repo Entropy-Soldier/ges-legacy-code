@@ -927,6 +927,7 @@
     <ClCompile Include="sdk\client\entity_client_tools.cpp" />
     <ClCompile Include="sdk\client\toolframework_client.cpp" />
     <ClCompile Include="sdk\client\mp3player.cpp" />
+    <ClCompile Include="v5_1_achievements.cpp" />
     <ClCompile Include="v5_achievements.cpp" />
   </ItemGroup>
   <ItemGroup>

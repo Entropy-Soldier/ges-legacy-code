@@ -27,7 +27,8 @@
 #include "tier0/memdbgon.h"
 
 #define	SLAPPER_RANGE		65.0f
-#define	STOCK_RANGE			70.0f
+#define	STOCK_RANGE			65.0f
+#define STOCK_MODEL			"models/weapons/sniperrifle/v_buttstock.mdl"
 
 #ifdef CLIENT_DLL
 #define CWeaponSlappers C_WeaponSlappers
@@ -53,15 +54,19 @@ public:
 
 	virtual GEWeaponID GetWeaponID( void ) const { return WEAPON_SLAPPERS; }
 
-	float		GetRange( void )		{	return	SLAPPER_RANGE;	}
+	float		GetRange( void )		{	return	m_bIsRifleButt ? STOCK_RANGE : SLAPPER_RANGE;	}
 	bool		DamageWorld()			{	return	false;			}
 
 	virtual void	Precache(void);
 	void		AddViewKick( void );
-	void		SecondaryAttack( void )	{	return;	}
+	void		SecondaryAttack( void )	{ return; }
+	void		SetViewModel( void );
+	void		EnableAlternateViewmodel( bool enabled );
 
 	virtual void Equip( CBaseCombatCharacter *pOwner );
 	virtual void Drop( const Vector &vecVelocity );
+
+	virtual bool Deploy( void );
 
 	// Animation event
 #ifndef CLIENT_DLL
@@ -71,6 +76,9 @@ public:
 
 protected:
 	virtual	void	ImpactEffect( trace_t &trace );
+
+	CNetworkVar( bool, m_bIsRifleButt );
+	CNetworkVar( bool, m_bWantsToBeRifleButt );
 
 private:
 	CWeaponSlappers( const CWeaponSlappers & );		
@@ -83,6 +91,13 @@ private:
 IMPLEMENT_NETWORKCLASS_ALIASED( WeaponSlappers, DT_WeaponSlappers )
 
 BEGIN_NETWORK_TABLE( CWeaponSlappers, DT_WeaponSlappers )
+#ifdef CLIENT_DLL
+	RecvPropBool( RECVINFO( m_bIsRifleButt ) ),
+	RecvPropBool( RECVINFO( m_bWantsToBeRifleButt ) ),
+#else
+	SendPropBool( SENDINFO( m_bIsRifleButt ) ),
+	SendPropBool( SENDINFO( m_bWantsToBeRifleButt ) ),
+#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CWeaponSlappers )
@@ -116,13 +131,15 @@ IMPLEMENT_ACTTABLE(CWeaponSlappers);
 //-----------------------------------------------------------------------------
 CWeaponSlappers::CWeaponSlappers( void )
 {
-
+	m_bIsRifleButt = false;
+	m_bWantsToBeRifleButt = false;
 }
 
 void CWeaponSlappers::Precache(void)
 {
 	PrecacheModel("models/weapons/slappers/v_slappers.mdl");
 	PrecacheModel("models/weapons/slappers/w_slappers.mdl");
+	PrecacheModel( STOCK_MODEL );
 
 	PrecacheScriptSound("Weapon_slappers.Swing");
 	PrecacheScriptSound("Weapon_slappers.Smack");
@@ -168,7 +185,7 @@ void CWeaponSlappers::HandleAnimEventMeleeHit( animevent_t *pEvent, CBaseCombatC
 	AngleVectors( GetAbsAngles(), &vecDirection );
 
 	Vector vecEnd;
-	VectorMA( pOperator->Weapon_ShootPosition(), SLAPPER_RANGE, vecDirection, vecEnd );
+	VectorMA( pOperator->Weapon_ShootPosition(), GetRange(), vecDirection, vecEnd );
 	CBaseEntity *pHurt = pOperator->CheckTraceHullAttack( pOperator->Weapon_ShootPosition(), vecEnd, Vector(-16,-16,-16), Vector(36,36,36), GetGEWpnData().m_iDamage, DMG_CLUB );
 	
 	// did I hit someone?
@@ -217,6 +234,23 @@ void CWeaponSlappers::Equip( CBaseCombatCharacter *pOwner )
 	BaseClass::Equip( pOwner );
 	CollisionProp()->SetCollisionBounds( -Vector(16,16,16), Vector(16,16,16) );
 }
+
+bool CWeaponSlappers::Deploy( void )
+{
+	if ( m_bWantsToBeRifleButt && !m_bIsRifleButt )
+	{
+		m_bIsRifleButt = true;
+		SetViewModel();
+	}
+	else if ( !m_bWantsToBeRifleButt && m_bIsRifleButt )
+	{
+		m_bIsRifleButt = false;
+		SetViewModel();
+	}
+
+	return BaseClass::Deploy();;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -230,4 +264,28 @@ void CWeaponSlappers::Drop( const Vector &vecVelocity )
 void CWeaponSlappers::ImpactEffect( trace_t &traceHit )
 {
 	// Slappers don't make impact marks
+}
+
+void CWeaponSlappers::EnableAlternateViewmodel( bool enabled )
+{
+	m_bWantsToBeRifleButt = enabled;
+}
+
+void CWeaponSlappers::SetViewModel()
+{
+	if (!m_bIsRifleButt)
+	{
+		BaseClass::SetViewModel();
+		return;
+	}
+
+	CGEPlayer *pGEPlayer = ToGEPlayer(GetOwner());
+	if (!pGEPlayer)
+		return;
+	CBaseViewModel *vm = pGEPlayer->GetViewModel(m_nViewModelIndex);
+	if (vm == NULL)
+		return;
+
+	vm->SetWeaponModel( STOCK_MODEL, this );
+	vm->m_nSkin = m_nSkin;
 }

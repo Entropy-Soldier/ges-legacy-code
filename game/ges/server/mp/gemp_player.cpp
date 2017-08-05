@@ -765,6 +765,11 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 		CTeam *pJanus = g_Teams[TEAM_JANUS];
 		CTeam *pMI6 = g_Teams[TEAM_MI6];
 
+		// If we're trying to join the DM team when it's teamplay switch to auto-join instead.
+		// Seriously things get ~crazy~ without this.
+		if (iTeam == TEAM_UNASSIGNED)
+			iTeam = MAX_GE_TEAMS;
+
 		// Deny teamswitch that attempts to unbalance the teams.  Switching to spectator is always allowed but players cannot unbalance the teams from there.
 		if ( !bWasForced && iTeam != TEAM_SPECTATOR && !ge_allow_unbalanced_teamswitch.GetBool() && ge_teamautobalance.GetBool() && !ge_tournamentmode.GetBool() )
 		{

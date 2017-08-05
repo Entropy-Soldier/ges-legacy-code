@@ -1755,6 +1755,9 @@
     <ClCompile Include="ges\client\VGUI\ge_popup.cpp">
       <Filter>GES\VGUI\Menu</Filter>
     </ClCompile>
+    <ClCompile Include="v5_1_achievements.cpp">
+      <Filter>GES\Achievements</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ges\client\clientmode_ge.h">

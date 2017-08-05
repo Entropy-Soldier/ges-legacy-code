@@ -141,7 +141,9 @@ public:
 	void RemoveCaptureAreas( const char *name = NULL, int count = -1 );
 
 	// Called from CGEWeapon
-	void OnTokenSpawned( CGEWeapon *pToken );
+
+	// Returns true if entity is allowed to spawn, false if not.
+	bool OnTokenSpawned( CGEWeapon *pToken );
 	void OnTokenRemoved( CGEWeapon *pToken );
 	void OnTokenPicked( CGEWeapon *pToken, CGEPlayer *pPlayer );
 	void OnTokenDropped( CGEWeapon *pToken, CGEPlayer *pPlayer );

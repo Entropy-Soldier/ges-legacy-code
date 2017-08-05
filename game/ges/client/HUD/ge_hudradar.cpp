@@ -130,14 +130,17 @@ private:
 };
 
 
-#define BG_ALPHA_PLAYER 225
+#define BG_ALPHA_PLAYER 245
 #define BG_ALPHA_SPECTATOR 255
+#define BG_ALPHA_SPAWNING 50
 #define BG_COLOR_FFA_VALUES 0, 255, 0, BG_ALPHA_PLAYER
 #define BG_COLOR_JANUS_VALUES 224, 37, 43, BG_ALPHA_PLAYER
 #define BG_COLOR_MI6_VALUES 8, 161, 248, BG_ALPHA_PLAYER
+#define BG_COLOR_SPAWNING_VALUES 255, 255, 255, BG_ALPHA_SPAWNING
 #define BG_COLOR_FFA Color(BG_COLOR_FFA_VALUES)
 #define BG_COLOR_JANUS Color(BG_COLOR_JANUS_VALUES)
 #define BG_COLOR_MI6 Color(BG_COLOR_MI6_VALUES)
+#define BG_COLOR_SPAWNING Color(BG_COLOR_SPAWNING_VALUES)
 #define BG_SWEEP_TIME 1.0
 #define BG_SWEEP_ALPHA 50
 
@@ -196,6 +199,7 @@ extern ConVar ge_radar_showenemyteam;
 
 ConVar cl_ge_showradar( "cl_ge_showradar", "1", FCVAR_ARCHIVE | FCVAR_CLIENTDLL, "Toggles the radar if allowed in the server" );
 ConVar cl_ge_radarpos( "cl_ge_radarpos", "0", FCVAR_ARCHIVE | FCVAR_CLIENTDLL, "Positions the radar in set locations clockwise from middle-bottom [0:5]", GERadarPos_Callback );
+ConVar DEBUG_cl_ge_radarSAValue( "DEBUG_cl_ge_radarSAValue", "50", FCVAR_ARCHIVE | FCVAR_CLIENTDLL, "Tweak the radar alpha used in spawn mode" );
 
 DECLARE_HUDELEMENT( CGERadar );
 
@@ -230,6 +234,7 @@ CGERadar::CGERadar( const char *pElementName ) :
 
 	ListenForGameEvent( "round_start" );
 	ListenForGameEvent( "player_team" );
+	ListenForGameEvent( "player_spawn" );
 }
 
 //---------------------------------------------------------
@@ -292,7 +297,20 @@ void CGERadar::Reset( void )
 
 void CGERadar::FireGameEvent( IGameEvent *event )
 {
-	if ( !Q_strcmp( event->GetName(), "player_team" ) )
+	if ( !Q_stricmp(event->GetName(), "player_spawn") )
+	{
+		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+		if (pPlayer && pPlayer->GetUserID() == event->GetInt("userid"))
+		{
+			m_BackgroundColor = BG_COLOR_SPAWNING;
+
+			// For tweaking during development
+			int r, g, b, a;
+			m_BackgroundColor.GetColor(r, g, b, a);
+			m_BackgroundColor.SetColor(r, g, b, DEBUG_cl_ge_radarSAValue.GetInt());
+		}
+	}
+	else if ( !Q_strcmp( event->GetName(), "player_team" ) )
 	{
 		// Figure out which background we should use
 		// TODO: This should probably be in real-time code to catch observer team...
@@ -577,7 +595,7 @@ void CGERadar::Paint()
 	{
 		int r, g, b, a;
 		bgcol.GetColor(r, g, b, a);
-		bgcol.SetColor(r, g, b, 255);
+		bgcol.SetColor(r, g, b, BG_ALPHA_SPECTATOR);
 	}
 
 	m_Background->DrawSelf(m_iSideBuff, m_iSideBuff, m_flRadarDiameter, m_flRadarDiameter, bgcol);
@@ -590,6 +608,17 @@ void CGERadar::Paint()
 
 		if (sweepTime + BG_SWEEP_TIME > gpGlobals->curtime)
 		{
+			if (m_BackgroundColor == BG_COLOR_SPAWNING)
+			{
+				switch (pLocalGEPlayer->GetTeamNumber())
+				{ 
+					case TEAM_MI6: m_BackgroundColor = BG_COLOR_MI6; break;
+					case TEAM_JANUS: m_BackgroundColor = BG_COLOR_JANUS; break;
+					case TEAM_UNASSIGNED: m_BackgroundColor = BG_COLOR_FFA; break;
+					default: m_BackgroundColor = BG_COLOR_SPAWNING; break;
+				}
+			}
+
 			int r, g, b, a;
 			Color sweepcol = bgcol;
 

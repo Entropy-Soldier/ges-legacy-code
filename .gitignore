@@ -35,4 +35,4 @@ lib/gtest/ServerTest*
 build*/
 game/ges/server/ge_textencryptor.cpp
 game/ges/server/ge_textencryptor.h
-game/ges/server/ge_webkeys.h
+game/ges/shared/ge_webkeys.h

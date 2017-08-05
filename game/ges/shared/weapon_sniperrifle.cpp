@@ -51,6 +51,7 @@ public:
 	}
 
 	virtual void	Precache(void);
+	virtual void	Equip( CBaseCombatCharacter *pOwner );
 	virtual GEWeaponID GetWeaponID(void) const { return WEAPON_SNIPER_RIFLE; }
 	virtual bool CanBeSilenced(void) { return true; }
 
@@ -155,4 +156,31 @@ void CWeaponSniper::Precache(void)
 	PrecacheScriptSound("Weapon.Special2");
 
 	BaseClass::Precache();
+}
+
+void CWeaponSniper::Equip( CBaseCombatCharacter *pOwner )
+{
+	BaseClass::Equip( pOwner );
+	
+	// Since we got the sniper we also get the sniper rifle butt!
+	CGEPlayer *pGEPlayer = ToGEPlayer(GetOwner());
+
+	if (!pGEPlayer)
+		return;
+
+	CGEWeapon *pWeapon;
+	// Scan the player's held weapons and find their slappers.  Not a big deal since we'll only ever
+	// do this once per life.
+	for (int i = 0; i < MAX_WEAPONS; i++)
+	{
+		pWeapon = ToGEWeapon(pGEPlayer->GetWeapon(i));
+		if (!pWeapon)
+			continue;
+
+		if (pWeapon->GetWeaponID() == WEAPON_SLAPPERS) // Good work we found it.
+		{
+			pWeapon->EnableAlternateViewmodel( true );
+			break;
+		}
+	}
 }

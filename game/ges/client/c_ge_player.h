@@ -90,6 +90,9 @@ public:
 	virtual void		FireBullets( const FireBulletsInfo_t &info );
 	virtual bool		Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex = GE_RIGHT_HAND );
 
+	virtual int GetLastUsedWeaponForBucket(int bucket)	{ return (bucket >= 0 && bucket < 10) ? m_iLastUsedWeaponInBucket[bucket] : -1; }
+	virtual void SetLastUsedWeaponForBucket(int bucket, int value)	{ if (bucket >= 0 && bucket < 10) m_iLastUsedWeaponInBucket[bucket] = value; }
+
 protected:
 	IMaterial *m_pDM_VoiceHeadMaterial;
 	IMaterial *m_pMI6_VoiceHeadMaterial;
@@ -119,6 +122,9 @@ private:
 
 	int m_iTotalMaxArmor;
 	int m_iTotalArmorPickup;
+
+	// Stores the weapon that was most recently used in each bucket.
+	int m_iLastUsedWeaponInBucket[10];
 
 	bool m_bSentUnlockCode;
 };

@@ -134,6 +134,8 @@ public:
 	virtual int		GetBodygroupFromName(const char* name);
 	virtual void	SwitchBodygroup( int group, int value );
 	
+	virtual void	EnableAlternateViewmodel( bool enabled ) {}; // Does nothing on most weapons.
+
 	virtual void	SetPickupTouch( void );
 	virtual void	MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int iTracerType );
 

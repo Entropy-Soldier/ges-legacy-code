@@ -86,6 +86,8 @@ C_GEPlayer::C_GEPlayer()
 	m_iNewZoomOffset = 0;
 	m_bSentUnlockCode = false;
 
+	memset(m_iLastUsedWeaponInBucket, 0, 10);
+
 	// Load our voice overhead icons if not done yet
 	if ( m_pDM_VoiceHeadMaterial == NULL )
 	{

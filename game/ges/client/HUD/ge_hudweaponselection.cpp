@@ -14,6 +14,8 @@
 #include "history_resource.h"
 #include "input.h"
 #include "weapon_parse.h"
+#include "c_ge_player.h"
+#include "in_buttons.h"
 
 #include <KeyValues.h>
 #include <vgui/IScheme.h>
@@ -34,6 +36,7 @@ using namespace vgui;
 
 ConVar cl_ge_hud_fastswitchlist("cl_ge_hud_fastswitchlist", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Show all held weapons on fast switch.");
 ConVar cl_ge_hud_noswitchlist("cl_ge_hud_noswitchlist", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Hide weaponlist entirely on switch.");
+ConVar cl_ge_hud_uselastbucketitem("cl_ge_hud_uselastbucketitem", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "When first switching buckets with the number keys, select the last used weapon in that bucket.");
 
 //-----------------------------------------------------------------------------
 // Purpose: Selection of weapons for GE:Source
@@ -76,7 +79,7 @@ protected:
 private:
 	void FastWeaponSwitch( int iWeaponSlot );
 
-	virtual void SetSelectedWeapon( C_BaseCombatWeapon *pWeapon ) { m_hSelectedWeapon = pWeapon; };
+	virtual void SetSelectedWeapon( C_BaseCombatWeapon *pWeapon, bool recordSelection = true );
 
 	void DrawBox(int x, int y, int wide, int tall, Color color, int number = -1 );
 
@@ -158,6 +161,20 @@ bool CHudWeaponSelection::ShouldDraw()
 	return m_bSelectionVisible;
 }
 
+void CHudWeaponSelection::SetSelectedWeapon( C_BaseCombatWeapon *pWeapon, bool recordSelection /*== true*/ )
+{
+	m_hSelectedWeapon = pWeapon;
+
+	if (recordSelection)
+	{
+		// Record our selection for later quickswitch use.
+		CGEPlayer *pGEPlayer = ToGEPlayer(C_BasePlayer::GetLocalPlayer());
+
+		if (pWeapon && pGEPlayer)
+			pGEPlayer->SetLastUsedWeaponForBucket(pWeapon->GetSlot(), pWeapon->GetPosition());
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Moves the selection to the next item in the menu
 //-----------------------------------------------------------------------------
@@ -211,7 +228,7 @@ void CHudWeaponSelection::CycleToNextWeapon()
 		pNextWeapon = pCurrWeapon;
 
 	
-	SetSelectedWeapon( pNextWeapon );
+	SetSelectedWeapon( pNextWeapon, hud_fastswitch.GetBool() );
 	if ( !IsInSelectionMode() )
 		OpenSelection();
 
@@ -272,7 +289,7 @@ void CHudWeaponSelection::CycleToPrevWeapon( void )
 		pPrevWeapon = pCurrWeapon;
 
 	
-	SetSelectedWeapon( pPrevWeapon );
+	SetSelectedWeapon( pPrevWeapon, hud_fastswitch.GetBool() );
 	if ( !IsInSelectionMode() )
 		OpenSelection();
 
@@ -373,6 +390,12 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 		iPosition = GetSelectedWeapon()->GetPosition();
 	else if ( pActiveWeapon && pActiveWeapon->GetSlot() == iSlot )
 		iPosition = pActiveWeapon->GetPosition();
+	else if ( cl_ge_hud_uselastbucketitem.GetBool() )
+	{
+		CGEPlayer *pGEPlayer = ToGEPlayer(pPlayer);
+		if ( pGEPlayer )
+			iPosition = pGEPlayer->GetLastUsedWeaponForBucket(iSlot) - 1;
+	}
 
 	// search for the weapon after the current one
 	pNextWeapon = GetNextActivePos( iSlot, iPosition );
@@ -389,7 +412,7 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 		if ( !IsInSelectionMode() )
 			OpenSelection();
 
-		SetSelectedWeapon( pNextWeapon );
+		SetSelectedWeapon( pNextWeapon, false );
 	}
 	else
 		pPlayer->EmitSound( "Player.DenyWeaponSelection" );
@@ -424,6 +447,12 @@ void CHudWeaponSelection::ProcessInput( void )
 	if ( hud_fastswitch.GetBool() )
 		return;
 
+	// Actually record the selection now for non-quickswitch users.
+	if ( gHUD.m_iKeyBits & (IN_ATTACK | IN_ATTACK2) )
+	{
+		if (IsWeaponSelectable())
+			SetSelectedWeapon(GetSelectedWeapon(), true);
+	}
 	CBaseHudWeaponSelection::ProcessInput();
 }
 
@@ -691,6 +720,12 @@ void CHudWeaponSelection::FastWeaponSwitch( int iWeaponSlot )
 	{
 		// start after this weapon
 		iPosition = pActiveWeapon->GetPosition();
+	}
+	else if ( cl_ge_hud_uselastbucketitem.GetBool() )
+	{
+		CGEPlayer *pGEPlayer = ToGEPlayer(pPlayer);
+		if ( pGEPlayer )
+			iPosition = pGEPlayer->GetLastUsedWeaponForBucket(iWeaponSlot) - 1;
 	}
 
 	C_BaseCombatWeapon *pNextWeapon = NULL;

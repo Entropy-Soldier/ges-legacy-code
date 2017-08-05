@@ -18,6 +18,7 @@
 #include "IVRenderView.h"
 #include "in_buttons.h"
 #include "hudelement.h"
+#include <vgui_controls/TextEntry.h>
 
 #include "ge_gamerules.h"
 #include "gemp_gamerules.h"
@@ -42,11 +43,17 @@ public:
 	
 	void ResetColor( bool paused=false );
 
+	CPanelAnimationVar( vgui::HFont, m_hNumberFont_shadow, "NumberFont", "HudNumbers_Shadow" );
+	CPanelAnimationVar( vgui::HFont, m_hNumberGlowFont_shadow, "NumberGlowFont", "HudNumbersGlow_Shadow" );
+	CPanelAnimationVar( vgui::HFont, m_hNumberFont_noshadow, "NumberFont", "HudNumbers" );
+	CPanelAnimationVar( vgui::HFont, m_hNumberGlowFont_noshadow, "NumberGlowFont", "HudNumbersGlow" );
+
 	CPanelAnimationVar( Color, m_NormColor, "fontcolor", "255 255 255 255" );
 	CPanelAnimationVar( Color, m_SpecColor, "speccolor", "0 0 0 235" );
 	CPanelAnimationVar( Color, m_PausedColor, "pausecolor", "120 120 120 255" );
 
 private:
+	bool m_bUsingShadow;
 	float m_flNextAnim;
 	float m_flNextThink;
 	float m_iPrevValue;
@@ -65,6 +72,7 @@ CGEHudRoundTimer::CGEHudRoundTimer( const char *pElementName ) :
 	m_flNextAnim = 0;
 	m_flNextThink = 0;
 	m_iPrevValue = 0;
+	m_bUsingShadow = false; // Start in spec
 }
 
 void CGEHudRoundTimer::Reset()
@@ -179,11 +187,30 @@ void CGEHudRoundTimer::ResetColor( bool paused /*=false*/ )
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 	// Reset the color immediately, spectators only see one color regardless of paused
 	if ( pPlayer && pPlayer->IsObserver() )
-		SetFgColor( m_SpecColor );
-	else if ( paused )
-		SetFgColor( m_PausedColor );
+	{
+		SetFgColor(m_SpecColor);
+
+		if ( m_bUsingShadow )
+		{
+			m_bUsingShadow = false;
+			m_hNumberFont = m_hNumberFont_noshadow;
+			m_hNumberGlowFont = m_hNumberGlowFont_noshadow;
+		}
+	}
 	else
-		SetFgColor( m_NormColor );
+	{
+		if (paused)
+			SetFgColor(m_PausedColor);
+		else
+			SetFgColor(m_NormColor);
+
+		if ( !m_bUsingShadow )
+		{
+			m_bUsingShadow = true;
+			m_hNumberFont = m_hNumberFont_shadow;
+			m_hNumberGlowFont = m_hNumberGlowFont_shadow;
+		}
+	}
 
 	// Reset the blur
 	m_flBlur = 0;

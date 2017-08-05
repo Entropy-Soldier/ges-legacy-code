@@ -151,10 +151,8 @@ void CGEWeapon::Spawn()
 	m_vOriginalSpawnAngles = GetAbsAngles();
 
 	// Notify the token manager we are arriving
-	GEMPRules()->GetTokenManager()->OnTokenSpawned( this );
-
-	// Add us to the approperate entity tracker list
-	GEEntityTracker()->AddItemToTracker( this, ET_LIST_WEAPON );
+	if (GEMPRules()->GetTokenManager()->OnTokenSpawned( this )) // If we're actually allowed to spawn...
+		GEEntityTracker()->AddItemToTracker( this, ET_LIST_WEAPON ); // Add us to the approperate entity tracker list
 }
 
 void CGEWeapon::UpdateOnRemove( void )
