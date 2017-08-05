@@ -13,7 +13,6 @@
 
 #include <vgui_controls/Frame.h>
 #include <vgui_controls/Button.h>
-#include "ge_webrequest.h"
 #include "ge_panelhelper.h"
 
 class CGEPopupBox : public vgui::Frame
@@ -22,7 +21,7 @@ private:
 	DECLARE_CLASS_SIMPLE(CGEPopupBox, vgui::Frame);
 
 public:
-	CGEPopupBox( vgui::VPANEL parent, const char *title, const char *message );
+	CGEPopupBox( vgui::VPANEL parent );
 	~CGEPopupBox();
 
 	virtual const char *GetName( void ) { return "GESPopupBox"; }
@@ -36,12 +35,11 @@ public:
 	virtual void SetParent( vgui::VPANEL parent ) { BaseClass::SetParent( parent ); }
 	virtual void SetParent( vgui::Panel* parent ) { BaseClass::SetParent( parent ); }
 
-protected:
-	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 	void displayPopup( const char* title, const char* message );
 
-private:
-	char m_sName[32];
+protected:
+	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 };
 
+extern GameUI<CGEPopupBox>* GetGEPopupBox();
 #endif //GE_POPUP_H

@@ -15,13 +15,22 @@
 #include <vgui_controls/PanelListPanel.h>
 #include <vgui_controls/URLLabel.h>
 #include <vgui/IVGui.h>
+#include <ienginevgui.h>
+#include "GameUI/IGameUI.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-CGEPopupBox::CGEPopupBox( vgui::VPANEL parent, const char *title, const char *message ) : BaseClass( NULL, GetName() )
+static GameUI<CGEPopupBox> g_GEPopupBox;
+
+GameUI<CGEPopupBox> *GetGEPopupBox()
 {
-	SetParent( parent );
+	return &g_GEPopupBox;
+}
+
+CGEPopupBox::CGEPopupBox( vgui::VPANEL parent ) : BaseClass( NULL, GetName() )
+{
+	SetParent(parent);
 
 	SetScheme( vgui::scheme()->LoadSchemeFromFile("resource/SourceScheme.res", "SourceScheme") );
 	SetProportional( true );
@@ -36,8 +45,6 @@ CGEPopupBox::CGEPopupBox( vgui::VPANEL parent, const char *title, const char *me
 	SetPaintBorderEnabled( true );
 	SetMouseInputEnabled( true );
 	SetKeyBoardInputEnabled( true );
-
-	displayPopup( title, message );
 }
 
 CGEPopupBox::~CGEPopupBox()
@@ -67,8 +74,6 @@ void CGEPopupBox::displayPopup( const char *title, const char *message )
 	SetZPos( 5 );
 	RequestFocus();
 	MoveToFront();
-
-	//SetBounds(ScreenWidth()/2 - XRES(POPUP_SIZE)/2,ScreenHeight()/2 - YRES(POPUP_SIZE)/2,XRES(POPUP_SIZE), YRES(POPUP_SIZE));
 
 	// Make sure our background is correct
 	SetBgColor( pScheme->GetColor( "UpdateBGColor", Color(123,146,156,255) ) );

@@ -69,7 +69,8 @@ bool lastVisitedServerGood;
 
 void DisplayBlacklistPopup()
 {
-	new CGEPopupBox(null, "#GEUI_ServerBlacklisted", lastVisitedServerBlacklistReason);
+	if (GetGEPopupBox() && (CGEPopupBox*)GetGEPopupBox()->GetPanel())
+		((CGEPopupBox*)GetGEPopupBox()->GetPanel())->displayPopup("#GEUI_ServerBlacklisted", lastVisitedServerBlacklistReason);
 }
 
 void OnServerInvestigated( const char *result, const char *error, const char *internalData )
@@ -144,6 +145,7 @@ bool InvestigateGEServer(const char *address, bool abortOnInvalidIP)
 	if ( needsInit )
 	{
 		Q_strcpy(lastVisitedServerAddress, ""); // Didn't visit any servers yet.
+		Q_strcpy(lastVisitedServerBlacklistReason, "This Server is Blacklisted!\n");
 		lastVisitedServerGood = true; // Innocent until proven guilty.  Haha just kidding the init value of this doesn't even matter.
 		needsInit = false;
 	}
