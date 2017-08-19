@@ -118,15 +118,24 @@ void CGEUpdateChecker::processUpdate( const char* data )
 
 	vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( GetScheme() );
 
-	// We only need to update if we are behind in the major version, behind in a minor version but equal to the major version, or our client version is behind.
-	if (version.Count() >= 3 && (atoi(version[0]) > ges_major_version || (atoi(version[0]) == ges_major_version && atoi(version[1]) > ges_minor_version) || atoi(version[2]) > ges_client_version))
+	if (version.Count() < 3)
+		return; // Didn't get proper version info from web server, can't check for updates!
+
+	// Makes the comparison really simple and lets us avoid complex conditional expressions which have caused mistakes in the past.
+	// As long as we don't need to release GE:S version 6.1001.0 anytime soon this should work well enough.
+	// (2^31 - 1)/1000000 ~= 2000 so we've got a lot of major version releases before this becomes a problem.
+	int ourVersionValue = ges_major_version * 1000000 + ges_minor_version * 1000 + ges_client_version;
+	int newestVersionValue = atoi(version[0]) * 1000000 + atoi(version[1]) * 1000 + atoi(version[2]);
+
+	// We only need to update if our version number is less than the current version number.
+	if (ourVersionValue < newestVersionValue)
 	{
 		// We have differing version strings, notify the client
 		// Setup the version labels
 		vgui::Panel *pVersion = FindChildByName( "yourversion" );
 		if ( pVersion )
 			PostMessage( pVersion, new KeyValues( "SetText", "text", ges_version_text ) );
-	
+		
 		pVersion = FindChildByName( "currversion" );
 		if ( pVersion )
 			PostMessage( pVersion, new KeyValues( "SetText", "text", kv->GetString("version") ) );
