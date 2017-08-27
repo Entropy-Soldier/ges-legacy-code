@@ -349,6 +349,51 @@ void CGECreateServer::PopulateControls( void )
 		// Clear the list first
 		scenariolist->DeleteAllItems();
 
+		struct GamemodeData
+		{
+			const char*	codeName;
+			const char*	printName;
+		};
+
+		struct GamemodeList
+		{
+			const char*	name;
+			CUtlVector<GamemodeData*> list;
+		};
+
+		// Parse our gameplay menu label text file to determine how to sort our modes and what names to display them under.
+		CUtlVector<GamemodeList*> modeLists;
+		GamemodeList* targetList;
+		CUtlDict<const char*, int> presentModes;
+
+		KeyValues *pKV = ReadEncryptedKVFile( filesystem, "python/gpmenulabels", NULL );
+		if (pKV)
+		{
+			KeyValues *pKey = pKV->GetFirstSubKey();
+			while (pKey)
+			{
+				targetList = new GamemodeList;
+				targetList->name = pKey->GetName();
+
+				// Parse through everything in this key, adding it to the approperate list.
+				KeyValues *pMode = pKey->GetFirstSubKey();
+				while (pMode)
+				{
+					GamemodeData* modeData = new GamemodeData;
+
+					modeData->codeName = pMode->GetName();
+					modeData->printName = pMode->GetString();
+					targetList->list.AddToTail(modeData);
+					pMode = pMode->GetNextKey();
+				}
+
+				modeLists.AddToTail(targetList);
+				pKey = pKey->GetNextKey();
+			}
+		}
+		else
+			Warning("Could not find file %s\n", "python/gpmenulabels"); // Rest will execute without crashing, all lists exist but are length 0.
+
 		FileFindHandle_t findHandle; // note: FileFINDHandle
 		char file[32];
 
@@ -356,17 +401,63 @@ void CGECreateServer::PopulateControls( void )
 		const char *pFilename = filesystem->FindFirstEx( PYDIR, "MOD", &findHandle );
 		while ( pFilename )
 		{
-			// Add the scenario to the list if not __init__ or TDM
-			if ( !Q_stristr(pFilename, "__init__") && !Q_stristr(pFilename, "tournamentdm") )
-			{
-				Q_FileBase( pFilename, file, 32 );
-				scenariolist->AddItem( file, new KeyValues(file) );
-			}
-
+			Q_FileBase(pFilename, file, 32);
+			presentModes.Insert( file );
 			pFilename = filesystem->FindNext( findHandle );
 		}
-
 		filesystem->FindClose( findHandle );
+
+		int modeListsLength = modeLists.Count();
+
+		for (int listNum = 0; listNum < modeListsLength; listNum++)
+		{
+			targetList = modeLists[listNum];
+			int iterLength = targetList->list.Count();
+
+			bool isVisible = Q_strcmp( targetList->name, "hide" );
+
+			if ( isVisible ) // Hidden list doesn't get a label.
+			{
+				int id = scenariolist->AddItem( targetList->name, NULL ); // Add gamemode class title so we know what kind of modes these are.
+				scenariolist->GetMenu()->SetItemEnabled( id, false ); // Disable so it gets a different title and people can't select it.
+			}
+			for (int i = 0; i < iterLength; i++)
+			{
+				int presentIndex = presentModes.Find(targetList->list[i]->codeName);
+				if ( presentIndex != -1 )
+				{
+					if ( isVisible ) // Hidden list doesn't actually add the modes.
+					{
+						scenariolist->AddItem(targetList->list[i]->printName, new KeyValues(targetList->list[i]->codeName));
+					}
+					presentModes.RemoveAt(presentIndex); // Remove it so we don't think it's a custom mode later.
+				}
+				else
+					Warning("Could not locate gameplay file %s\n", targetList->list[i]->codeName);
+			}
+		}
+
+		// We've got some custom modes left!
+		if ( presentModes.Count() > 0 )
+		{
+			int id = scenariolist->AddItem("#GE_QUALIFIER_CUSTOM", NULL);
+			scenariolist->GetMenu()->SetItemEnabled(id, false);
+
+			int nextModeID = presentModes.First();
+			while (nextModeID != -1)
+			{
+				scenariolist->AddItem(presentModes.GetElementName(nextModeID), new KeyValues(presentModes.GetElementName(nextModeID)));
+				nextModeID = presentModes.Next(nextModeID);
+			}
+		}
+
+		// Free up all our memory that we used in this incredibly overdone list builder.
+		for (int listNum = modeLists.Count() - 1; listNum >= 0; listNum--)
+		{
+			modeLists[listNum]->list.PurgeAndDeleteElements();
+			modeLists.Remove(listNum); // Calls destructor of struct.
+		}
+
 		scenariolist->SetEditable( false );
 		scenariolist->SetNumberOfEditLines( 10 );
 		scenariolist->GetMenu()->ForceCalculateWidth();

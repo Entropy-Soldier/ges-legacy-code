@@ -29,6 +29,9 @@ public:
 	virtual void ItemTouch( CBaseEntity *pEntity );
 	virtual bool MyTouch( CBasePlayer *pPlayer );
 
+	// Disable use sounds.
+	virtual int	ObjectCaps() { return BaseClass::ObjectCaps() & ~( FCAP_IMPULSE_USE | FCAP_CONTINUOUS_USE | FCAP_ONOFF_USE | FCAP_DIRECTIONAL_USE ); };
+
 	virtual void Materialize();
 
 	// Triggers a respawn and makes the crate appear instantly.

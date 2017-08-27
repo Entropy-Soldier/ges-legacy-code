@@ -2922,6 +2922,7 @@ void CHL2_Player::PlayerUse ( void )
 		}
 #endif
 	}
+#ifndef GE_DLL
 	else if ( m_afButtonPressed & IN_USE )
 	{
 		// Signal that we want to play the deny sound, unless the user is +USEing on a ladder!
@@ -2929,6 +2930,7 @@ void CHL2_Player::PlayerUse ( void )
 		// lets the ladder code unset this flag.
 		m_bPlayUseDenySound = true;
 	}
+#endif
 
 	// Debounce the use key
 	if ( usedSomething && pUseEntity )

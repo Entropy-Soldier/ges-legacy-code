@@ -90,6 +90,9 @@ CGEPlayer::CGEPlayer()
 	m_bKilledOtherThisFrame = false;
 	m_iFrameDamageOutput = 0;
 
+	m_iTotalMaxArmor = -1;
+	m_iTotalArmorPickup = 0;
+
 	memset(m_iPVS, 0, sizeof(m_iPVS));
 }
 
@@ -170,7 +173,7 @@ bool CGEPlayer::AddArmor( int amount, int maxAmount )
 			itemName = "item_armorvest";
 		}
 
-		IncrementArmorValue( amount, maxAmount );
+		IncrementArmorValue( amountAdded, maxAmount );
 
 		CPASAttenuationFilter filter( this, pickupSound );
 		EmitSound( filter, entindex(), pickupSound );
