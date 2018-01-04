@@ -31,6 +31,10 @@ public:
 	virtual bool		IsInAir( void )		{ return true; };
 	virtual GEWeaponID	GetWeaponID( void ) { return WEAPON_ROCKET_LAUNCHER; };
 	virtual const char* GetPrintName( void ) { return "#GE_RocketLauncher"; };
+	
+	// This will probably spare 1 person from having to deal with this but might as well...
+	// if the rocketis on top of the spawn then we probably don't want to spawn inside of it.
+	virtual bool	CanBlockPlayerSpawn() { return true; };
 
 	virtual int		OnTakeDamage( const CTakeDamageInfo &inputInfo );
 

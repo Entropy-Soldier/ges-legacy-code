@@ -120,6 +120,7 @@ int CEnvExplosion::DrawDebugTextOverlays( void )
 		EntityText(text_offset,tempstr,0);
 		text_offset++;
 	}
+
 	return text_offset;
 }
 

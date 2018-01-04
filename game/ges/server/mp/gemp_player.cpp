@@ -939,14 +939,26 @@ CBaseEntity* CGEMPPlayer::EntSelectSpawnPoint()
 		else  // Didn't find one but we don't want to see the inside of dr.dean's head anymore so let's just grab the first deathmatch one.
 		{
 			DevMsg("Looking for DM Spawn!\n");
-			pSpot = (CGEPlayerSpawn*)GERules()->GetSpawnersOfType(SPAWN_PLAYER)->Element(0).Get();
+
+			// If we at least have 1 deathmatch spawn, just use that.
+			if (GERules()->GetSpawnersOfType(SPAWN_PLAYER)->Count() > 0)
+				pSpot = (CGEPlayerSpawn*)GERules()->GetSpawnersOfType(SPAWN_PLAYER)->Element(0).Get();
+			else
+			{
+				// We didn't find ANY spawns which means we're about to crash.  Stick in a spawn at the origin, and call the somewhat
+				// expensive UpdateSpawnerLocations() function to add it to the list for the future, in order to at least save us from that.
+				Warning("------------------------------------------------------------\n");
+				Warning("MAP HAS NO INFO_PLAYER_DEATHMATCH ENTITIES OR INFO_PLAYER_SPECTATOR ENTITIES, SPAWNING AT ORIGIN\n");
+				Warning("------------------------------------------------------------\n");
+
+				// Create a spawn for us to use later!
+				pSpot = (CGEPlayerSpawn*)GEMPRules()->CreateSpawnerOfType( SPAWN_PLAYER, Vector(0,0,0) );
+			}
 		}
 
-		if (pSpot)
-		{
-			DevMsg("Returning spectator spawn point!\n");
-			return pSpot;
-		}
+		// If pSpot is NULL we still want to return it, otherwise we fall through and start looking for a DM spawn!
+		DevMsg("Returning spectator spawn point!\n");
+		return pSpot;
 	}
 
 	if ( ge_debug_playerspawns.GetBool() )

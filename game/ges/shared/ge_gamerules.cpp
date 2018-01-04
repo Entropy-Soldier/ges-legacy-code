@@ -826,7 +826,7 @@ bool CGERules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer  )
 		return false;
 
 	// Flter spawn points for bots
-	if ( pPlayer->IsBot() )
+	if ( pPlayer && pPlayer->IsBot() )
 		return pSpawn->IsBotFriendly();
 
 	return true;
@@ -996,6 +996,43 @@ void CGERules::ClearSpawnerLocations()
 	m_vSpawnerLocations.Purge();
 	m_vSpawnerStats.Purge();
 }
+
+
+CBaseEntity* CGERules::CreateSpawnerOfType( int type, Vector location )
+{
+	const char* classname = SpawnerTypeToClassName( type );
+	Assert( classname );
+
+	// We know our spawner is valid if we make it this far.
+	CUtlVector<EHANDLE> *vEnts = m_vSpawnerLocations.Element( m_vSpawnerLocations.Find(type) );
+	SpawnerStats *pStats = m_vSpawnerStats.Element( m_vSpawnerStats.Find(type) );
+	CBaseEntity *pEnt = (CGEPlayerSpawn*)CreateEntityByName( classname, -1 );
+
+	if (!pEnt) // Failed to spawn the spawn, abort!
+	{
+		Warning("Failed to create new spawner entity!\n");
+		return NULL;
+	}
+
+	pEnt->SetAbsOrigin( location );
+	((CGESpawner*)pEnt)->Init();
+	((CGESpawner*)pEnt)->SetEnabled(true);
+	pEnt->Spawn();
+	vEnts->AddToTail( pEnt );
+
+	// Update the STATZ
+	Vector origin = pEnt->GetAbsOrigin();
+	pStats->maxs = pStats->maxs.Max( origin );
+	pStats->mins = pStats->mins.Min( origin );
+
+	// I have no idea what this is for and it doesn't seem to actually calculate the
+	// centroid ( SUM(x[i]/i) != SUM(x)/i where x is an array of n values ) but I will try and respect whatever it does.
+	pStats->centroid += origin;
+	pStats->centroid /= vEnts->Count();
+
+	return pEnt;
+}
+
 
 void CGERules::InitDefaultAIRelationships()
 {

@@ -173,7 +173,7 @@ void CGEViewEffects::DrawCrosshair( void )
 
 bool CGEViewEffects::ShouldDrawCrosshair( C_GEPlayer *pPlayer )
 {
-	if ( !pPlayer )
+	if ( !pPlayer || !pPlayer->IsAlive()) // Fix for crosshair displaying over bloodscreen since latency can sometimes cause aimmode to not cancel in time.
 		return false;
 
 	// Check observer logic

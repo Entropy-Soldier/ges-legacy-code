@@ -142,6 +142,7 @@ public:
 	virtual bool	CanBecomeRagdoll();
 	virtual void	Event_Killed( const CTakeDamageInfo &info );
 	virtual void	Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
+	bool CanBlockPlayerSpawn()			{ return IsAlive() && !(GetEFlags() & EF_NODRAW); };
 
 // Ragdoll Support
 	virtual void	UpdateOnRemove();

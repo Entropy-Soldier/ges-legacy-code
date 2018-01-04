@@ -272,10 +272,13 @@ bool CGEPlayerSpawn::IsOccupied( void )
 		return true;
 
 	CBaseEntity *pList[32];
-	int count = UTIL_EntitiesInBox( pList, 32, GetAbsOrigin() + VEC_HULL_MIN, GetAbsOrigin() + VEC_HULL_MAX, 0 );
+
+	// Check a bit extra so we don't spawn so close to someone or something that we may as well have been inside of them.
+	// This really jacks up the surface area but that's okay.
+	int count = UTIL_EntitiesInBox( pList, 32, GetAbsOrigin() + VEC_HULL_MIN + Vector(-96, -96, -16) , GetAbsOrigin() + VEC_HULL_MAX + Vector( 96, 96, 16) , 0 );
 	for ( int i = 0; i < count; i++ )
 	{
-		if ( (pList[i]->IsPlayer() || pList[i]->IsNPC()) && pList[i]->IsAlive() && !(pList[i]->GetEFlags() & EF_NODRAW) )
+		if ( pList[i]->CanBlockPlayerSpawn() )
 			return true;
 	}
 

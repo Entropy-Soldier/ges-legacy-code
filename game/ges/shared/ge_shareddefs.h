@@ -143,10 +143,10 @@ const int AMMO_BUCKSHOT_CRATE		=	20;
 const int AMMO_MAGNUM_CRATE			=	25;
 const int AMMO_GOLDENGUN_CRATE		=	10;
 const int AMMO_PROXIMITYMINE_CRATE	=	3;
-const int AMMO_TIMEDMINE_CRATE		=	3;
-const int AMMO_REMOTEMINE_CRATE		=	3;
+const int AMMO_TIMEDMINE_CRATE		=	4;
+const int AMMO_REMOTEMINE_CRATE		=	4;
 const int AMMO_TKNIFE_CRATE			=	5;
-const int AMMO_GRENADE_CRATE		=	3;
+const int AMMO_GRENADE_CRATE		=	4;
 const int AMMO_ROCKET_CRATE			=	2;
 const int AMMO_SHELL_CRATE			=	4;
 const int AMMO_MOONRAKER_CRATE		=	0;
@@ -424,6 +424,7 @@ const float MAX_ARMOR = 160;
 	};
 
 	extern const char *SpawnerTypeToClassName( int id );
+	extern int SpawnerClassNameToType( const char *classname );
 
 #endif
 

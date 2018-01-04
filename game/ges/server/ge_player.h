@@ -98,6 +98,8 @@ public:
 	virtual void PlayHitsound(int dmgTaken, int dmgtype);
 	virtual void PlayKillsound();
 
+	bool CanBlockPlayerSpawn()				{ return IsAlive() && !(GetEFlags() & EF_NODRAW); };
+
 	// -------------------------------------------------
 
 	// Redfine this to ensure when we call this function we set the weapons to loadup on the right VM

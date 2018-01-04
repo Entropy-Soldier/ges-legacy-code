@@ -32,6 +32,9 @@ public:
 	bool KeyValue( const char *szKeyName, const char *szValue );
 	int DrawDebugTextOverlays(void);
 
+	// Explosions prevent players from spawning.
+	virtual bool	CanBlockPlayerSpawn() { return true; };
+
 	// Input handlers
 	void InputExplode( inputdata_t &inputdata );
 

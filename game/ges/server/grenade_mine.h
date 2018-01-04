@@ -49,6 +49,10 @@ public:
 	virtual const char* GetAttachSound( void );
 	virtual int			GetCustomData( void ) { return m_bInAir ? 1 : 0; };
 	
+	// Only avoid timed mines, as the other two could otherwise be used to block spawns indefinitely.
+	// Proxy mines don't come up in LTK/Arsenal and don't explode on spawn invulnerable players in the other modes.
+	virtual bool	CanBlockPlayerSpawn() { return m_iWeaponID == WEAPON_TIMEDMINE; };
+
 	// Input handlers
 	void	InputExplode( inputdata_t &inputdata );
 

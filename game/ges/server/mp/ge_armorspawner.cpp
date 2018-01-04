@@ -65,16 +65,14 @@ void CGEArmorSpawner::OnInit( void )
 	if ( !Q_strcmp(GetClassname(), "item_armorvest") )
 	{
 		m_bIsHalfArmor = false;
-		Warning( "Map has %s in it when ge_armorspawner should be used!\n", GetClassname() );
+		//Warning( "Map has %s in it when ge_armorspawner should be used!\n", GetClassname() );
 		SetClassname( "ge_armorspawner" );
-		return;
 	}
 	else if ( !Q_strcmp(GetClassname(), "item_armorvest_half") )
 	{
 		m_bIsHalfArmor = true;
-		Warning( "Map has %s in it when ge_armorspawner should be used!\n", GetClassname() );
+		//Warning( "Map has %s in it when ge_armorspawner should be used!\n", GetClassname() );
 		SetClassname( "ge_armorspawner" );
-		return;
 	}
 
 	if (m_bIsHalfArmor)

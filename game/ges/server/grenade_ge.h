@@ -34,6 +34,9 @@ public:
 	virtual int		OnTakeDamage( const CTakeDamageInfo &inputInfo );
 	virtual void	VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
 
+	// A grenade nearby means this spawn is not safe for the next little while!
+	virtual bool	CanBlockPlayerSpawn() { return true; };
+
 	virtual bool		IsInAir( void ) { return true; };
 	virtual GEWeaponID	GetWeaponID( void ) { return WEAPON_GRENADE; };
 	virtual const char* GetPrintName( void ) { return "#GE_Grenade"; };

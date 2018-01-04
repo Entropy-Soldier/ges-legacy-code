@@ -1059,6 +1059,17 @@ const char *SpawnerTypeToClassName( int id )
 
 	return GESpawnerInfo[id].classname;
 }
+
+int SpawnerClassNameToType( const char *classname )
+{
+	for (int i = SPAWN_NONE; i < SPAWN_MAX; i++)
+	{
+		if ( !Q_strcmp(GESpawnerInfo[i].classname, classname) )
+			return i;
+	}
+
+	return -1;
+}
 // End Spawner helper functions
 
 // Removes cut off multibyte characters from the end of a string.

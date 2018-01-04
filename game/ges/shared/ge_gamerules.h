@@ -47,6 +47,9 @@ public:
 	void UpdateSpawnerLocations();
 	bool GetSpawnerStats( int spawn_type, Vector &mins, Vector &maxs, Vector &centroid );
 
+	// Creates a spawner of the given type at the given location in the map, and adds it to the correct spawner list.
+	CBaseEntity *CreateSpawnerOfType( int type, Vector location );
+
 	// Respawns all active players
 	void SpawnPlayers();
 

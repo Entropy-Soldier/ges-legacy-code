@@ -356,3 +356,56 @@ void CGESpawner::InputToggle( inputdata_t &inputdata )
 	m_bDisabled = !m_bDisabled;
 	m_bDisabled ? OnDisabled() : OnEnabled();
 }
+
+CON_COMMAND_F( ge_generatespawner, "Generates a spawner of the given classname, and makes it active.  Usage: ge_generatespawner spawner_classname slot/quality", FCVAR_CHEAT )
+{
+	int playeridx = UTIL_GetCommandClientIndex();
+	CGEMPPlayer *pPlayer = ToGEMPPlayer(UTIL_PlayerByIndex(playeridx));
+
+	if (args.ArgC() < 1)
+		return;
+
+	// Best to check this since maybe the server console can call the command
+	if ( !pPlayer )
+	{
+		Warning("You must be a player to use ge_generatespawner!\n");
+		return;
+	}
+
+	int spawnerType = SpawnerClassNameToType(args[1]);
+
+	if (spawnerType == -1)
+	{
+		Warning("Invalid classname to use with ge_generatespawner!\n");
+		return;
+	}
+
+	// Figure out where we're looking.
+	Vector aimVector = pPlayer->CBasePlayer::GetAutoaimVector( AUTOAIM_SCALE_DEFAULT );
+	Vector startPos = pPlayer->Weapon_ShootPosition();
+	Vector endPos = startPos + (aimVector * MAX_TRACE_LENGTH);
+
+	trace_t	tr;
+	UTIL_TraceLine( startPos, endPos, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &tr );
+
+	
+	CBaseEntity *newSpawner = GEMPRules()->CreateSpawnerOfType(spawnerType, tr.endpos);
+
+	if ( !newSpawner || args.ArgC() < 2)
+		return;
+
+	if ( spawnerType == SPAWN_WEAPON || spawnerType == SPAWN_AMMO )
+	{
+		((CGESpawner*)newSpawner)->SetSlot(atoi(args[2]));
+		((CGESpawner*)newSpawner)->Init();
+	}
+		
+	if ( spawnerType == SPAWN_ARMOR )
+	{
+		if (!Q_strcmp(args[2], "half"))
+		{
+			newSpawner->SetClassname("item_armorvest_half");
+			((CGESpawner*)newSpawner)->Init();
+		}
+	}
+}

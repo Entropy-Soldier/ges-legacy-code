@@ -1229,6 +1229,9 @@ public:
 	void					SetBulletProof( bool state ) { m_bBulletProof = state; };
 	bool					IsBulletProof() { return m_bBulletProof; };
 
+	// Set to true if the entity can disable a playerspawn by being inside of it.
+	virtual bool			CanBlockPlayerSpawn() { return false; };
+
 	// Let the entity know it is being tracked, so when it gets removed it knows to remove its entry in the entity tracker.
 	// it's okay if it gets removed by other means before it gets deleted, this just results in a needless search when it does.
 	// very few entities will ever be tracked, and even fewer will be untracked manually, so this should not be a problem.
