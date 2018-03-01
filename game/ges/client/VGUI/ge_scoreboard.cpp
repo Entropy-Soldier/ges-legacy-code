@@ -351,9 +351,9 @@ bool CGEScoreBoard::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
 	kv->SetInt("deaths", GEPlayerRes()->GetDeaths( playerIndex ));
 	kv->SetString("char", GEPlayerRes()->GetCharName( playerIndex ));
 
-	if (!GEMPRules()->GetScoreboardMode())
+	if (GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_STANDARD)
 		kv->SetInt("score", GEPlayerRes()->GetPlayerScore(playerIndex));
-	else
+	else if (GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_TIME)
 	{
 		int seconds = GEPlayerRes()->GetPlayerScore(playerIndex);
 		int displayseconds = seconds % 60;
@@ -362,6 +362,17 @@ bool CGEScoreBoard::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
 		Q_snprintf(name, sizeof(name), "%d:%s%d", displayminutes, displayseconds < 10 ? "0" : "", displayseconds);
 		kv->SetString("score", name);
 	}
+	else if (GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_LEVELS)
+	{
+		int points = GEPlayerRes()->GetPlayerScore(playerIndex);
+		int pointsPerLevel = GEMPRules()->GetScorePerScoreLevel();
+
+		Q_snprintf(name, sizeof(name), "%d | %d", (points / pointsPerLevel) + 1, points % pointsPerLevel);
+		kv->SetString("score", name);
+	}
+	else
+		Warning("Tried to display score using invalid mode %d!\n", GEMPRules()->GetScoreboardMode());
+
 	// Get our developer status
 	int iStatus = GEPlayerRes()->GetDevStatus(playerIndex);
 
@@ -433,6 +444,26 @@ enum {
 	MAX_SCOREBOARD_PLAYERS = 32
 };
 
+
+static inline int quickCompareStringNumbers(const char* str1, const char* str2, int strlen1, int strlen2)
+{
+	// A higher level always gets displayed on top.
+	if ( strlen1 > strlen2 )
+		return true;
+	else if ( strlen1 < strlen2 )
+		return false;
+
+	// Same length so we need to compare them directly.
+	int compval = Q_strncmp(str1, str2, strlen1);
+
+	if (compval < 0)
+		return false;
+	else if (compval > 0)
+		return true;
+	else
+		return -1;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Used for sorting players
 //-----------------------------------------------------------------------------
@@ -445,7 +476,7 @@ bool CGEScoreBoard::StaticPlayerSortFunc(vgui::SectionedListPanel *list, int ite
 	int v1, v2;
 
 	// first compare frags
-	if (!GEMPRules()->GetScoreboardMode())
+	if ( GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_STANDARD )
 	{
 		v1 = it1->GetInt("score");
 		v2 = it2->GetInt("score");
@@ -455,7 +486,19 @@ bool CGEScoreBoard::StaticPlayerSortFunc(vgui::SectionedListPanel *list, int ite
 		else if (v1 < v2)
 			return false;
 	}
-	else // Having to do this instead of just sorting by score and then translating score into the time string really bugs me but I'm not sure if it can be done.
+	else if ( GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_TIME ) // Having to do this instead of just sorting by score and then translating score into the time string really bugs me but I'm not sure if it can be done.
+	{
+		const char* score1 = it1->GetString("score");
+		const char* score2 = it2->GetString("score");
+
+		int compValue = quickCompareStringNumbers(score1, score2, Q_strlen(score1), Q_strlen(score2));
+
+		if (compValue != -1)
+			return compValue;
+
+		//If we made it this far they're equal.
+	}
+	else if ( GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_LEVELS )
 	{
 		const char* score1 = it1->GetString("score");
 		const char* score2 = it2->GetString("score");
@@ -463,22 +506,43 @@ bool CGEScoreBoard::StaticPlayerSortFunc(vgui::SectionedListPanel *list, int ite
 		int length1 = Q_strlen(score1);
 		int length2 = Q_strlen(score2);
 
-		// The bigger string will be the bigger number.
-		if (length1 > length2)
-			return true;
-		else if (length2 > length1)
-			return false;
+		// This will be 95% of cases, at least in arsenal, as generally kills per level will be < 10 and max level will be == 10
+		if (length1 == length2)
+		{
+			int compval = Q_strcmp(score1, score2);
 
-		//However, they will usually end up the same length, so we'll need to compare them.
-		int compval = Q_strcmp(score1, score2);
+			if (compval < 0)
+				return false;
+			else if (compval > 0)
+				return true;
+		}
+		else // Different lengths can be tricky as we need to check to see if they have a larger level or larger level score.
+		{
+			const char* score1BarPos = Q_strrchr(score1, '|');
+			const char* score2BarPos = Q_strrchr(score2, '|');
 
-		if (compval < 0)
-			return false;
-		else if (compval > 0)
-			return true;
+			// Factor out the space as well.
+			int score1LevelLen = score1BarPos - score1 - 1;
+			int score2LevelLen = score2BarPos - score2 - 1;
 
-		//If we made it this far they're equal.
+			int compValue = quickCompareStringNumbers(score1, score2, score1LevelLen, score2LevelLen);
+
+			if (compValue != -1)
+				return compValue;
+
+			// If we've gotten here it means we only have level score left to compare.
+			// Our level score length is equal to the total length, minux the bar and spaces, minus the level length.
+			int score1ScoreLen = length1 - (score1LevelLen + 3);
+			int score2ScoreLen = length2 - (score1LevelLen + 3);
+
+			compValue = quickCompareStringNumbers(score1BarPos + 1, score2BarPos + 1, score1ScoreLen, score2ScoreLen);
+
+			if (compValue != -1)
+				return compValue;
+		}
 	}
+	else
+		Warning( "Tried to compare using invalid scoreboard mode %d!\n", GEMPRules()->GetScoreboardMode() );
 
 	// next compare deaths
 	v1 = it1->GetInt("deaths");

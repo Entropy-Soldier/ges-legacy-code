@@ -538,9 +538,9 @@ bool CGERoundReport::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
 	kv->SetString("favweapon", GetWeaponPrintName( GEPlayerRes()->GetFavoriteWeapon(playerIndex) ));
 	kv->SetString( "char", GEPlayerRes()->GetCharName( playerIndex ) );
 
-	if (!GEMPRules()->GetScoreboardMode())
+	if ( GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_STANDARD )
 		kv->SetInt("score", GEPlayerRes()->GetPlayerScore(playerIndex));
-	else
+	else if ( GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_TIME )
 	{
 		int seconds = GEPlayerRes()->GetPlayerScore(playerIndex);
 		int displayseconds = seconds % 60;
@@ -549,6 +549,16 @@ bool CGERoundReport::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
 		Q_snprintf(name, sizeof(name), "%d:%s%d", displayminutes, displayseconds < 10 ? "0" : "", displayseconds);
 		kv->SetString("score", name);
 	}
+	else if (GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_LEVELS)
+	{
+		int points = GEPlayerRes()->GetPlayerScore(playerIndex);
+		int pointsPerLevel = GEMPRules()->GetScorePerScoreLevel();
+
+		Q_snprintf(name, sizeof(name), "%d | %d", (points / pointsPerLevel) + 1, points % pointsPerLevel);
+		kv->SetString("score", name);
+	}
+	else
+		Warning("Tried to display final scoreboard with undefined point type %d\n", GEMPRules()->GetScoreboardMode());
 
 	return true;
 }

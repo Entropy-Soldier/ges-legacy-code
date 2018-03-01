@@ -362,16 +362,20 @@ CON_COMMAND_F( ge_generatespawner, "Generates a spawner of the given classname, 
 	int playeridx = UTIL_GetCommandClientIndex();
 	CGEMPPlayer *pPlayer = ToGEMPPlayer(UTIL_PlayerByIndex(playeridx));
 
-	if (args.ArgC() < 1)
+	if (args.ArgC() < 2)
+	{
+		Warning("Not enough arguments!\n");
 		return;
+	}
 
-	// Best to check this since maybe the server console can call the command
+	// Best to check this since the server console can call the command
 	if ( !pPlayer )
 	{
 		Warning("You must be a player to use ge_generatespawner!\n");
 		return;
 	}
 
+	// Get the spawner we want to create, and make sure it's a valid one.
 	int spawnerType = SpawnerClassNameToType(args[1]);
 
 	if (spawnerType == -1)
@@ -388,18 +392,27 @@ CON_COMMAND_F( ge_generatespawner, "Generates a spawner of the given classname, 
 	trace_t	tr;
 	UTIL_TraceLine( startPos, endPos, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &tr );
 
-	
+	// Create the spawn, and add it to the relevant spawner list.
 	CBaseEntity *newSpawner = GEMPRules()->CreateSpawnerOfType(spawnerType, tr.endpos);
 
-	if ( !newSpawner || args.ArgC() < 2)
+	if ( !newSpawner )
 		return;
 
+	// Set the angles of our spawn to match the angles of our spawning player
+	newSpawner->SetAbsAngles(QAngle(0, pPlayer->GetAbsAngles().y, 0));
+
+	// If we have multiple arguments, chances are that we want to set a spawner parameter.
+	if ( args.ArgC() < 3 )
+		return;
+
+	// If we're a weapon or ammo spawner, assign the slot as it appears on the weaponset popout menu (1-8, not 0-7)
 	if ( spawnerType == SPAWN_WEAPON || spawnerType == SPAWN_AMMO )
 	{
-		((CGESpawner*)newSpawner)->SetSlot(atoi(args[2]));
+		((CGESpawner*)newSpawner)->SetSlot( atoi(args[2]) - 1 );
 		((CGESpawner*)newSpawner)->Init();
 	}
-		
+	
+	// If we're an armor vest, check to see if we want to be a half armor vest
 	if ( spawnerType == SPAWN_ARMOR )
 	{
 		if (!Q_strcmp(args[2], "half"))

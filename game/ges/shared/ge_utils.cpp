@@ -754,6 +754,46 @@ unsigned int RSHash(const char *str)
    return hash;
 }
 
+#define MAX_XML_TAG_SIZE 64
+
+void ExtractXMLTagSubstring( char *dest, int destLength, const char *XMLData, const char *tagString )
+{
+	int tagSize = Q_strlen(tagString) + 2;
+
+	if (tagSize + 1 > MAX_XML_TAG_SIZE)
+	{
+		Warning("Scanning for too large of a tag, aborting!\n");
+		dest[0] = '\0';
+		return;
+	}
+
+	char openingTag[MAX_XML_TAG_SIZE];
+	char closingTag[MAX_XML_TAG_SIZE];
+	Q_snprintf(openingTag, MAX_XML_TAG_SIZE, "<%s>", tagString);
+	Q_snprintf(closingTag, MAX_XML_TAG_SIZE, "</%s>", tagString);
+
+	const char *startingPos = Q_strstr(XMLData, openingTag);
+	const char *endingPos = Q_strstr(XMLData, closingTag);
+
+	if (!startingPos || !endingPos)
+	{
+		dest[0] = '\0';
+		return;
+	}
+
+	// The total length of the data is the distance between the two pointers (as char types are one byte) minus the length of the starting tag.
+	int dataLength = ((endingPos + 1) - startingPos) - tagSize;
+
+	// We actually have no data between these tags!
+	if (dataLength <= 0)
+	{
+		dest[0] = '\0';
+		return;
+	}
+
+	Q_strncpy(dest, startingPos + tagSize, dataLength < destLength ? dataLength : destLength);
+}
+
 #ifdef GAME_DLL
 bool IsOnList( int listnum, const unsigned int hash )
 {

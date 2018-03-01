@@ -12,6 +12,7 @@
 #include "vgui_controls/Frame.h"
 #include "clientmode_shared.h"
 #include "ge_popup.h"
+#include "ge_utils.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -63,8 +64,10 @@ int IsInvalidIpAddress(const char *address)
 		return -1; // Otherwise it just means the address is incomplete.
 }
 
+#define MAX_BLACKLIST_REASON_SIZE 2048
+
 char lastVisitedServerAddress[32];
-char lastVisitedServerBlacklistReason[1024];
+char lastVisitedServerBlacklistReason[MAX_BLACKLIST_REASON_SIZE];
 bool lastVisitedServerGood;
 
 void DisplayBlacklistPopup()
@@ -77,14 +80,81 @@ void OnServerInvestigated( const char *result, const char *error, const char *in
 {
 	if (!error || error[0] == '\0')
 	{
+		char responseBuffer[1024 + MAX_BLACKLIST_REASON_SIZE];
+		char statusBuffer[MAX_BLACKLIST_REASON_SIZE + 64];
+		char errorBuffer[512];
+
+		Warning("got investigation result of %s\n", result);
+		ExtractXMLTagSubstring(responseBuffer, sizeof(responseBuffer), result, "response");
+
+		if (responseBuffer[0] != '\0') // We got a response!
+		{
+			ExtractXMLTagSubstring(statusBuffer, sizeof(statusBuffer), responseBuffer, "getServerStatus");
+
+			Warning("statusBuffer = %s\n", statusBuffer);
+
+			if (statusBuffer[0] == '\0')
+			{
+				ExtractXMLTagSubstring(errorBuffer, sizeof(errorBuffer), responseBuffer, "error");
+				Warning("Failed to get server status with error %s\n", errorBuffer);
+				return;
+			}
+		}
+		else
+		{
+			Warning("Response did not have valid format!\n");
+			return; // Don't write anything so we keep trying.
+		}
+
 		Q_strcpy(lastVisitedServerAddress, internalData);
 
-		if (Q_strstr(result, "serverStatus=blacklisted"))
+		char statusString[64];
+		
+		// serverStatus=blacklisted&amp;statusReason=asdf
+
+		const char *statusStart = Q_strstr(statusBuffer, "serverStatus=") + Q_strlen("serverStatus=");
+		const char *statusEnd = Q_strstr(statusBuffer, "&amp;");
+		const char *reasonStart = Q_strstr(statusBuffer, "statusReason=");
+
+		// Make sure we actually found the reason tag before directing the pointer to a potentially out of bounds address.
+		if (reasonStart)
+			reasonStart += Q_strlen("statusReason=");
+
+		if (!statusStart)
 		{
-			const char *reason = Q_strstr(result, "statusReason=") + Q_strlen("statusReason=");
+			Warning("Failed to extract server status!\n");
+			return;
+		}
+
+		if (!statusEnd && reasonStart)
+		{
+			Warning("Failed to identify end of status string!\n");
+			return;
+		}
+
+		int statusLength;
+
+		// If there's no ending marker, and no reason marker, the entire string is the status reason.
+		if ( !statusEnd && !reasonStart )
+		{
+			statusLength = Q_strlen(statusStart) + 1;
+		}
+		else
+			statusLength = (statusEnd + 1) - statusStart; // Otherwise be sure to extract only the part relevant to the status message.
+
+
+		Q_strncpy(statusString, statusStart, min(statusLength, sizeof(statusString)));
+
+		Warning("Status string = %s\n", statusString);
+		Warning("Reason string = %s!\n", reasonStart);
+
+		if (!Q_strcmp(statusString, "blacklisted"))
+		{
+			const char *reason = reasonStart;
+			char firstDigit = '\0';
 
 			int i;
-			for (i = 0; i < 1023; i++)
+			for (i = 0; i < MAX_BLACKLIST_REASON_SIZE - 1; i++)
 			{
 				if (*reason == '\0')
 					break;
@@ -95,24 +165,16 @@ void OnServerInvestigated( const char *result, const char *error, const char *in
 				}
 				else
 				{
-					reason++; reason++; // Second digit is only distinguishing digit since we only care about a small set of potentially useful characters.
-					
-					char newChar;
+					reason++; // Skip % character since we've already gotten all the useful info out of it.
+					firstDigit = *reason;
+					reason++; // Move on to second character now that we've recorded the first one.
 
-					switch (*reason)
-					{
-						case '0': newChar = ' ';
-						case '1': newChar = '!';
-						case '7': newChar = '\'';
-						case 'A': newChar = '\n';
-						case 'C': newChar = ',';
-						case 'E': newChar = '~';
-						case 'F': newChar = '?';
-						default: newChar = ' '; // Just assume space if no match is found.
-					}
+					// Combine both characters into one hex value, represented as a string.
+					char buffer[8];
+					Q_snprintf(buffer, sizeof(buffer), "%c%c", firstDigit, *reason);
 					
-					
-					lastVisitedServerBlacklistReason[i] = newChar;
+					// Convert that string into a new, single character and record it to our reason buffer.
+					lastVisitedServerBlacklistReason[i] = (char)strtol(buffer, NULL, 16);
 				}
 
 				reason++;

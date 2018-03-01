@@ -277,6 +277,7 @@ BOOST_PYTHON_MODULE(GEPlayer)
 		.def("StripAllWeapons", &CGEPlayer::StripAllWeapons)
 		.def("GetAimDirection", pyAimDirection)
 		.def("GetEyePosition", &CGEPlayer::EyePosition)
+		.def("GetLastHitGroup", &CGEPlayer::LastHitGroup)
 		.def("GiveNamedWeapon", &CGEPlayer::GiveNamedWeapon, GiveNamedWeapon_overloads());
 
 	class_<CGEMPPlayer, bases<CGEPlayer>, boost::noncopyable>("CGEMPPlayer", no_init)

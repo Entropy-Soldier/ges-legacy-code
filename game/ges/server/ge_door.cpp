@@ -578,12 +578,36 @@ void CGEDoor::Blocked(CBaseEntity *pOther)
 		m_pPartnerEnts[i]->SetLocalAngularVelocity(QAngle(0, 0, 0));
 	}
 
-	BaseClass::Blocked(pOther);
+	// Don't call into baseclass because it has some behavior that conflicts with ge_door block behavior.
+	// And also prevents doors with a negative wait time from being blocked, which is not a problem for ge_doors.
+	// Instead just modify the baseclass blocking damage code and implement motion reversal ourselves.
 
-	if (m_toggle_state == TS_AT_TOP || m_toggle_state == TS_GOING_UP)
-		DoorGroupGoUp(false);
+	// Hurt the blocker a little.
+	if ( m_flBlockDamage )
+	{
+		// if the door is marked "force closed" then there's nothing to do but push/damage the object.
+		// If block damage is set, but this object is a physics prop that can't be damaged, just
+		// give up and disable collisions
+		if ( m_bForceClosed && pOther->GetMoveType() == MOVETYPE_VPHYSICS && (pOther->m_takedamage == DAMAGE_NO || pOther->m_takedamage == DAMAGE_EVENTS_ONLY) )
+		{
+			EntityPhysics_CreateSolver( this, pOther, true, 4.0f );
+		}
+		else
+		{
+			pOther->TakeDamage( CTakeDamageInfo( this, this, m_flBlockDamage, DMG_CRUSH ) );
+		}
+	}
+
+	// Don't change direction if we're set to force ourselves closed.  If there's blocking damage it will
+	// hopefully take care of the obstruction, along with the weapon removal.
+	if ( m_bForceClosed )
+		return;
+
+	// Reverse direction, along with all of our partners.
+	if (m_toggle_state == TS_AT_BOTTOM || m_toggle_state == TS_GOING_DOWN)
+		DoorGroupGoUp(true);
 	else
-		DoorGroupGoDown(false);
+		DoorGroupGoDown(true);
 }
 
 void CGEDoor::InputOpen(inputdata_t &inputdata)

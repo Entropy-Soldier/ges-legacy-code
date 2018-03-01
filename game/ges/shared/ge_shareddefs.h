@@ -502,11 +502,16 @@ extern const char *GetIconForAward( int id );
 extern const char *GetAwardPrintName( int id );
 extern bool GetAwardSort( int id );
 
+#define GE_UNKNOWNPLAYER -1
+#define GE_STANDARDPLAYER 0
 #define GE_DEVELOPER 1
 #define GE_BETATESTER 2
 #define GE_CONTRIBUTOR 3
 #define GE_SILVERACH 4
 #define GE_GOLDACH 5
+
+// By "Owning" only the none ID we're claiming to not have our skin code yet.
+#define GE_SKINCODENULL 1 << WEAPON_NONE
 
 #ifdef GAME_DLL
 extern CUtlVector<unsigned int> vDevsHash;

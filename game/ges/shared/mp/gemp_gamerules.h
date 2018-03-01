@@ -37,6 +37,14 @@ enum GES_TEAMPLAY
 	TEAMPLAY_TOGGLE
 };
 
+// Scoreboard modes
+enum GES_SCOREBOARD_POINT_MODES
+{
+	SCOREBOARD_POINTS_STANDARD,
+	SCOREBOARD_POINTS_TIME,
+	SCOREBOARD_POINTS_LEVELS
+};
+
 class CGEMPRules : public CGERules, public CGEGameplayEventListener
 {
 public:
@@ -185,6 +193,9 @@ public:
 	int  GetScoreboardMode()  { return m_iScoreboardMode; };
 	void  SetScoreboardMode( int newmode )  { m_iScoreboardMode = newmode; };
 
+	int  GetScorePerScoreLevel()  { return m_iScoreboardScorePerLevel; };
+	void  SetScorePerScoreLevel( int newscorethresh )  { m_iScoreboardScorePerLevel = newscorethresh; };
+
 	bool IsMultiplayer() { return true; }
 	bool IsTeamplay();
 	bool IsIntermission();
@@ -299,6 +310,7 @@ private:
 	CNetworkVar( bool,  m_bShouldShowHUDTimer );
 	CNetworkVar( int,	m_iTeamplayMode );
 	CNetworkVar( int, m_iScoreboardMode );
+	CNetworkVar( int, m_iScoreboardScorePerLevel );
 	CNetworkVar( int, m_iAwardEventCode );
 
 	CNetworkVar( float, m_flRoundStartTime );

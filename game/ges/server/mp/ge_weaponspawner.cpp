@@ -36,6 +36,7 @@ protected:
 	virtual int  ShouldRespawn( void );
 
 private:
+	int m_iSlotSkin;
 	bool m_bAllowSpecial;		// Explicitly allow a special token to spawn here
 };
 
@@ -43,6 +44,7 @@ LINK_ENTITY_TO_CLASS(ge_weaponspawner, CGEWeaponSpawner);
 
 BEGIN_DATADESC( CGEWeaponSpawner )
 	DEFINE_KEYFIELD( m_bAllowSpecial, FIELD_BOOLEAN, "allowgg" ),
+	DEFINE_KEYFIELD( m_iSlotSkin, FIELD_INTEGER, "skin" ),
 END_DATADESC();
 
 CGEWeaponSpawner::CGEWeaponSpawner( void )
@@ -52,6 +54,12 @@ CGEWeaponSpawner::CGEWeaponSpawner( void )
 
 void CGEWeaponSpawner::OnInit( void )
 {
+	if (m_iSlotSkin != 8)
+	{
+		// Use our hammer skin to determine what slot we are.
+		SetSlot((m_iSlotSkin + 1) % 8);
+	}
+
 	int weapid = GEMPRules()->GetLoadoutManager()->GetWeaponInSlot( GetSlot() );
 	if ( weapid != WEAPON_NONE )
 		SetBaseEnt( WeaponIDToAlias( weapid ) );

@@ -956,7 +956,7 @@ CBaseEntity* CGEMPPlayer::EntSelectSpawnPoint()
 			}
 		}
 
-		// If pSpot is NULL we still want to return it, otherwise we fall through and start looking for a DM spawn!
+		// If pSpot is NULL we still want to return it, otherwise we'll fall through and start looking for a DM spawn!
 		DevMsg("Returning spectator spawn point!\n");
 		return pSpot;
 	}
@@ -1512,7 +1512,7 @@ void CGEMPPlayer::OnWebDataRetreived( GEPlayerWebInfo *webInfo )
 
 	// Because of this we're going to need to make sure we've got all of our data before proceeding.
 
-	if (webInfo->devStatus == -1 || webInfo->skinCode == 1)
+	if (webInfo->devStatus == GE_UNKNOWNPLAYER || webInfo->skinCode == 1)
 		return; // Don't have all of our relevant data yet!
 
 	Warning("Got devStatus of %d and skinCode of %llu for %s\n", webInfo->devStatus, webInfo->skinCode, GetPlayerName());
