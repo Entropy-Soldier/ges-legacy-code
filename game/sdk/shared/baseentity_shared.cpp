@@ -1951,7 +1951,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 		{
 			FireBulletsInfo_t modinfo = info;
 			modinfo.m_nFlags |= FIRE_BULLETS_PENETRATED_SHOT;
-			HandleShotImpactingGlass( modinfo, tr, vecDir, &traceFilter );
+			//HandleShotImpactingGlass( modinfo, tr, vecDir, &traceFilter );
 		}
 
 		// Per bullet damage!

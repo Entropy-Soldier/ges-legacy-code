@@ -1323,7 +1323,7 @@ protected:
 			m_flLastKillTime = gpGlobals->curtime; //Reset our kill flag.
 		else if ( !Q_stricmp(event->GetName(), "round_end") )
 		{
-			if ( gpGlobals->curtime - m_flLastKillTime > 180 && CalcPlayerCount() >= 6 ) // 180 seconds = 3 minutes.
+			if ( gpGlobals->curtime - m_flLastKillTime > 180 && CalcPlayerCount() >= 6 && pPlayer->GetTeamNumber() != TEAM_SPECTATOR ) // 180 seconds = 3 minutes.
 				IncrementCount();
 
 			m_flLastKillTime = gpGlobals->curtime;

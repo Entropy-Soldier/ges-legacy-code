@@ -1552,8 +1552,10 @@ protected:
 	// Handle shot entering water
 	bool HandleShotImpactingWater( const FireBulletsInfo_t &info, const Vector &vecEnd, ITraceFilter *pTraceFilter, Vector *pVecTracerDest );
 
+#ifndef GE_DLL
 	// Handle shot entering water
 	virtual void HandleShotImpactingGlass( const FireBulletsInfo_t &info, trace_t &tr, const Vector &vecDir, ITraceFilter *pTraceFilter );
+#endif
 
 	// Should we draw bubbles underwater?
 	bool ShouldDrawUnderwaterBulletBubbles();

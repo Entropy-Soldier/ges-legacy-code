@@ -632,6 +632,9 @@ inline const Vector CBaseEntity::ApplySpreadGauss(const Vector &vecSpread, const
 #ifdef GAME_DLL
 ConVar ge_debug_penetration( "ge_debug_penetration", "0", FCVAR_GAMEDLL | FCVAR_CHEAT );
 #endif
+
+#define	MAX_GLASS_PENETRATION_DEPTH	16.0f
+
 void CBaseEntity::HandleBulletPenetration( CBaseCombatWeapon *pWeapon, const FireBulletsInfo_t &info, trace_t &tr, const Vector &vecDir, ITraceFilter *pTraceFilter )
 {
 	// Store the index of bullet proof glass for future use
@@ -641,9 +644,24 @@ void CBaseEntity::HandleBulletPenetration( CBaseCombatWeapon *pWeapon, const Fir
 	if ( !(info.m_nFlags & FIRE_BULLETS_PENETRATED_SHOT) )
 		recurse_index = 0;
 
-	// Protect against infinite recursion!
-	if ( ++recurse_index >= 8 )
+	// Protect against infinite recursion or finished traces.
+	if ( ++recurse_index >= 16 || info.m_flPenetrateDepth <= 0.0f)
 		return;
+
+	// depthmult is how much penetration distance we get per penetration point on the weapon.
+	// This will indirectly divide the penetration cost, as we're getting more distance per penetration point.
+	float depthmult = 1.0f;
+
+	// If we detected another entity within our intended penetration distance, we need to avoid hitting that
+	// entity. Instead, we'll trace backwards from where we hit them instead of the max distance we can penetrate.
+	float nearestHitEntityMult = 1.0f; 
+
+	// If we both enter and leave glass, this counts as a glass penetration and costs no penetration power.
+	bool enteredGlass = false;
+	bool leftGlass = false;
+
+	// Record the current max trace length in case we need to modify it for glass shots later
+	int maxTraceLength = info.m_flPenetrateDepth;
 
 	FireBulletsInfo_t refireInfo;
 	surfacedata_t *psurf = physprops->GetSurfaceData( tr.surface.surfaceProps );
@@ -656,8 +674,7 @@ void CBaseEntity::HandleBulletPenetration( CBaseCombatWeapon *pWeapon, const Fir
 	}
 #endif
 
-	// If we are bullet proof and we don't have enough penetration, disable any further checks
-	// TODO: We should differentiate btwn bulletproof glass and BLOCK BULLETS
+	// If we are bullet proof we require a penetrating weapon to shoot through us.
 	if ( info.m_flPenetrateDepth <= MIN_PENETRATION_DEPTH && tr.m_pEnt && tr.m_pEnt->IsBulletProof() )
 	{
 		if ( psurf && psurf->game.material == CHAR_TEX_GLASS )
@@ -666,17 +683,6 @@ void CBaseEntity::HandleBulletPenetration( CBaseCombatWeapon *pWeapon, const Fir
 			DoImpactEffect( tr, DMG_BULLET );
 		}
 
-		return;
-	}
-
-	// Check if we have hit glass so we can do proper effects
-	// we don't care about the thickness of glass for penetration purposes
-	// unless it is bullet-proof (handled above)
-	if ( psurf && psurf->game.material == CHAR_TEX_GLASS )
-	{
-		refireInfo = info;
-		refireInfo.m_nFlags |= FIRE_BULLETS_PENETRATED_SHOT;
-		HandleShotImpactingGlass( refireInfo, tr, vecDir, pTraceFilter );
 		return;
 	}
 
@@ -690,38 +696,68 @@ void CBaseEntity::HandleBulletPenetration( CBaseCombatWeapon *pWeapon, const Fir
 		return;
 #endif
 
-	//Entities get penetrated twice as far.
-	float depthmult = 1.0;
+	// Entities get penetrated twice as far.
 	if (tr.DidHitNonWorldEntity() && info.m_flPenetrateDepth >= 2)
 		depthmult = 2.0;
 
-	// Move through up to our max penetration
-	Vector	testPos = tr.endpos + ( vecDir * info.m_flPenetrateDepth * depthmult);
+	// Check if we have hit glass so we can do proper effects
+	if ( psurf && psurf->game.material == CHAR_TEX_GLASS )
+	{
+		CEffectData	data;
+
+		data.m_vNormal = tr.plane.normal;
+		data.m_vOrigin = tr.endpos;
+
+		DispatchEffect("GlassImpact", data);
+
+		DoImpactEffect( tr, GetAmmoDef()->DamageType(info.m_iAmmoType) );
+
+		// For non-bullet proof glass, we get to travel a fair distance through it at no cost
+		// to penetration power of future shots.
+		if (!tr.m_pEnt || !tr.m_pEnt->IsBulletProof())
+		{
+			// Use the glass penetration depth for this so we can go through most of the time
+			// but only do so if it is greater than we'd otherwise travel.
+			maxTraceLength = max(info.m_flPenetrateDepth, MAX_GLASS_PENETRATION_DEPTH);
+
+			// Keep this in mind for later.
+			enteredGlass = true;
+		}
+	}
+
+	// Multiply our max trace length by our expected depth multiplier.
+	// This can make the MAX_GLASS_PENETRATION_DEPTH twice as long but this isn't an issue as the
+	// penetration code handles long entity traces much better than long world traces.
+	maxTraceLength *= depthmult;
+
+	// Determine the furthest location we could penetrate to if this was a solid wall.
+	Vector testPos = tr.endpos + ( vecDir * maxTraceLength);
+
+	// I can't figure out how to do a trace that ignores the world, but if you can
+	// figure that out it's worth doing this step on a world impact too, just ignore the world instead of the hit entity.
+	if ( tr.DidHitNonWorldEntity() && tr.m_pEnt ) // Hit an entity so let's try to hit the entity directly behind it.
+	{
+		// Try to find the furthest point we can penetrate without hitting another entity.
+		trace_t	testposTrace;
+
+		UTIL_TraceLine(tr.endpos, testPos, MASK_SHOT, tr.m_pEnt, COLLISION_GROUP_NONE, &testposTrace);
+		testPos = testposTrace.endpos; // Our new testpos is the start of whatever new entity/world surface we hit.  This way we don't go past them and miss.
+		nearestHitEntityMult = testposTrace.fraction;
+	}
 
 	trace_t	passTrace;
-	// Re-trace as if the bullet had passed right through
+
+	// Now trace backwards from that point to our original hit position in an attempt to find the other side of the wall.
 	UTIL_TraceLine( testPos, tr.endpos, MASK_SHOT, pTraceFilter, &passTrace );
 
-	float depth = info.m_flPenetrateDepth * (1.0 - passTrace.fraction);
-
-	// If we didn't make it through, we will do a very short range bullet refire to make sure we hit whatever we ended up in.
-	// Setting the penetrate depth to 0 here will kill the next refire attempt.
-	if (passTrace.startsolid || passTrace.fraction == 1.0f)
-	{
-		if (passTrace.DidHitNonWorldEntity() && passTrace.m_pEnt != tr.m_pEnt)
-			refireInfo.m_flPenetrateDepth = 0;
-		else // If we ended up inside the world or the entity we hit with the first trace there's no point in hitting it again.
-			return;
-	}
-	else
-		refireInfo.m_flPenetrateDepth = info.m_flPenetrateDepth - depth;
-
+	// This is how far we've penetrated in terms of weapon penetration power.
+	float depth = maxTraceLength * (1.0 - passTrace.fraction) * nearestHitEntityMult;
 
 	// If surface is thick enough, impact the other side (will look like an exit effect)
 	if (depth/depthmult > 4)
 		DoImpactEffect( passTrace, GetAmmoDef()->DamageType(info.m_iAmmoType) );
 
-	if ( tr.m_pEnt && (tr.m_pEnt->IsPlayer() || tr.m_pEnt->IsNPC()) )
+	if ( tr.m_pEnt )
 	{
 		// Don't let this bullet hit us again
 		refireInfo.m_pAdditionalIgnoreEnt = tr.m_pEnt;
@@ -731,6 +767,52 @@ void CBaseEntity::HandleBulletPenetration( CBaseCombatWeapon *pWeapon, const Fir
 		refireInfo.m_pAdditionalIgnoreEnt = info.m_pAdditionalIgnoreEnt;
 	}
 
+	// Check to see if we've left glass, and if so make a note of it and generate the proper effects.
+	psurf = physprops->GetSurfaceData( passTrace.surface.surfaceProps );
+
+	if ( psurf && psurf->game.material == CHAR_TEX_GLASS )
+	{
+		CEffectData	data;
+
+		data.m_vNormal = tr.plane.normal;
+		data.m_vOrigin = tr.endpos;
+
+		DispatchEffect("GlassImpact", data);
+
+		leftGlass = true;
+	}
+
+	// We started in glass and managed to hit another entity before hitting our max depth,
+	// so we probably left the glass and but may not be able to escape into the open air.
+	// Make sure we still detect the glass exit in this case.
+	if ( enteredGlass && nearestHitEntityMult != 1.0f )
+		leftGlass = true;
+
+	// If we've both entered and left glass, this penetration costs us nothing.
+	if ( enteredGlass && leftGlass )
+	{
+		depth = 0;
+	}
+
+	// If we didn't make it through, we will do a very short range bullet refire to make sure we hit whatever we ended up in.
+	// Setting the penetrate depth to 0 here will kill the next refire attempt.  If we detected an entity and shortened our trace,
+	// though, it means we actually can go further and shouldn't give up early.
+	if ( ( passTrace.startsolid || passTrace.fraction == 1.0f ) && nearestHitEntityMult == 1.0f  )
+	{
+		if ( passTrace.DidHitNonWorldEntity() && passTrace.m_pEnt != tr.m_pEnt )
+		{
+			//Warning("Attempting to fire one last shot!\n");
+			refireInfo.m_flPenetrateDepth = 0;
+		}
+		else // If we ended up inside the world or the entity we hit with the first trace there's no point in hitting it again.
+		{
+			//Warning("Couldn't make it through!\n");
+			return;
+		}
+	}
+	else
+		refireInfo.m_flPenetrateDepth = info.m_flPenetrateDepth - depth;
+
 #ifdef GAME_DLL
 	if ( ge_debug_penetration.GetBool() )
 	{
@@ -739,13 +821,17 @@ void CBaseEntity::HandleBulletPenetration( CBaseCombatWeapon *pWeapon, const Fir
 		debugoverlay->AddTextOverlay( tr.endpos, 2, 3.5f, "Material: %s", physprops->GetPropName(tr.surface.surfaceProps) );
 		debugoverlay->AddTextOverlay( tr.endpos, 3, 3.5f, "Penetration Left: %0.1f", info.m_flPenetrateDepth - depth );
 		if ( tr.m_pEnt && (tr.m_pEnt->IsPlayer() || tr.m_pEnt->IsNPC()) )
-			debugoverlay->AddTextOverlay( tr.endpos, 4, 3.5f, "(Half depth -> Player hit)" );
+			debugoverlay->AddTextOverlay( tr.endpos, 4, 3.5f, "(Player hit)" );
 
-		debugoverlay->AddLineOverlay( tr.endpos, passTrace.endpos, 0, 0, 255, true, 3.5f );
+		// Show different colors depending on if glass was involved in the penetration or not.
+		if ( !enteredGlass && !leftGlass )
+			debugoverlay->AddLineOverlay( tr.endpos, passTrace.endpos, 0, 0, 255, true, 3.5f );
+		else
+			debugoverlay->AddLineOverlay( tr.endpos, passTrace.endpos, enteredGlass ? 255 : 0, leftGlass ? 255 : 0, 0, true, 3.5f );
 	}
 #endif
 
-	// Refire the round, as if starting from behind the glass
+	// Refire the round, as if starting from behind the object
 	refireInfo.m_iShots			= 1;
 	refireInfo.m_vecSrc			= passTrace.endpos;
 	refireInfo.m_vecDirShooting = vecDir;
@@ -759,86 +845,6 @@ void CBaseEntity::HandleBulletPenetration( CBaseCombatWeapon *pWeapon, const Fir
 
 	// Refire the shot from the other side of the object
 	FireBullets( refireInfo );
-}
-
-#define	MAX_GLASS_PENETRATION_DEPTH	16.0f
-//-----------------------------------------------------------------------------
-// Specific handling of glass impacts
-//-----------------------------------------------------------------------------
-void CBaseEntity::HandleShotImpactingGlass(const FireBulletsInfo_t &info, trace_t &tr, const Vector &vecDir, ITraceFilter *pTraceFilter)
-{
-	static int sBPGlassSurfaceIdx = physprops->GetSurfaceIndex("bulletproof_glass");
-	// Move through the glass until we're at the other side
-	Vector	testPos = tr.endpos + (vecDir * MAX_GLASS_PENETRATION_DEPTH);
-
-	CEffectData	data;
-
-	data.m_vNormal = tr.plane.normal;
-	data.m_vOrigin = tr.endpos;
-
-	DispatchEffect("GlassImpact", data);
-
-	trace_t	penetrationTrace;
-	FireBulletsInfo_t behindGlassInfo;
-
-	// Re-trace as if the bullet had passed right through
-	UTIL_TraceLine(testPos, tr.endpos, MASK_SHOT, pTraceFilter, &penetrationTrace);
-
-	// We somehow didn't hit anything, ragequit.
-	if (penetrationTrace.fraction == 1.0f)
-		return;
-
-	// We got stuck inside of something
-	if (penetrationTrace.startsolid || tr.fraction == 0.0f)
-	{
-		// We got stuck inside the world, ragequit.
-		if (penetrationTrace.DidHitWorld())
-		{
-			DoImpactEffect(tr, DMG_BULLET);
-			return;
-		}
-
-		// We got stuck inside an entity, ignore it and keep going.
-		if (penetrationTrace.m_pEnt)
-			behindGlassInfo.m_pAdditionalIgnoreEnt = penetrationTrace.m_pEnt;
-	}
-	
-	// Do a penetrated bullet decal
-	DoImpactEffect( tr, DMG_BULLET );
-
-	// Impact the other side (will look like an exit effect)
-	DoImpactEffect( penetrationTrace, GetAmmoDef()->DamageType(info.m_iAmmoType) );
-
-	data.m_vNormal = penetrationTrace.plane.normal;
-	data.m_vOrigin = penetrationTrace.endpos;
-	
-	DispatchEffect( "GlassImpact", data );
-
-#ifdef GAME_DLL
-	if ( ge_debug_penetration.GetBool() )
-	{
-		// Spit out penetration data and draw penetration line in red
-		debugoverlay->AddTextOverlay( tr.endpos, 1, 3.5f, "Depth: %0.1f", MAX_GLASS_PENETRATION_DEPTH * tr.fraction );
-		debugoverlay->AddTextOverlay( tr.endpos, 2, 3.5f, "Material: %s", physprops->GetPropName(tr.surface.surfaceProps) );
-		
-		debugoverlay->AddLineOverlay( penetrationTrace.startpos, penetrationTrace.endpos, 255, 0, 0, true, 3.5f );
-	}
-#endif
-
-	// Refire the round, as if starting from behind the glass
-	behindGlassInfo.m_iShots = 1;
-	behindGlassInfo.m_vecSrc = penetrationTrace.endpos;
-	behindGlassInfo.m_vecDirShooting = vecDir;
-	behindGlassInfo.m_vecSpread = vec3_origin;
-	behindGlassInfo.m_flDistance = info.m_flDistance*( 1.0f - tr.fraction );
-	behindGlassInfo.m_iAmmoType = info.m_iAmmoType;
-	behindGlassInfo.m_iTracerFreq = info.m_iTracerFreq;
-	behindGlassInfo.m_iDamage = info.m_iDamage;
-	behindGlassInfo.m_pAttacker = info.m_pAttacker ? info.m_pAttacker : this;
-	behindGlassInfo.m_nFlags = info.m_nFlags;
-	behindGlassInfo.m_flPenetrateDepth = info.m_flPenetrateDepth;
-
-	FireBullets( behindGlassInfo );
 }
 
 bool CGEPlayer::Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex /*= GE_RIGHT_HAND*/ )
