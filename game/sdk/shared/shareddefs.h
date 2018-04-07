@@ -596,6 +596,7 @@ enum FireBulletsFlags_t
 #ifdef GE_DLL
 	FIRE_BULLETS_PENETRATED_SHOT = 0x10, // This is set if this shot is actually a refire after a penetration (prevents multiple lag compensations per frame)
 	FIRE_BULLETS_FORCE_TRACER = 0x20,
+	FIRE_BULLETS_NO_IMPACT_EFFECTS = 0x40,
 #endif
 };
 
@@ -624,6 +625,8 @@ struct FireBulletsInfo_t
 	#ifdef GE_DLL
 		m_flPenetrateDepth = 0;
 		m_iGaussFactor = 1;
+		m_pHitPlayers[0] = NULL;
+		m_iHitPlayersTailIndex = 0;
 	#endif
 	}
 
@@ -646,6 +649,8 @@ struct FireBulletsInfo_t
 	#ifdef GE_DLL
 		m_flPenetrateDepth = 0;
 		m_iGaussFactor = 1;
+		m_pHitPlayers[0] = NULL;
+		m_iHitPlayersTailIndex = 0;
 	#endif
 	}
 
@@ -666,6 +671,8 @@ struct FireBulletsInfo_t
 #ifdef GE_DLL
 	float m_flPenetrateDepth;
 	int m_iGaussFactor;
+	CBaseEntity* m_pHitPlayers[MAX_PLAYERS]; // Yep...I could not get CUtlVector working here even though it works in EmitSound_t.  If you can figure out how switch to that.
+	unsigned int m_iHitPlayersTailIndex;
 #endif
 };
 
