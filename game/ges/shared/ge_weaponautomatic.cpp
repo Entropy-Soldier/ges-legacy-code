@@ -73,6 +73,10 @@ void CGEWeaponAutomatic::PrimaryAttack( void )
 		return;
 	}
 
+	SendWeaponAnim( GetPrimaryAttackActivity() );
+	pPlayer->SetAnimation( PLAYER_ATTACK1 );
+	ToGEPlayer(pPlayer)->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+
 	pPlayer->DoMuzzleFlash();
 
 	// To make the firing framerate independent, we may have to fire more than one bullet here on low-framerate systems, 
@@ -116,10 +120,6 @@ void CGEWeaponAutomatic::PrimaryAttack( void )
 		m_bFireOnEmpty = true;
 		m_flNextEmptySoundTime = gpGlobals->curtime + max(GetClickFireRate(), 0.25);
 	}
-
-	SendWeaponAnim( GetPrimaryAttackActivity() );
-	pPlayer->SetAnimation( PLAYER_ATTACK1 );
-	ToGEPlayer(pPlayer)->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 }
 
 void CGEWeaponAutomatic::DoMachineGunKick( CBasePlayer *pPlayer, float dampEasy, float maxVerticleKickAngle, float fireDurationTime, float slideLimitTime )
@@ -186,6 +186,14 @@ bool CGEWeaponAutomatic::Deploy( void )
 	m_nNumShotsFired = 0;
 
 	return BaseClass::Deploy();
+}
+
+bool CGEWeaponAutomatic::Holster(CBaseCombatWeapon *pSwitchingTo)
+{
+	m_nNumShotsFired = 0;
+	m_flNextSoundTime = gpGlobals->curtime;
+
+	return BaseClass::Holster( pSwitchingTo );
 }
 
 //-----------------------------------------------------------------------------

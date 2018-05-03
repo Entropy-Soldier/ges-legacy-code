@@ -112,8 +112,8 @@ CGEWeapon::CGEWeapon()
 	m_bSilenced = false;
 	m_bIsAlwaysSilent = false;
 	m_flAccuracyPenalty = m_flCoolDownTime = 0.0f;
-	// Our weapons are not water proof by default, but the alt fire is
-	m_bFiresUnderwater = false;
+	// Our weapons are water proof by default, because why not.
+	m_bFiresUnderwater = true;
 	m_bAltFiresUnderwater = true;
 	m_bEnableGlow = false;
 

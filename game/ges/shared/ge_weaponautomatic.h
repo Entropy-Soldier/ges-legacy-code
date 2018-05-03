@@ -36,6 +36,7 @@ public:
 
 	virtual void	ItemPostFrame( void );
 	virtual bool	Deploy( void );
+	virtual bool	Holster(CBaseCombatWeapon *pSwitchingTo);
 
 	virtual void	PrimaryAttack( void );
 	virtual bool	Reload( void );
