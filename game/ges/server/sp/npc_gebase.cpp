@@ -920,7 +920,9 @@ bool CNPC_GEBase::BumpWeapon( CGEWeapon *pWeapon )
 	if ( canHaveWeapon )
 	{
 		// Give us the clip ammo
-		GiveAmmo( pWeapon->GetDefaultClip1(), pWeapon->GetPrimaryAmmoType() ); 
+		if (pWeapon->ShouldGiveDefaultClip())
+			GiveAmmo( pWeapon->GetDefaultClip1(), pWeapon->GetPrimaryAmmoType() ); 
+
 		Weapon_Equip( pWeapon );
 		pWeapon->SetWeaponVisible( false );
 
@@ -947,7 +949,7 @@ bool CNPC_GEBase::BumpWeapon( CGEWeapon *pWeapon )
 	return canHaveWeapon;
 }
 
-CBaseEntity	*CNPC_GEBase::GiveNamedItem( const char *pszName, int iSubType )
+CBaseEntity	*CNPC_GEBase::GiveNamedItem( const char *pszName, int iSubType, bool giveDefaultClip )
 {
 	// If I already own this type don't create one
 	if ( Weapon_OwnsThisType(pszName, iSubType) )
@@ -975,6 +977,8 @@ CBaseEntity	*CNPC_GEBase::GiveNamedItem( const char *pszName, int iSubType )
 	CBaseCombatWeapon *pWeapon = dynamic_cast<CBaseCombatWeapon*>( (CBaseEntity*)pent );
 	if ( pWeapon )
 	{
+		pWeapon->SetShouldGiveDefaultClip( giveDefaultClip );
+
 		Weapon_Equip( pWeapon );
 		pWeapon->SetWeaponVisible( false );
 

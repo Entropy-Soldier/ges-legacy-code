@@ -497,7 +497,11 @@ public:
 	virtual void 			SelectItem( const char *pstr, int iSubType = 0 );
 	void					ItemPreFrame( void );
 	virtual void			ItemPostFrame( void );
+#ifdef GE_DLL
+	virtual CBaseEntity		*GiveNamedItem( const char *szName, int iSubType = 0, bool giveDefaultClip = true );
+#else
 	virtual CBaseEntity		*GiveNamedItem( const char *szName, int iSubType = 0 );
+#endif
 	void					EnableControl(bool fControl);
 	virtual void			CheckTrainUpdate( void );
 	void					AbortReload( void );

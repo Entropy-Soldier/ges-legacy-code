@@ -82,6 +82,9 @@ void pyMakeVisible( CBaseCombatCharacter *pEnt )
 
 bool pyWeaponSwitch( CBaseCombatCharacter *pEnt, bp::object weap_or_id )
 {
+	if ( !pEnt )
+		return false;
+
 	bp::extract<CGEWeapon*> to_weap( weap_or_id );
 	bp::extract<char*> to_name( weap_or_id );
 	bp::extract<int> to_id( weap_or_id );
@@ -95,10 +98,34 @@ bool pyWeaponSwitch( CBaseCombatCharacter *pEnt, bp::object weap_or_id )
 	else if ( to_id.check() )
 		pWeap = pEnt->Weapon_OwnsThisType( WeaponIDToAlias( to_id() ) );
 	
-	if ( pEnt && pWeap )
+	if ( pWeap )
 		return pEnt->Weapon_Switch( pWeap );
 
 	return false;
+}
+
+bool pyRemoveWeapon( CBaseCombatCharacter *pEnt, bp::object weap_or_id )
+{
+	if ( !pEnt ) 
+		return false;
+
+	bp::extract<CGEWeapon*> to_weap( weap_or_id );
+	bp::extract<char*> to_name( weap_or_id );
+	bp::extract<int> to_id( weap_or_id );
+
+	CBaseCombatWeapon *pWeap = NULL;
+
+	if ( to_weap.check() )
+		pWeap = to_weap();
+	else if ( to_name.check() )
+		pWeap = pEnt->Weapon_OwnsThisType( to_name() );
+	else if ( to_id.check() )
+		pWeap = pEnt->Weapon_OwnsThisType( WeaponIDToAlias( to_id() ) );
+
+	if (!pWeap)
+		return false;
+
+	return pEnt->RemoveWeapon( pWeap );
 }
 
 int pyGetAmmoCount( CBaseCombatCharacter *pEnt, bp::object weap_or_ammo )
@@ -230,6 +257,7 @@ BOOST_PYTHON_MODULE(GEPlayer)
 		.def("GetActiveWeapon", pyGetActiveWeapon, return_value_policy<reference_existing_object>())
 		.def("HasWeapon", pyHasWeapon)
 		.def("WeaponSwitch", pyWeaponSwitch)
+		.def("StripWeapon", pyRemoveWeapon)
 		.def("GetAmmoCount", pyGetAmmoCount)
 		.def("GetHeldWeapons", pyGetHeldWeapons)
 		.def("GetHeldWeaponIds", pyGetHeldWeaponIds)

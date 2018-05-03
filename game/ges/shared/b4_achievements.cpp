@@ -564,7 +564,7 @@ protected:
 	virtual void Init()
 	{
 		SetFlags( ACH_SAVE_GLOBAL );
-		SetGoal( 50 );
+		SetGoal( 20 );
 	}
 
 	virtual void ListenForEvents()
@@ -576,7 +576,7 @@ protected:
 	{
 		if ( !Q_stricmp(event->GetName(), "round_end") )
 		{
-			if ( !CBasePlayer::GetLocalPlayer() || !event->GetBool("showreport") || !IsScenario( "yolt" ) || CalcPlayerCount() < 4 )
+			if ( !CBasePlayer::GetLocalPlayer() || !event->GetBool("showreport") || !IsScenario( "yolt" ) || CalcPlayerCount() < 8 )
 				return;
 
 			// If we won we get cred

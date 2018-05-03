@@ -61,6 +61,7 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
 	RecvPropBool( RECVINFO(m_bEnableGlow) ),
 	RecvPropInt( RECVINFO(m_GlowColor), 0, RecvProxy_IntToColor32 ),
 	RecvPropFloat( RECVINFO(m_GlowDist) ),
+	RecvPropFloat( RECVINFO(m_flShootTime) ),
 #else
 	SendPropBool( SENDINFO( m_bSilenced ) ),
 	SendPropFloat( SENDINFO( m_flAccuracyPenalty ) ),
@@ -68,6 +69,7 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
 	SendPropBool( SENDINFO(m_bEnableGlow) ),
 	SendPropInt( SENDINFO(m_GlowColor), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt ),
 	SendPropFloat( SENDINFO(m_GlowDist) ),
+	SendPropFloat( SENDINFO(m_flShootTime) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -85,6 +87,7 @@ BEGIN_DATADESC( CGEWeapon )
 	DEFINE_FIELD( m_flHolsterTime,		FIELD_TIME ),
 	DEFINE_FIELD( m_flAccuracyPenalty,	FIELD_TIME ),
 	DEFINE_FIELD( m_flCoolDownTime,		FIELD_TIME ),
+	DEFINE_FIELD( m_flShootTime,		FIELD_TIME ),
 
 	DEFINE_THINKFUNC( OnReloadOffscreen ),
 END_DATADESC()
@@ -95,6 +98,8 @@ BEGIN_PREDICTION_DATA( CGEWeapon )
 	DEFINE_PRED_FIELD( m_bSilenced, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flAccuracyPenalty, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flCoolDownTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_flShootTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD_TOL( m_flShootTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),
 END_PREDICTION_DATA()
 #endif
 
@@ -114,6 +119,8 @@ CGEWeapon::CGEWeapon()
 
 	m_flSmokeRate = m_flLastShotTime = 0;
 	m_iShotsFired = 0;
+
+	m_flShootTime = 0;
 
 #ifdef GAME_DLL
 	m_flDeployTime = 0.0f;
@@ -272,25 +279,38 @@ void CGEWeapon::PrimaryAttack(void)
 	if(!pPlayer)
 		return;
 
-//	CGEPlayer *pGEPlayer = ToGEPlayer(pPlayer);
+	// Send the animation event to the client/server
+	pPlayer->SetAnimation( PLAYER_ATTACK1 );
+	ToGEPlayer(pPlayer)->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
+
+	float fireDelay = GetFireDelay();
+
+	if (fireDelay == 0.0f)
+	{
+		// We have no fire delay so just shoot right now.
+		FireWeapon();
+		//Warning("Instant Fire!\n");
+	}
+	else
+	{
+		// We have a fire delay so get ready to shoot when it's time.
+		m_flShootTime = gpGlobals->curtime + fireDelay;
+		//Warning("Delayed Fire!\n");
+	}
+}
+
+void CGEWeapon::FireWeapon()
+{
+	CBasePlayer *pPlayer = ToBasePlayer(GetOwner());
+
+	if(!pPlayer)
+		return;
 
 	// MUST call sound before removing a round from the clip of a CMachineGun
 	WeaponSound( SINGLE );
 
 	pPlayer->DoMuzzleFlash();
-
-	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
-
-	//This stops silent firing...
-	//if (pPlayer->m_nButtons & IN_RELOAD)
-	//{
-	//	m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
-	//	return;
-	//}
-
-	// Send the animation event to the client/server
-	pPlayer->SetAnimation( PLAYER_ATTACK1 );
-	ToGEPlayer(pPlayer)->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 
 	Vector	vecSrc = pPlayer->Weapon_ShootPosition();
 	Vector	vecAiming = pPlayer->GetAutoaimVector(AUTOAIM_10DEGREES);
@@ -312,7 +332,9 @@ void CGEWeapon::PrimaryAttack(void)
 	if (!m_iClip1)
 	{
 		m_bFireOnEmpty = true;
-		m_flNextEmptySoundTime = gpGlobals->curtime + max(GetClickFireRate(), 0.25);
+
+		// Subtract out fire delay here so we keep the expected fire pace.
+		m_flNextEmptySoundTime = gpGlobals->curtime + max(GetClickFireRate() - GetFireDelay(), 0.25);
 	}
 }
 
@@ -325,8 +347,6 @@ void CGEWeapon::OnReloadOffscreen(void)
 	if ( pOwner->GetActiveWeapon() == this && GetWeaponID() < WEAPON_RANDOM ) // Only switch skins if we still have the weapon equipped!
 		SetSkin(ToGEMPPlayer(pOwner)->GetUsedWeaponSkin(GetWeaponID()));
 }
-
-
 
 bool CGEWeapon::Reload(void)
 {
@@ -794,6 +814,18 @@ bool CGEWeapon::IsWeaponVisible( void )
 		return BaseClass::IsWeaponVisible();
 }
 
+void CGEWeapon::ItemPreFrame( void )
+{
+	// If we are waiting for our fire delay to expire, and it has, fire the weapon!
+	if ( m_flShootTime && gpGlobals->curtime >= m_flShootTime) 
+	{
+		FireWeapon();
+		m_flShootTime = 0;
+	}
+
+	BaseClass::ItemPreFrame();
+}
+
 void CGEWeapon::ItemPostFrame( void )
 {
 	// Reset shots fired if we go past our reset time (do this before any possible call to Primary Attack)
@@ -850,6 +882,8 @@ bool CGEWeapon::Deploy( void )
 
 	if ( BaseClass::Deploy() )
 	{
+		m_flShootTime = 0;
+
 #ifdef GAME_DLL
 		m_flDeployTime = gpGlobals->curtime;
 #else

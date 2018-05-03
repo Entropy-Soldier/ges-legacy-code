@@ -5699,7 +5699,11 @@ void CBloodSplat::Think( void )
 //-----------------------------------------------------------------------------
 // Purpose: Create and give the named item to the player. Then return it.
 //-----------------------------------------------------------------------------
+#ifdef GE_DLL
+CBaseEntity	*CBasePlayer::GiveNamedItem( const char *pszName, int iSubType, bool giveDefaultClip )
+#else
 CBaseEntity	*CBasePlayer::GiveNamedItem( const char *pszName, int iSubType )
+#endif
 {
 	// If I already own this type don't create one
 	if ( Weapon_OwnsThisType(pszName, iSubType) )
@@ -5736,6 +5740,10 @@ CBaseEntity	*CBasePlayer::GiveNamedItem( const char *pszName, int iSubType )
 	if ( pWeapon )
 	{
 		pWeapon->SetSubType( iSubType );
+
+#ifdef GE_DLL
+		pWeapon->SetShouldGiveDefaultClip( giveDefaultClip );
+#endif
 	}
 
 	DispatchSpawn( pent );

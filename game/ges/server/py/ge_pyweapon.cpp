@@ -130,6 +130,11 @@ const char* pyWeaponClassname( int id )
 	return name != NULL ? name : "";
 }
 
+int pyWeaponID( const char *classname )
+{
+	return AliasToWeaponID( classname );
+}
+
 void pyWeaponSetAbsOrigin( CGEWeapon *weap, Vector origin )
 {
 	if ( !weap || weap->GetOwner() )
@@ -245,6 +250,7 @@ BOOST_PYTHON_MODULE(GEWeapon)
 	// Quick access to weapon information
 	def("WeaponAmmoType", pyWeaponAmmoType);
 	def("WeaponClassname", pyWeaponClassname);
+	def("WeaponID", pyWeaponID);
 	def("WeaponPrintName", pyWeaponPrintName);
 	def("WeaponInfo", pyWeaponInfo, WeaponInfo_overloads());
 

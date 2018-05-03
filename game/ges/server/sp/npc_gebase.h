@@ -96,7 +96,7 @@ public:
 
 // Helper Functions
 	virtual bool	HasWeapon(CBaseEntity *pEnt);
-	CBaseEntity*	GiveNamedItem( const char *pszName, int iSubType = 0 );
+	CBaseEntity*	GiveNamedItem( const char *pszName, int iSubType = 0, bool giveDefaultClip = true );
 	
 	virtual void	TraceAttack( const CTakeDamageInfo &inputInfo, const Vector &vecDir, trace_t *ptr );
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );

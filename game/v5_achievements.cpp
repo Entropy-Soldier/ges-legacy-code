@@ -540,7 +540,7 @@ protected:
 	virtual void Init()
 	{
 		SetFlags(ACH_SAVE_GLOBAL);
-		SetGoal(100);
+		SetGoal(50);
 	}
 
 	virtual void ListenForEvents()
@@ -563,7 +563,7 @@ protected:
 			IncrementCount();
 	}
 };
-DECLARE_GE_ACHIEVEMENT(CAchPitfall, ACHIEVEMENT_GES_PITFALL, "GES_PITFALL", 100, GE_ACH_UNLOCKED);
+DECLARE_GE_ACHIEVEMENT(CAchPitfall, ACHIEVEMENT_GES_PITFALL, "GES_PITFALL", 50, GE_ACH_UNLOCKED);
 
 
 // Backtracking: Steal 100 levels in Arsenal

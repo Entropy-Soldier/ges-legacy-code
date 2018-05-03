@@ -204,7 +204,6 @@ void CGEPlayer::GiveAllItems( void )
 	SetHealth( GetMaxHealth() );
 	AddArmor( GetMaxArmor(), GetMaxArmor() );
 
-
 	CBasePlayer::GiveAmmo( AMMO_9MM_MAX, AMMO_9MM );
 	CBasePlayer::GiveAmmo( AMMO_GOLDENGUN_MAX, AMMO_GOLDENGUN );
 	CBasePlayer::GiveAmmo( AMMO_MAGNUM_MAX, AMMO_MAGNUM );
@@ -217,6 +216,7 @@ void CGEPlayer::GiveAllItems( void )
 	CBasePlayer::GiveAmmo( AMMO_TKNIFE_MAX, AMMO_TKNIFE );
 	CBasePlayer::GiveAmmo( AMMO_SHELL_MAX, AMMO_SHELL );
 	CBasePlayer::GiveAmmo( AMMO_ROCKET_MAX, AMMO_ROCKET );
+	CBasePlayer::GiveAmmo( AMMO_WATCHLASER_MAX, AMMO_WATCHLASER );
 
 	GiveNamedItem( "weapon_slappers" );
 	GiveNamedItem( "weapon_knife" );
@@ -254,13 +254,6 @@ void CGEPlayer::GiveAllItems( void )
 	GiveNamedItem( "weapon_proximitymine" );
 	GiveNamedItem( "weapon_timedmine" );
 	GiveNamedItem( "weapon_grenade" );
-
-	// Quick fix for the ammo deduction that ammo spawn weapons get causing the cheat to not give full ammo for them.
-	CBasePlayer::GiveAmmo(AMMO_REMOTEMINE_MAX, AMMO_REMOTEMINE);
-	CBasePlayer::GiveAmmo(AMMO_PROXIMITYMINE_MAX, AMMO_PROXIMITYMINE);
-	CBasePlayer::GiveAmmo(AMMO_TIMEDMINE_MAX, AMMO_TIMEDMINE);
-	CBasePlayer::GiveAmmo(AMMO_GRENADE_MAX, AMMO_GRENADE);
-	CBasePlayer::GiveAmmo(AMMO_TKNIFE_MAX, AMMO_TKNIFE);
 }
 
 int CGEPlayer::GiveAmmo( int nCount, int nAmmoIndex, bool bSuppressSound )
@@ -278,7 +271,7 @@ int CGEPlayer::GiveAmmo( int nCount, int nAmmoIndex, bool bSuppressSound )
 		NotifyPickup( name, 1 );
 
 		// If we surpressed the sound it wasn't a normal pickup so we don't deserve to get a bonus weapon from it.
-		if (bSuppressSound)
+		if ( bSuppressSound )
 			return amt;
 
 		const char* weaponname = NULL;
@@ -306,14 +299,7 @@ int CGEPlayer::GiveAmmo( int nCount, int nAmmoIndex, bool bSuppressSound )
 		{
 			// If we actually got one of these weapons through an ammo box, we shouldn't also get the weapon's defualt clip.
 			// default clip should only be given from player drops.
-			CBaseEntity *pWeapon = GiveNamedItem(weaponname);
-			if (pWeapon)
-			{
-				CGEWeapon *pGEWeapon = ToGEWeapon((CBaseCombatWeapon*)pWeapon);
-
-				if (pGEWeapon)
-					RemoveAmmo(pGEWeapon->GetDefaultClip1(), GetAmmoDef()->Index(name));
-			}
+			GiveNamedItem(weaponname, 0, false);
 		}
 	}
 
@@ -1398,21 +1384,18 @@ const char* CGEPlayer::GetCharIdent( void )
 
 void CGEPlayer::GiveNamedWeapon(const char* ident, int ammoCount, bool stripAmmo)
 {
-	if (ammoCount > 0)
+	// Give ammo first so it will go straight into the clip of a newly created weapon.
+	if ( ammoCount > 0 )
 	{
 		int id = AliasToWeaponID( ident );
 		const char* ammoId = GetAmmoForWeapon(id);
 
 		int aID = GetAmmoDef()->Index( ammoId );
+
 		GiveAmmo( ammoCount, aID, true );
 	}
 
-	CGEWeapon *pWeapon = (CGEWeapon*)GiveNamedItem(ident);
-
-	if (stripAmmo && pWeapon)
-	{
-		RemoveAmmo( pWeapon->GetDefaultClip1(), pWeapon->m_iPrimaryAmmoType );
-	}
+	GiveNamedItem(ident, 0, !stripAmmo);
 }
 
 void CGEPlayer::StripAllWeapons()

@@ -63,8 +63,10 @@ public:
 	virtual bool	IsExplosiveWeapon() { return false; }
 	virtual bool	IsAutomaticWeapon() { return false; }
 	virtual bool	IsThrownWeapon()	{ return false; }
+	virtual bool	HasFireDelay()		{ return GetFireDelay() != 0.0f; }
 
 	virtual void	PrimaryAttack();
+	virtual void	FireWeapon();
 	virtual bool	Reload();
 	virtual void	OnReloadOffscreen();
 	virtual void	DryFire();
@@ -118,6 +120,7 @@ public:
 	virtual bool	HasShotsLeft( void );
 	virtual bool	IsWeaponVisible( void );
 
+	virtual void	ItemPreFrame( void );
 	virtual void	ItemPostFrame( void );
 
 	virtual void	Equip( CBaseCombatCharacter *pOwner );
@@ -192,6 +195,8 @@ protected:
 	float			m_flSmokeRate;
 	int				m_iShotsFired;
 	float			m_flLastShotTime;
+
+	CNetworkVar( float, m_flShootTime );
 
 private:
 #ifdef GAME_DLL

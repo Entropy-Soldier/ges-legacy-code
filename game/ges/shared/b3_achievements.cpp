@@ -404,6 +404,24 @@ protected:
 			// Otherwise the other person kill
 			m_flLastGrenadeKill = gpGlobals->curtime;
 		}
+
+		// Transfered kill credit
+		if ( event->GetInt("weaponid") == WEAPON_NONE && pVictim == CBasePlayer::GetLocalPlayer() )
+		{
+			// Not a transferred explosive death, or a killbind. (explode killbind has "DMG_BLAST" type so we have to check it)
+			if ( event->GetInt("dmgtype") != DMG_BLAST || !Q_strcmp(event->GetString("weapon"), "self") )
+				return;
+
+			float kDiff = gpGlobals->curtime - m_flLastGrenadeKill;
+
+			// We only got here because it's a transferred suicide, so treat is as such.
+			if ( kDiff >= 0.0f && kDiff < 0.5f )
+			{
+				IncrementCount();
+			}
+
+			m_flLastGrenadeSuicide = gpGlobals->curtime;
+		}
 	}
 
 private:

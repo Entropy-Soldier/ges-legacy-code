@@ -158,7 +158,7 @@ public:
 	virtual int   GetRunCode()					{ return m_flRunCode; }
 	virtual void  SetRunCode(float code)		{ m_flRunCode = code; }
 
-	virtual CBaseEntity	*GiveNamedItem( const char *szName, int iSubType = 0 );
+	virtual CBaseEntity	*GiveNamedItem( const char *szName, int iSubType = 0, bool giveDefaultClip = true );
 	virtual void  GiveDefaultItems();
 	virtual bool  ClientCommand( const CCommand &args );
 

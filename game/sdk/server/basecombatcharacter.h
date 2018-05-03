@@ -315,8 +315,13 @@ public:
 	CBaseCombatWeapon*	GetActiveWeapon() const;
 	int					WeaponCount() const;
 	CBaseCombatWeapon*	GetWeapon( int i ) const;
+#ifndef GE_DLL
 	bool				RemoveWeapon( CBaseCombatWeapon *pWeapon );
+#endif
 	void				RemoveAllWeapons();
+#ifdef GE_DLL
+	bool				RemoveWeapon( CBaseCombatWeaponHandle weapon );
+#endif
 	WeaponProficiency_t GetCurrentWeaponProficiency() { return m_CurrentWeaponProficiency; }
 	void				SetCurrentWeaponProficiency( WeaponProficiency_t iProficiency ) { m_CurrentWeaponProficiency = iProficiency; }
 	virtual WeaponProficiency_t CalcWeaponProficiency( CBaseCombatWeapon *pWeapon );

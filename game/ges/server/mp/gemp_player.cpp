@@ -313,6 +313,8 @@ void CGEMPPlayer::InitialSpawn()
 	BaseClass::InitialSpawn();
 }
 
+extern ConVar ge_startarmored;
+
 void CGEMPPlayer::Spawn()
 {
 	Precache();
@@ -467,6 +469,13 @@ void CGEMPPlayer::Spawn()
 		// CreateViewModel( GE_LEFT_HAND );
 
 		SetHealth( GetMaxHealth() );
+
+		if ( ge_startarmored.GetInt() == 2 )
+			SetArmorValue( GetMaxArmor() );
+		else if ( ge_startarmored.GetInt() == 1 )
+			SetArmorValue( GetMaxArmor() / 2 );
+		else
+			SetArmorValue( 0 );
 		
 		AddFlag(FL_ONGROUND); // set the player on the ground at the start of the round.
 
@@ -1127,13 +1136,13 @@ bool CGEMPPlayer::CheckForValidSpawns( int iSpawnerType /*= -1*/ )
 	return false;
 }
 
-CBaseEntity *CGEMPPlayer::GiveNamedItem( const char *classname, int iSubType /*=0*/ )
+CBaseEntity *CGEMPPlayer::GiveNamedItem( const char *classname, int iSubType /*=0*/, bool giveDefaultClip /*=true*/ )
 {
 	// Don't give out tokens
 	if ( GEMPRules()->GetTokenManager()->IsValidToken( classname ) )
 		return NULL;
 
-	CBaseEntity *pEnt = BaseClass::GiveNamedItem( classname, iSubType );
+	CBaseEntity *pEnt = BaseClass::GiveNamedItem( classname, iSubType, giveDefaultClip );
 	if ( pEnt && !pEnt->GetOwnerEntity() )
 	{
 		// If we didn't actually take the item, remove it

@@ -652,13 +652,7 @@ void CGEBotPlayer::GiveNamedWeapon( const char* ident, int ammoCount, bool strip
 		m_pNPC->GiveAmmo( ammoCount, aID, false );
 	}
 
-	CGEWeapon *pWeapon = (CGEWeapon*) m_pNPC->GiveNamedItem( ident );
-
-	if ( stripAmmo && pWeapon )
-	{
-		m_pNPC->RemoveAmmo( pWeapon->GetDefaultClip1(), pWeapon->m_iPrimaryAmmoType );
-	}
-
+	m_pNPC->GiveNamedItem( ident, 0, !stripAmmo );
 }
 
 int	CGEBotPlayer::GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound )

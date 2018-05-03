@@ -301,6 +301,10 @@ public:
 	virtual int				GetMaxClip2( void ) const;
 	virtual int				GetDefaultClip1( void ) const;
 	virtual int				GetDefaultClip2( void ) const;
+#ifdef GE_DLL
+	virtual void			SetShouldGiveDefaultClip( bool state ) { m_bGiveDefaultClip = state; }
+	virtual bool			ShouldGiveDefaultClip() { return m_bGiveDefaultClip; }
+#endif
 	virtual int				GetWeight( void ) const;
 	virtual bool			AllowsAutoSwitchTo( void ) const;
 	virtual bool			AllowsAutoSwitchFrom( void ) const;
@@ -376,7 +380,7 @@ public:
 
 	bool					IsRemoveable() { return m_bRemoveable; }
 	void					SetRemoveable( bool bRemoveable ) { m_bRemoveable = bRemoveable; }
-	
+
 	// Returns bits for	weapon conditions
 	virtual bool			WeaponLOSCondition( const Vector &ownerPos, const Vector &targetPos, bool bSetConditions );	
 	virtual	int				WeaponRangeAttack1Condition( float flDot, float flDist );
@@ -499,6 +503,10 @@ private:
 	Activity				m_IdealActivity;
 
 	bool					m_bRemoveable;
+
+#ifdef GE_DLL
+	bool					m_bGiveDefaultClip;
+#endif
 
 	int						m_iPrimaryAmmoCount;
 	int						m_iSecondaryAmmoCount;

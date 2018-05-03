@@ -96,7 +96,6 @@ void CGEWeaponPistol::PrimaryAttack( void )
 
 	// Don't fire again until our ROF expires
 	m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
-	m_iClip1 -= 1;
 
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
 
@@ -110,6 +109,12 @@ void CGEWeaponPistol::PrimaryAttack( void )
 	}
 
 	BaseClass::PrimaryAttack();
+}
+
+void CGEWeaponPistol::FireWeapon()
+{
+	m_iClip1 -= 1; // Only take away a bullet when we actually shoot.
+	BaseClass::FireWeapon();
 }
 
 //-----------------------------------------------------------------------------
@@ -127,7 +132,7 @@ void CGEWeaponPistol::ItemPostFrame( void )
 	if ( pOwner == NULL || pOwner->m_nButtons & IN_RELOAD )
 		return;
 
-	//Allow a refire as fast as the player can click
+	// Allow a refire as fast as click fire rate if the player isn't just holding down the button.
 	if ( ( ( pOwner->m_nButtons & IN_ATTACK ) == false ) && ( m_flSoonestPrimaryAttack < gpGlobals->curtime ) )
 	{
 		m_flNextPrimaryAttack = gpGlobals->curtime - 0.1f;

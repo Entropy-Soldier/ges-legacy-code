@@ -199,10 +199,6 @@ void CWeaponSlappers::HandleAnimEventMeleeHit( animevent_t *pEvent, CBaseCombatC
 		UTIL_TraceLine( pOperator->Weapon_ShootPosition(), pHurt->GetAbsOrigin(), MASK_SHOT_HULL, pOperator, COLLISION_GROUP_NONE, &traceHit );
 		ImpactEffect( traceHit );
 	}
-	else
-	{
-		WeaponSound( MELEE_MISS );
-	}
 }
 
 

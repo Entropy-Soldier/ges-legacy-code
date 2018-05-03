@@ -25,12 +25,12 @@ public:
 
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
-
-	virtual	void	Spawn( void );
 	
 	//Attack functions
 	virtual	void	PrimaryAttack( void );
 //	virtual	void	SecondaryAttack( void );
+
+	virtual void	FireWeapon();
 	
 	virtual void	ItemPostFrame( void );
 
@@ -50,16 +50,15 @@ public:
 	virtual	float	GetDamageForActivity( Activity hitActivity )	{ return GetGEWpnData().m_iDamage; }
 	virtual bool	DamageWorld()									{ return true; }
 	virtual bool	SwingsInArc()									{ return true; }
-	virtual int		GetStaticHitActivity()							{ return NULL; }
+	virtual int		GetStaticHitActivity()							{ return ACT_VM_MISSCENTER; }
 
-	virtual void	MakeTracer(const Vector &vecTracerSrc, const trace_t &tr, int iTracerType);
+	virtual void	MakeTracer(const Vector &vecTracerSrc, const trace_t &tr, int iTracerType)	{}; // Don't make tracers by default.
 
 protected:
-	virtual	void	ImpactEffect( trace_t &trace );
+	virtual	void	ImpactEffect( trace_t &trace )					{}; // No impact effects by default.
 	bool			ImpactWater( const Vector &start, const Vector &end );
 	virtual void	Swing( int bIsSecondary );
-	void			Hit( trace_t &traceHit, Activity nHitActivity );
-	Activity		ChooseIntersectionPointAndActivity( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CBaseEntity *pOwner );
+	void			Hit( trace_t &traceHit );
 
 private:
 	CGEWeaponMelee( const CGEWeaponMelee & );

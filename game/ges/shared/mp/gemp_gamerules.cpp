@@ -87,6 +87,7 @@ extern ConVar mp_chattime;
 ConVar ge_allowradar		( "ge_allowradar", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Allow clients to use their radars." );
 ConVar ge_allowjump			( "ge_allowjump",  "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Toggles allowing players to jump." );
 ConVar ge_startarmed		( "ge_startarmed", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Configures the armed level of spawned players [0, 1, 2]" );
+ConVar ge_startarmored		( "ge_startarmored", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "2 = players will spawn with full armor, 1 = players will spawn with half armor, 0 = players spawn with no armor." );
 ConVar ge_paintball			( "ge_paintball",  "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "The famous paintball mode." );
 
 ConVar ge_teamautobalance	( "ge_teamautobalance", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Turns on the auto balancer for teamplay" );
@@ -246,9 +247,7 @@ void GEInfAmmo_Callback(IConVar *var, const char *pOldString, float flOldValue)
 							AMMO_SHELL_MAX, AMMO_TIMEDMINE_MAX - 1, AMMO_REMOTEMINE_MAX - 1, AMMO_TKNIFE_MAX - 1, AMMO_GRENADE_MAX - 1, AMMO_PROXIMITYMINE_MAX - 1};
 
 	FOR_EACH_PLAYER(pPlayer)
-		pPlayer->RemoveAllAmmo(); // First strip their ammo so if someone spazzes out on the console command they don't end up with max ammo for throwables.
-
-		for (int i = 0; i < 13; i++)
+		for (int i = 0; i < 14; i++)
 		{
 			pPlayer->GiveAmmo(ammoamounts[i], GetAmmoDef()->Index(ammotypes[i]), true);
 		}

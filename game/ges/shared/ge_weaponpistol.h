@@ -38,6 +38,7 @@ public:
 	virtual void	ItemPostFrame( void );
 
 	virtual void	PrimaryAttack( void );
+	virtual void	FireWeapon( void );
 	virtual void	SecondaryAttack( void ) { };
 	virtual bool	Reload( void );
 

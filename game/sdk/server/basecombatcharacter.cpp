@@ -1872,6 +1872,9 @@ void CBaseCombatCharacter::Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector
 	else
 		pWeapon->SetPrimaryAmmoCount( pWeapon->GetDefaultClip1() );
 
+	// Dropped weapons should give the default clip again, even if they didn't originally.
+	pWeapon->SetShouldGiveDefaultClip(true);
+
 	Vector vThrowPos = Weapon_ShootPosition() - Vector(0,0,12);
 
 	if( UTIL_PointContents(vThrowPos) & CONTENTS_SOLID )
@@ -2046,47 +2049,55 @@ void CBaseCombatCharacter::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 	pWeapon->ChangeTeam( GetTeamNumber() );
 #endif
 
-	// ----------------------
-	//  Give Primary Ammo
-	// ----------------------
-	// If gun doesn't use clips, just give ammo
-	if (pWeapon->GetMaxClip1() == -1)
+#ifdef GE_DLL
+	if ( pWeapon->ShouldGiveDefaultClip() ) // We're meant to get ammo from this weapon!
 	{
-#ifdef HL2_DLL
-		if( FStrEq(STRING(gpGlobals->mapname), "d3_c17_09") && FClassnameIs(pWeapon, "weapon_rpg") && pWeapon->NameMatches("player_spawn_items") )
+#endif
+		// ----------------------
+		//  Give Primary Ammo
+		// ----------------------
+		// If gun doesn't use clips, just give ammo
+		if (pWeapon->GetMaxClip1() == -1)
 		{
-			// !!!HACK - Don't give any ammo with the spawn equipment RPG in d3_c17_09. This is a chapter
-			// start and the map is way to easy if you start with 3 RPG rounds. It's fine if a player conserves
-			// them and uses them here, but it's not OK to start with enough ammo to bypass the snipers completely.
-			GiveAmmo( 0, pWeapon->m_iPrimaryAmmoType); 
-		}
-		else
+#ifdef HL2_DLL
+			if (FStrEq(STRING(gpGlobals->mapname), "d3_c17_09") && FClassnameIs(pWeapon, "weapon_rpg") && pWeapon->NameMatches("player_spawn_items"))
+			{
+				// !!!HACK - Don't give any ammo with the spawn equipment RPG in d3_c17_09. This is a chapter
+				// start and the map is way to easy if you start with 3 RPG rounds. It's fine if a player conserves
+				// them and uses them here, but it's not OK to start with enough ammo to bypass the snipers completely.
+				GiveAmmo(0, pWeapon->m_iPrimaryAmmoType);
+			}
+			else
 #endif // HL2_DLL
-		GiveAmmo(pWeapon->GetDefaultClip1(), pWeapon->m_iPrimaryAmmoType); 
-	}
-	// If default ammo given is greater than clip
-	// size, fill clips and give extra ammo
-	else if (pWeapon->GetDefaultClip1() >  pWeapon->GetMaxClip1() )
-	{
-		pWeapon->m_iClip1 = pWeapon->GetMaxClip1();
-		GiveAmmo( (pWeapon->GetDefaultClip1() - pWeapon->GetMaxClip1()), pWeapon->m_iPrimaryAmmoType); 
-	}
+				GiveAmmo(pWeapon->GetDefaultClip1(), pWeapon->m_iPrimaryAmmoType);
+		}
+		// If default ammo given is greater than clip
+		// size, fill clips and give extra ammo
+		else if (pWeapon->GetDefaultClip1() > pWeapon->GetMaxClip1())
+		{
+			pWeapon->m_iClip1 = pWeapon->GetMaxClip1();
+			GiveAmmo((pWeapon->GetDefaultClip1() - pWeapon->GetMaxClip1()), pWeapon->m_iPrimaryAmmoType);
+		}
 
-	// ----------------------
-	//  Give Secondary Ammo
-	// ----------------------
-	// If gun doesn't use clips, just give ammo
-	if (pWeapon->GetMaxClip2() == -1)
-	{
-		GiveAmmo(pWeapon->GetDefaultClip2(), pWeapon->m_iSecondaryAmmoType); 
+		// ----------------------
+		//  Give Secondary Ammo
+		// ----------------------
+		// If gun doesn't use clips, just give ammo
+		if (pWeapon->GetMaxClip2() == -1)
+		{
+			GiveAmmo(pWeapon->GetDefaultClip2(), pWeapon->m_iSecondaryAmmoType);
+		}
+		// If default ammo given is greater than clip
+		// size, fill clips and give extra ammo
+		else if (pWeapon->GetDefaultClip2() > pWeapon->GetMaxClip2())
+		{
+			pWeapon->m_iClip2 = pWeapon->GetMaxClip2();
+			GiveAmmo((pWeapon->GetDefaultClip2() - pWeapon->GetMaxClip2()), pWeapon->m_iSecondaryAmmoType);
+		}
+
+#ifdef GE_DLL
 	}
-	// If default ammo given is greater than clip
-	// size, fill clips and give extra ammo
-	else if ( pWeapon->GetDefaultClip2() > pWeapon->GetMaxClip2() )
-	{
-		pWeapon->m_iClip2 = pWeapon->GetMaxClip2();
-		GiveAmmo( (pWeapon->GetDefaultClip2() - pWeapon->GetMaxClip2()), pWeapon->m_iSecondaryAmmoType); 
-	}
+#endif
 
 	pWeapon->Equip( this );
 
@@ -2137,6 +2148,10 @@ void CBaseCombatCharacter::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 //-----------------------------------------------------------------------------
 bool CBaseCombatCharacter::Weapon_EquipAmmoOnly( CBaseCombatWeapon *pWeapon )
 {
+#ifdef GE_DLL
+	if ( !pWeapon->ShouldGiveDefaultClip() ) // Aren't meant to get any ammo from this weapon!
+		return false;
+#endif
 	// Check for duplicates
 	for (int i=0;i<MAX_WEAPONS;i++) 
 	{
@@ -2343,6 +2358,32 @@ void CBaseCombatCharacter::RemoveAllWeapons()
 	}
 }
 
+#ifdef GE_DLL
+bool CBaseCombatCharacter::RemoveWeapon( CBaseCombatWeaponHandle weapon )
+{
+	if ( !weapon )
+		return false;
+
+	for (int i = 0; i < MAX_WEAPONS; i++)
+	{
+		if ( m_hMyWeapons[i] && m_hMyWeapons[i] == weapon )
+		{
+			if ( weapon == m_hActiveWeapon )
+			{
+				m_hMyWeapons[i]->Holster( ); 
+				ClearActiveWeapon();
+			}
+
+			m_hMyWeapons[i]->Delete( );
+			m_hMyWeapons.Set( i, NULL );
+
+			return true;
+		}
+	}
+
+	return false;
+}
+#endif
 
 // take health
 int CBaseCombatCharacter::TakeHealth (float flHealth, int bitsDamageType)

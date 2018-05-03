@@ -69,6 +69,7 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 
 #ifdef GE_DLL
 	m_bEmptySwitch = true;
+	m_bGiveDefaultClip = true;
 #endif
 
 	// Defaults to zero
@@ -128,6 +129,23 @@ void CBaseCombatWeapon::Activate( void )
 }
 void CBaseCombatWeapon::GiveDefaultAmmo( void )
 {
+#ifdef GE_DLL
+	if (!ShouldGiveDefaultClip()) // Don't load us up if we don't want to give out default clips!
+	{
+		if (UsesClipsForAmmo1())
+		{
+			m_iClip1 = 0;
+			m_iClip2 = 0;
+		}
+		else
+		{
+			m_iClip1 = WEAPON_NOCLIP;
+			m_iClip2 = WEAPON_NOCLIP;
+		}
+
+		return;
+	}
+#endif
 	// If I use clips, set my clips to the default
 	if ( UsesClipsForAmmo1() )
 	{
