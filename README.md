@@ -10,8 +10,7 @@ hundreds and thousands of PC gamers for Eight long years and running.
 Visit our [website](http://www.geshl2.com) and [forums](http://forums.geshl2.com)!
 
 ## Current State
-The last public release of GES was v4.2.4 on November 10, 2013. This is the legacy
-code that comprised that release.
+GE:S is under active development.  Though most aspects of the development proccess happen on the GE:S Team's private servers, the base code of the game is open source and provided here.
 
 ## Navigating the Code
 The main code base for GES is located in the following directories:
@@ -25,9 +24,7 @@ the Boost Python library. To play our music, we utilize FMOD since Valve's inter
 sound functions do not operate across level transitions.
 
 ## Contributing
-We will accept pull requests and bug reports from anyone. All we ask at this state
-is to limit your requests to bug fixes and compilation fixes. New capability and major
-code revisions will not be accepted until further notice.
+If you have a bug to fix or feature to contribute, please give us a bug report or pull request!  All we ask is for clear documentation of the change and for your understanding if we decide not to include it.  Minor bug fixes are more lilely to be accepted than major feature additions, but if there's a feature contribution you'd like to work on feel free to ask ahead of time if it's something we're interested in including in the game.
 
 ## Code License
 GoldenEye: Source original code (files starting with 'ge_') is licensed under the
