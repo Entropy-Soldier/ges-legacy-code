@@ -1299,8 +1299,11 @@ protected:
 		if (!pPlayer)
 			return;
 
-		if (!IsScenario("viewtoakill", false))
+		if ( !IsScenario("viewtoakill", false) )
+		{
+			m_flLastKillTime = 0;
 			return;
+		}
 
 		if (!Q_stricmp(event->GetName(), "player_death"))
 		{
@@ -1309,7 +1312,7 @@ protected:
 				return;
 
 			// But if it is...
-			if ( gpGlobals->curtime - m_flLastKillTime > 180 && CalcPlayerCount() >= 6 ) // 180 seconds = 3 minutes.
+			if ( m_flLastKillTime && gpGlobals->curtime - m_flLastKillTime > 180 && CalcPlayerCount() >= 6 ) // 180 seconds = 3 minutes.
 				IncrementCount();
 
 			m_flLastKillTime = gpGlobals->curtime;
@@ -1320,10 +1323,11 @@ protected:
 				m_flLastKillTime = gpGlobals->curtime;
 		}
 		else if ( !Q_stricmp(event->GetName(), "round_start") )
-			m_flLastKillTime = gpGlobals->curtime; //Reset our kill flag.
+			m_flLastKillTime = gpGlobals->curtime; // Reset our kill flag.
 		else if ( !Q_stricmp(event->GetName(), "round_end") )
 		{
-			if ( gpGlobals->curtime - m_flLastKillTime > 180 && CalcPlayerCount() >= 6 && pPlayer->GetTeamNumber() != TEAM_SPECTATOR ) // 180 seconds = 3 minutes.
+			if ( event->GetBool("showreport") && !event->GetBool("isfinal") && m_flLastKillTime && gpGlobals->curtime - m_flLastKillTime > 180 
+				&& CalcPlayerCount() >= 6 && pPlayer->GetTeamNumber() != TEAM_SPECTATOR ) // 180 seconds = 3 minutes.
 				IncrementCount();
 
 			m_flLastKillTime = gpGlobals->curtime;

@@ -45,6 +45,17 @@ void CTriggerTrap::Spawn(void)
 	GEMPRules()->AddTrapToList(this);
 }
 
+CTriggerTrap::CTriggerTrap( void )
+{
+	m_hTrapOwner = NULL;
+}
+
+CTriggerTrap::~CTriggerTrap( void )
+{
+	if (GEMPRules()) // We might be getting removed after the MPRules if it's a map unload.
+		GEMPRules()->RemoveTrapFromList( this );
+}
+
 //------------------------------------------------------------------------------
 // Purpose: Make the activator the owner of the trap.
 //------------------------------------------------------------------------------

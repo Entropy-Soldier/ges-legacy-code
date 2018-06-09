@@ -1550,7 +1550,8 @@ void CBaseCombatCharacter::Event_Killed( const CTakeDamageInfo &info )
 #ifdef GE_DLL
 	CGEPlayer *pGEPlayer = ToGEPlayer(this);
 
-	if (pGEPlayer)
+	// No need to call this for a bot's NPC as we're already calling it for their player.
+	if (pGEPlayer && !IsNPC())
 	{
 		pGEPlayer->DropAllTokens(); // Doing this here so OnPlayerKilled is called before OnTokenDropped.
 		pGEPlayer->DropTopWeapons(); // We have to do this here for ideal weapon drop behavior (like allowing gamemodes to prevent it)

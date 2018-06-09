@@ -308,7 +308,7 @@ void CGEMapManager::ParseMapData(const char *mapname)
 						m_pLoadoutWeightOverrides.AddToTail(atoi(data[1]));
 					}
 				}
-				else
+				else if (data.Count() == 1)
 					Warning("Weaponset Override of %s specified without weight, ignoring!\n", data[0]);
 			}
 			else if (Reading == RD_FFAGAMEPLAY)
@@ -334,7 +334,7 @@ void CGEMapManager::ParseMapData(const char *mapname)
 						m_pMapGamemodeWeights.AddToTail(atoi(data[1]));
 					}
 				}
-				else
+				else if (data.Count() == 1)
 					Warning("Gamemode %s specified without weight, ignoring!\n", data[0]);
 			}
 			else if (Reading == RD_TEAMGAMEPLAY)
@@ -359,7 +359,7 @@ void CGEMapManager::ParseMapData(const char *mapname)
 						m_pMapTeamGamemodeWeights.AddToTail(atoi(data[1]));
 					}
 				}
-				else
+				else if (data.Count() == 1)
 					Warning("Team Gamemode %s specified without weight, ignoring!\n", data[0]);
 			}
 		}

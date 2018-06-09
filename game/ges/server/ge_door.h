@@ -21,6 +21,7 @@ public:
 	DECLARE_DATADESC();
 
 	CGEDoor();
+	~CGEDoor();
 
 	float m_flacceltime; // Time it takes the door to accelerate to max speed
 	float m_flAccelSpeed; // Overrides acceltime when used.  Speed that the door accelerates per second.

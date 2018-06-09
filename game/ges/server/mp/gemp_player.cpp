@@ -470,12 +470,7 @@ void CGEMPPlayer::Spawn()
 
 		SetHealth( GetMaxHealth() );
 
-		if ( ge_startarmored.GetInt() == 2 )
-			SetArmorValue( GetMaxArmor() );
-		else if ( ge_startarmored.GetInt() == 1 )
-			SetArmorValue( GetMaxArmor() / 2 );
-		else
-			SetArmorValue( 0 );
+		SetArmorValue( clamp( ge_startarmored.GetInt(), 0, 8 ) * 20 );
 		
 		AddFlag(FL_ONGROUND); // set the player on the ground at the start of the round.
 
@@ -1170,9 +1165,9 @@ void CGEMPPlayer::GiveDefaultItems()
 	if ( loadout )
 	{
 		// Give the weakest weapon in our set if more conditions are met
-		if ( ge_startarmed.GetInt() >= 1 )
+		if ( ge_startarmed.GetInt() > 0 && ge_startarmed.GetInt() < 9 )
 		{
-			int wID = loadout->GetFirstWeapon();
+			int wID = loadout->GetWeapon( ge_startarmed.GetInt() - 1 );
 			int aID = GetAmmoDef()->Index( GetAmmoForWeapon(wID) );
 
 			// Give the player a slice of ammo for the lowest ranked weapon in the set

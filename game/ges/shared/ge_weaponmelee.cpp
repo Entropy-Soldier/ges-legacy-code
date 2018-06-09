@@ -73,7 +73,6 @@ void CGEWeaponMelee::ItemPostFrame( void )
 	else 
 	{
 		WeaponIdle();
-		return;
 	}
 }
 
@@ -249,15 +248,20 @@ void CGEWeaponMelee::Swing( int bIsSecondary )
 			if (GEMPRules()->IsTeamplay() && pPlayer->GetTeamNumber() == pOwner->GetTeamNumber())
 				continue;
 
-			// Use eye position to more effectively track crouching players.
-			Vector diff = pPlayer->EyePosition() - pOwner->EyePosition();
-			float dist = diff.Length();
+			// Use the best of 2 distance measurements to figure out if this player is in range.
+			Vector diff1 = pPlayer->EyePosition() - pOwner->EyePosition();
+			Vector diff2 = pPlayer->GetAbsOrigin() - pOwner->GetAbsOrigin();
+
+			// Only do one sqrt operation to save time.
+			float dist = min( diff1.LengthSqr(), diff2.LengthSqr() );
+			dist = sqrtf(dist);
 
 			// Make sure they're in range or closer than the current best target.
-			if (dist > targetDist)
+			if ( dist > targetDist )
 				continue;
 
 			// Draw a line from the player to the target to use for direction calculations.
+			// Use eye position to more effectively track crouching players.
 			Vector vecToTarget = pPlayer->EyePosition() - pOwner->EyePosition();
 			VectorNormalize(vecToTarget);
 
@@ -278,11 +282,11 @@ void CGEWeaponMelee::Swing( int bIsSecondary )
 		// Make sure there's someone to hit, if not then allow the previous miss to occour.
 		if (targetPlayer)
 		{
-			// Identify 3 points.  Face, Chest, and Legs.  We don't care about arm hits, they'll get treated like chest hits anyway.
+			// Identify 2 points.  Face, and Chest.  We don't care about arm hits, they'll get treated like chest hits anyway.
 			// They're calculated this way to compensate for crouching players and other states.
 
 			Vector headPos = targetPlayer->EyePosition() + Vector(0, 0, 4); // Slightly higher than eye position as eye position is actually in the neck.
-			Vector chestPos = (headPos * 3 + targetPlayer->GetAbsOrigin())/4; //3 fourths the distance between the ground and the target's eyes
+			Vector chestPos = (headPos * 3 + targetPlayer->GetAbsOrigin())/4 - Vector(0, 0, 4); //3 fourths the distance between the ground and the target's eyes
 
 			//First check to see if we can get a headshot.
 			Vector vecToheadPos = headPos - swingStart;

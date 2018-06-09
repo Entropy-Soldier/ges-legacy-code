@@ -17,6 +17,7 @@
 
 #if defined( CLIENT_DLL )
 #include "c_ge_player.h"
+#include "c_gemp_player.h"
 #else
 #include "ge_player.h"
 #include "gemp_player.h"
@@ -26,13 +27,13 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define	WATCHLASER_MAX_RANGE	90.0f
+#define	WATCHLASER_MAX_RANGE	100.0f
 #define	WATCHLASER_MIN_RANGE	70.0f
 #define RECHARGE_INTERVAL		0.5f
 #define POST_FIRE_CHARGE_DELAY	2.5f
 #define RECHARGE_AMOUNT			4
 
-#define MAX_RANGE_THRESH		190
+#define MAX_RANGE_THRESH		150
 #define MIN_RANGE_THRESH		50
 
 #define MIN_RANGE_RATIO			0.7f
@@ -202,10 +203,14 @@ bool CGEWeaponWatchLaser::Deploy(void)
 
 void CGEWeaponWatchLaser::ItemPostFrame(void)
 {
+	CGEMPPlayer *pOwner = ToGEMPPlayer(GetOwner());
+
+	if ( pOwner == NULL )
+		return;
+
 #ifdef GAME_DLL
 #ifdef RECHARGE
-	CGEMPPlayer *pOwner = ToGEMPPlayer(GetOwner());
-	if (pOwner && m_flNextRecharge && m_flNextRecharge < gpGlobals->curtime)
+	if ( m_flNextRecharge && m_flNextRecharge < gpGlobals->curtime )
 	{
 		m_flNextRecharge = gpGlobals->curtime + RECHARGE_INTERVAL;
 		pOwner->GiveAmmo(4, m_iPrimaryAmmoType, true);
@@ -216,7 +221,17 @@ void CGEWeaponWatchLaser::ItemPostFrame(void)
 #endif
 #endif
 
-	BaseClass::ItemPostFrame();
+	if ( (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime) )
+	{
+		if ( pOwner->GetAmmoCount(m_iPrimaryAmmoType) <= 0 )
+			HandleFireOnEmpty();
+		else
+			PrimaryAttack();
+	} 
+	else 
+	{
+		WeaponIdle();
+	}
 }
 
 float CGEWeaponWatchLaser::GetRange(void)

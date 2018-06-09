@@ -102,7 +102,8 @@ public:
 	float GetSpawnInvulnInterval();
 	bool GetSpawnInvulnCanBreak();
 
-	void AddTrapToList(CBaseEntity* pEnt) { m_vTrapList.AddToTail(pEnt); }
+	void AddTrapToList(CBaseEntity* pEnt);
+	void RemoveTrapFromList(CBaseEntity* pEnt);
 
 	bool AmmoShouldRespawn();
 	bool ArmorShouldRespawn();

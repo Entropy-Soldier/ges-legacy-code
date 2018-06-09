@@ -13,6 +13,9 @@ public:
 	DECLARE_CLASS(CTriggerTrap, CTriggerHurt);
 	DECLARE_DATADESC();
 
+	CTriggerTrap( void );
+	~CTriggerTrap( void );
+
 	virtual CBaseEntity* GetTrapOwner()					{ return m_hTrapOwner; }
 	virtual void SetTrapOwner(CBaseEntity* pEnt)		{ m_hTrapOwner = pEnt; }
 

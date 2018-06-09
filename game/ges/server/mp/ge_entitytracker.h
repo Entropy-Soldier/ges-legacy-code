@@ -61,15 +61,15 @@ public:
 
 	// Passes a pointer to the list of tracked weapons, to avoid potentially copying a gigantic list a bunch of times.
 	// DO NOT MANUALLY ADD ITEMS TO THIS.  Use AddItemToTracker and RemoveItemFromTracker to change it.
-	CUtlVector< CGEWeapon* >* GetWeaponList() { return &m_vWeaponList; };
+	CUtlVector< CGEWeapon* >* GetWeaponList() { return (CUtlVector< CGEWeapon* >*)&m_vWeaponList; };
 
 	// Passes a pointer to the list of tracked ammo crates, to avoid potentially copying a gigantic list a bunch of times.
 	// DO NOT MANUALLY ADD ITEMS TO THIS.  Use AddItemToTracker and RemoveItemFromTracker to change it.
-	CUtlVector< CGEAmmoCrate* >* GetAmmoList() { return &m_vAmmoList; };
+	CUtlVector< CGEAmmoCrate* >* GetAmmoList() { return (CUtlVector< CGEAmmoCrate* >*)&m_vAmmoList; };
 
 	// Passes a pointer to the list of tracked armor vests, to avoid potentially copying a gigantic list a bunch of times.
 	// DO NOT MANUALLY ADD ITEMS TO THIS.  Use AddItemToTracker and RemoveItemFromTracker to change it.
-	CUtlVector< CGEArmorVest* >* GetArmorList() { return &m_vArmorList; };
+	CUtlVector< CGEArmorVest* >* GetArmorList() { return (CUtlVector< CGEArmorVest* >*)&m_vArmorList; };
 
 	// Passes a pointer to the list of tracked armor vests, to avoid potentially copying a gigantic list a bunch of times.
 	// DO NOT MANUALLY ADD ITEMS TO THIS.  Use AddItemToTracker and RemoveItemFromTracker to change it.
@@ -92,13 +92,13 @@ private:
 	// Entity Specific Lists, are all mutually exclusive.
 
 	// All tracked armor vests.
-	CUtlVector< CGEArmorVest* > m_vArmorList;
+	CUtlVector< CBaseEntity* > m_vArmorList;
 
 	// All tracked weapons.
-	CUtlVector< CGEWeapon* > m_vWeaponList;
+	CUtlVector< CBaseEntity* > m_vWeaponList;
 
 	// All tracked ammo crates.
-	CUtlVector< CGEAmmoCrate* > m_vAmmoList;
+	CUtlVector< CBaseEntity* > m_vAmmoList;
 };
 
 extern void CreateEntityTracker();

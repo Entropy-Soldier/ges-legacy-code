@@ -607,18 +607,18 @@ void CGEBotPlayer::GiveDefaultItems( void )
 	if ( loadout )
 	{		
 		// Give the weakest weapon in our set if more conditions are met
-		if ( ge_startarmed.GetInt() >= 1 )
+		if ( ge_startarmed.GetInt() > 0 && ge_startarmed.GetInt() < 9 )
 		{
-			int wID = loadout->GetFirstWeapon();
+			int wID = loadout->GetWeapon( ge_startarmed.GetInt() - 1 );
 			int aID = GetAmmoDef()->Index( GetAmmoForWeapon(wID) );
 
 			// Give the player a slice of ammo for the lowest ranked weapon in the set
-			m_pNPC->GiveAmmo( GetAmmoDef()->CrateAmount(aID), aID );
-			pGivenWeapon = m_pNPC->GiveNamedItem( WeaponIDToAlias(wID) );
+			if (wID)
+			{
+				m_pNPC->GiveAmmo(GetAmmoDef()->CrateAmount(aID), aID);
+				pGivenWeapon = m_pNPC->GiveNamedItem(WeaponIDToAlias(wID));
+			}
 		}
-
-		//if (ge_startarmed.GetInt() >= 2)
-		//	pGivenWeapon = m_pNPC->GiveNamedItem("weapon_knife");
 	} 
 	else
 	{
@@ -634,6 +634,11 @@ void CGEBotPlayer::GiveDefaultItems( void )
 CBaseCombatWeapon *CGEBotPlayer::GetActiveWeapon()
 {
 	return m_pNPC->GetActiveWeapon();
+}
+
+bool CGEBotPlayer::Weapon_Detach( CBaseCombatWeapon *pWeapon )
+{
+	return m_pNPC->Weapon_Detach( pWeapon );
 }
 
 bool CGEBotPlayer::Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex /*=0*/ )
@@ -653,6 +658,22 @@ void CGEBotPlayer::GiveNamedWeapon( const char* ident, int ammoCount, bool strip
 	}
 
 	m_pNPC->GiveNamedItem( ident, 0, !stripAmmo );
+}
+
+inline CBaseCombatWeapon *CGEBotPlayer::GetWeapon(int i) const
+{
+	if ( !m_pNPC )
+		return NULL;
+
+	return m_pNPC->GetWeapon(i);
+}
+
+bool CGEBotPlayer::RemoveWeapon( CBaseCombatWeaponHandle weapon )
+{
+	if ( !m_pNPC )
+		return false;
+
+	return m_pNPC->RemoveWeapon( weapon );
 }
 
 int	CGEBotPlayer::GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound )
@@ -707,6 +728,14 @@ void CGEBotPlayer::StripAllWeapons()
 
 	m_pNPC->RemoveAllAmmo();
 	m_pNPC->RemoveAllWeapons();
+}
+
+CBaseCombatWeapon* CGEBotPlayer::Weapon_OwnsThisType( const char *pszWeapon, int iSubType ) const
+{
+	if ( !m_pNPC )
+		return NULL;
+
+	return m_pNPC->Weapon_OwnsThisType(pszWeapon, iSubType);
 }
 
 void CGEBotPlayer::RemoveAllItems( bool removeSuit )

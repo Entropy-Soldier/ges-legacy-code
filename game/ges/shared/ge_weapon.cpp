@@ -304,7 +304,7 @@ void CGEWeapon::FireWeapon()
 {
 	CBasePlayer *pPlayer = ToBasePlayer(GetOwner());
 
-	if(!pPlayer)
+	if (!pPlayer)
 		return;
 
 	// MUST call sound before removing a round from the clip of a CMachineGun

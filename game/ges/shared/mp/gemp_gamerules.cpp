@@ -86,8 +86,8 @@ extern ConVar mp_chattime;
 
 ConVar ge_allowradar		( "ge_allowradar", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Allow clients to use their radars." );
 ConVar ge_allowjump			( "ge_allowjump",  "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Toggles allowing players to jump." );
-ConVar ge_startarmed		( "ge_startarmed", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Configures the armed level of spawned players [0, 1, 2]" );
-ConVar ge_startarmored		( "ge_startarmored", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "2 = players will spawn with full armor, 1 = players will spawn with half armor, 0 = players spawn with no armor." );
+ConVar ge_startarmed		( "ge_startarmed", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Which weapon in the weapon set players start with." );
+ConVar ge_startarmored		( "ge_startarmored", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "How many bars of armor players will spawn with." );
 ConVar ge_paintball			( "ge_paintball",  "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "The famous paintball mode." );
 
 ConVar ge_teamautobalance	( "ge_teamautobalance", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Turns on the auto balancer for teamplay" );
@@ -1600,6 +1600,12 @@ void CGEMPRules::ClientDisconnected( edict_t *pEntity )
 		// Next wipe any traps this player may own.
 		for (int i = 0; i < m_vTrapList.Count(); i++)
 		{
+			if (!m_vTrapList[i])
+			{
+				Warning("Somehow registered null trap in index %d!\n", i);
+				continue;
+			}
+
 			const char *inflictor_name = m_vTrapList[i]->GetClassname();
 
 			if (Q_strncmp(inflictor_name, "trigger_trap", 12) == 0)
@@ -2060,6 +2066,26 @@ float CGEMPRules::GetSpawnInvulnInterval()
 bool CGEMPRules::GetSpawnInvulnCanBreak()
 {
 	return m_bSpawnInvulnCanBreak;
+}
+
+void CGEMPRules::AddTrapToList(CBaseEntity* pEnt) 
+{ 
+	//Warning( "Adding trap %x to list!\n", pEnt );
+
+	if (!m_vTrapList.HasElement(pEnt))
+		m_vTrapList.AddToTail(pEnt);
+	else
+		Warning( "Tried to register trap that was already registered!\n" );
+}
+
+void CGEMPRules::RemoveTrapFromList(CBaseEntity* pEnt) 
+{ 
+	//Warning( "Removing trap %x from list!\n", pEnt );
+
+	int targetIndex = m_vTrapList.Find( pEnt ); 
+
+	if ( targetIndex > -1 )
+		m_vTrapList.FastRemove( targetIndex );
 }
 
 void CGEMPRules::SetTeamplay( bool state, bool force /*= false*/ )

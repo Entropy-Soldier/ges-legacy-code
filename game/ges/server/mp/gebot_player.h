@@ -76,6 +76,10 @@ public:
 
 	virtual bool Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex = 0 );
 	virtual void GiveNamedWeapon( const char* ident, int ammoCount, bool stripAmmo = false );
+	virtual bool RemoveWeapon( CBaseCombatWeaponHandle weapon );
+	virtual bool Weapon_Detach( CBaseCombatWeapon *pWeapon );
+	virtual CBaseCombatWeapon*	GetWeapon( int i ) const;
+	virtual CBaseCombatWeapon*	Weapon_OwnsThisType( const char *pszWeapon, int iSubType = 0 ) const;
 	virtual int	 GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound = false );
 	virtual bool BumpWeapon( CBaseCombatWeapon *pWeapon );
 

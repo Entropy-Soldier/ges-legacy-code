@@ -63,6 +63,13 @@ CGEDoor::CGEDoor()
 	m_flStartMoveTime = 0;
 }
 
+CGEDoor::~CGEDoor()
+{
+	// Make sure we're not on the trap list if we got removed...this can result in an invalid pointer.
+	if (GEMPRules()) // We might be getting removed after the MPRules if it's a map unload, in which case it's not a big deal.
+		GEMPRules()->RemoveTrapFromList(this);
+}
+
 void CGEDoor::Spawn(void)
 {
 	BaseClass::Spawn();

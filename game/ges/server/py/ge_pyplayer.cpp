@@ -125,7 +125,12 @@ bool pyRemoveWeapon( CBaseCombatCharacter *pEnt, bp::object weap_or_id )
 	if (!pWeap)
 		return false;
 
-	return pEnt->RemoveWeapon( pWeap );
+	CGEBotPlayer *botPlayer = ToGEBotPlayer( pEnt );
+
+	if ( botPlayer )
+		return botPlayer->RemoveWeapon(pWeap);
+	else
+		return pEnt->RemoveWeapon( pWeap );
 }
 
 int pyGetAmmoCount( CBaseCombatCharacter *pEnt, bp::object weap_or_ammo )

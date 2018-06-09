@@ -197,11 +197,19 @@ public:
 	void				Weapon_SetActivity( Activity newActivity, float duration );
 	virtual void		Weapon_FrameUpdate( void );
 	virtual void		Weapon_HandleAnimEvent( animevent_t *pEvent );
+#ifdef GE_DLL
+	virtual CBaseCombatWeapon*	Weapon_OwnsThisType( const char *pszWeapon, int iSubType = 0 ) const;
+#else
 	CBaseCombatWeapon*	Weapon_OwnsThisType( const char *pszWeapon, int iSubType = 0 ) const;  // True if already owns a weapon of this class
+#endif
 	virtual bool		Weapon_CanUse( CBaseCombatWeapon *pWeapon );		// True is allowed to use this class of weapon
 	virtual void		Weapon_Equip( CBaseCombatWeapon *pWeapon );			// Adds weapon to player
 	virtual bool		Weapon_EquipAmmoOnly( CBaseCombatWeapon *pWeapon );	// Adds weapon ammo to player, leaves weapon
+#ifdef GE_DLL
+	virtual bool		Weapon_Detach( CBaseCombatWeapon *pWeapon );		// Clear any pointers to the weapon.
+#else
 	bool				Weapon_Detach( CBaseCombatWeapon *pWeapon );		// Clear any pointers to the weapon.
+#endif
 	virtual void		Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarget = NULL, const Vector *pVelocity = NULL );
 	virtual	bool		Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex = 0 );		// Switch to given weapon if has ammo (false if failed)
 	virtual	Vector		Weapon_ShootPosition( );		// gun position at current position/orientation
@@ -312,10 +320,16 @@ public:
 	void SetBloodColor( int nBloodColor );
 
 	// Weapons..
+#ifdef GE_DLL
+	virtual CBaseCombatWeapon*	GetActiveWeapon() const;
+#else
 	CBaseCombatWeapon*	GetActiveWeapon() const;
+#endif
 	int					WeaponCount() const;
+#ifdef GE_DLL
+	virtual CBaseCombatWeapon*	GetWeapon( int i ) const;
+#else
 	CBaseCombatWeapon*	GetWeapon( int i ) const;
-#ifndef GE_DLL
 	bool				RemoveWeapon( CBaseCombatWeapon *pWeapon );
 #endif
 	void				RemoveAllWeapons();
