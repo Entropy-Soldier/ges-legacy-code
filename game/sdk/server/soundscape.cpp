@@ -586,6 +586,13 @@ void CTriggerSoundscape::PlayerUpdateThink()
 	int i;
 	SetNextThink( gpGlobals->curtime + 0.2 );
 
+#ifdef GE_DLL
+	// If we're disabled we don't want to actually do this scan, otherwise we'll trigger for spectators and dead players but
+	// not anyone else!
+	if ( m_bDisabled ) 
+		return;
+#endif
+
 	CUtlVector<CBasePlayerHandle> oldSpectators;
 	oldSpectators = m_spectators;
 	m_spectators.RemoveAll();
