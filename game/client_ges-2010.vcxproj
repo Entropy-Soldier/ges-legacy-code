@@ -287,6 +287,7 @@
     <ClCompile Include="ges\shared\ge_game_timer.cpp" />
     <ClCompile Include="ges\shared\ge_player_shared.cpp" />
     <ClCompile Include="ges\shared\ge_utils.cpp" />
+    <ClCompile Include="ges\shared\ge_weaponutils.cpp" />
     <ClCompile Include="ges\shared\ge_webrequest.cpp" />
     <ClCompile Include="ges\shared\script_parser.cpp" />
     <ClCompile Include="ges\shared\mp\gemp_gamerules.cpp" />
@@ -977,6 +978,7 @@
     <ClInclude Include="ges\shared\ge_player_shared.h" />
     <ClInclude Include="ges\shared\ge_shareddefs.h" />
     <ClInclude Include="ges\shared\ge_utils.h" />
+    <ClInclude Include="ges\shared\ge_weaponutils.h" />
     <ClInclude Include="ges\shared\ge_webkeys.h" />
     <ClInclude Include="ges\shared\ge_webrequest.h" />
     <ClInclude Include="ges\shared\script_parser.h" />

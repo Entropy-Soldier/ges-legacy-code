@@ -4,7 +4,7 @@
 #include "utlbuffer.h"
 #include "gamestringpool.h"
 #include "ge_shareddefs.h"
-#include "ge_weapon_parse.h"
+#include "ge_utils.h"
 
 #ifdef CLIENT_DLL
 	#include <vgui/VGUI.h>
@@ -55,7 +55,7 @@ void GEUTIL_EncryptICE( unsigned char * buffer, int size, const unsigned char *k
 	Q_memcpy( buffer, temp, size-bytesLeft );
 }
 
-bool GEUTIL_DEncryptFile(const char* filename, const unsigned char* key, bool bEncrypt = true, bool bChangeExt = false)
+bool GEUTIL_DEncryptFile(const char* filename, const unsigned char* key, bool bEncrypt /*= true*/, bool bChangeExt /*= false*/)
 {
 	//Open up the file and load it into memory!
 	FileHandle_t fileHandle = filesystem->Open( filename, "rb", "MOD" );
@@ -161,7 +161,7 @@ void ClearStringVector( CUtlVector<char*> &vec )
 	vec.RemoveAll();
 }
 
-const char *Q_SkipSpaces( const char *in, int offset = 0 )
+const char *Q_SkipSpaces( const char *in, int offset /*= 0*/ )
 {
 	const char *x = in + offset;
 	while ( *x )
@@ -176,7 +176,7 @@ const char *Q_SkipSpaces( const char *in, int offset = 0 )
 	return x;
 }
 
-const char *Q_SkipData( const char *in, int offset = 0 )
+const char *Q_SkipData( const char *in, int offset /*= 0*/ )
 {
 	const char *x = in + offset;
 	while ( *x )
@@ -219,7 +219,7 @@ int Q_ExtractData( const char *in, CUtlVector<char*> &out )
 
 #ifdef CLIENT_DLL
 
-void GEUTIL_DrawSprite3D( IMaterial *pMaterial, Vector offset, float width, float height, int alpha = 255 )
+void GEUTIL_DrawSprite3D( IMaterial *pMaterial, Vector offset, float width, float height, int alpha /*= 255*/ )
 {
 	// Make sure we are allowed to access our orientation
 	Assert( IsCurrentViewAccessAllowed() );
@@ -987,108 +987,6 @@ bool GetAwardSort( int id )
 }
 // End award helper functions
 
-
-// Given an alias, return the associated weapon ID
-//
-int AliasToWeaponID( const char *alias )
-{
-	if (alias)
-	{
-		for( int i = WEAPON_NONE; i < WEAPON_MAX; ++i ) {
-			if (!GEWeaponInfo[i].alias)
-				continue;
-			if (!Q_stricmp( GEWeaponInfo[i].alias, alias ))
-				return i;
-		}
-	}
-
-	return WEAPON_NONE;
-}
-
-// Given a weapon ID, return it's alias
-//
-const char *WeaponIDToAlias( int id )
-{
-	if ( (id < 0) || (id >= WEAPON_MAX) )
-		return "";
-
-	return GEWeaponInfo[id].alias;
-}
-
-const char *GetAmmoForWeapon( int id )
-{
-	if ( (id < 0) || (id >= WEAPON_MAX) )
-		return "";
-
-	return GEWeaponInfo[id].ammo;
-}
-
-const char *GetWeaponPrintName( int id )
-{
-	if ( (id < 0) || (id >= WEAPON_MAX) )
-		return "";
-
-	return GEWeaponInfo[id].printname;
-}
-
-int GetRandWeightForWeapon( int id )
-{
-	if ( (id < 0) || (id >= WEAPON_MAX) )
-		return 0;
-
-	return GEWeaponInfo[id].randweight;
-}
-
-int GetStrengthOfWeapon(int id)
-{
-	if ((id < 0) || (id >= WEAPON_MAX))
-		return 0;
-
-	return GEWeaponInfo[id].strength;
-}
-
-
-int WeaponMaxDamageFromID(int id)
-{
-	const CGEWeaponInfo *weap = NULL;
-	
-	const char *name = WeaponIDToAlias(id);
-	if (name && name[0] != '\0')
-	{
-		int h = LookupWeaponInfoSlot(name);
-		if (h == GetInvalidWeaponInfoHandle())
-			return 5000;
-
-		weap = dynamic_cast<CGEWeaponInfo*>(GetFileWeaponInfoFromHandle(h));
-
-		if (weap)
-			return weap->m_iDamageCap;
-	}
-
-	return 5000;
-}
-
-const char* WeaponPickupSoundFromID(int id)
-{
-	const CGEWeaponInfo *weap = NULL;
-	
-	const char *name = WeaponIDToAlias(id);
-	if (name && name[0] != '\0')
-	{
-		int h = LookupWeaponInfoSlot(name);
-		if (h == GetInvalidWeaponInfoHandle())
-			return NULL;
-
-		weap = dynamic_cast<CGEWeaponInfo*>(GetFileWeaponInfoFromHandle(h));
-
-		if (weap)
-			return weap->aShootSounds[PICKUP];
-	}
-
-	return NULL;
-}
-
-// End weapon helper functions
 
 #ifdef GAME_DLL
 // Spawner Helper Functions

@@ -1758,6 +1758,9 @@
     <ClCompile Include="v5_1_achievements.cpp">
       <Filter>GES\Achievements</Filter>
     </ClCompile>
+    <ClCompile Include="ges\shared\ge_weaponutils.cpp">
+      <Filter>GES\Shared</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ges\client\clientmode_ge.h">
@@ -3637,6 +3640,9 @@
     </ClInclude>
     <ClInclude Include="ges\client\VGUI\ge_popup.h">
       <Filter>GES\VGUI\Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="ges\shared\ge_weaponutils.h">
+      <Filter>GES\Shared</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
