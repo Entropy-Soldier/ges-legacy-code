@@ -87,10 +87,15 @@ void CGETKnife::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
 		CalculateMeleeDamageForce( &dmgInfo, vecAiming, tr.endpos, TKNIFE_FORCE_SCALE );
 		dmgInfo.SetDamagePosition( tr.endpos );
 
-		if ( this->GetOwnerEntity() && this->GetOwnerEntity()->IsPlayer() )
+		// No need to worry about the source weapon being deleted before the projectile can hit a player
+		// if we assign its weapon right before it's about to get deleted.
+		if ( GetOwnerEntity() && ( GetOwnerEntity()->IsPlayer() || GetOwnerEntity()->IsNPC() ) )
 		{
 			CBasePlayer *pPlayer = ToBasePlayer( this->GetOwnerEntity() );
-			dmgInfo.SetWeapon( pPlayer->Weapon_OwnsThisType( "weapon_throwing_knife" ) );
+			CBaseCombatWeapon *pSrcWeapon = pPlayer->Weapon_OwnsThisType( "weapon_throwing_knife" );
+
+			if ( pSrcWeapon )
+				dmgInfo.SetWeapon( pSrcWeapon );
 		}
 
 		pOther->DispatchTraceAttack( dmgInfo, vecAiming, &tr );

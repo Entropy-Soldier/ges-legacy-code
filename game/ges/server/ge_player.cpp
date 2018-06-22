@@ -29,6 +29,7 @@
 #include "ent_hat.h"
 #include "gemp_gamerules.h"
 #include "ge_radarresource.h"
+#include "ge_weaponutils.h"
 
 #include "ge_player.h"
 #include "gemp_player.h"
@@ -504,22 +505,8 @@ int CGEPlayer::OnTakeDamage( const CTakeDamageInfo &inputinfo )
 		}
 	}
 
-
-
-	int weapid = WEAPON_NONE;
-
-	// Get the weapon ID for invuln calcs and event notifications.
-	CGEWeapon *pAttackerWep = NULL;
-
-	if (inputinfo.GetWeapon())
-		pAttackerWep = ToGEWeapon((CBaseCombatWeapon*)info.GetWeapon());
-
-	if (pAttackerWep)
-		weapid = pAttackerWep->GetWeaponID();
-	else if (info.GetInflictor() && !info.GetInflictor()->IsNPC() && Q_stristr(info.GetInflictor()->GetClassname(), "npc_"))
-		weapid = ToGEGrenade(info.GetInflictor())->GetWeaponID();
-	else if (inputinfo.GetDamageType() & DMG_BLAST)
-		weapid = WEAPON_EXPLOSION;
+	// Get the weaponID for invuln calcs.
+	int weapid = WeaponIDFromDamageInfo( &info );
 
 	int adjdmg = CalcInvul(info.GetDamage(), pGEAttacker, weapid);
 
@@ -678,21 +665,28 @@ int CGEPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 void CGEPlayer::TraceAttack( const CTakeDamageInfo &inputInfo, const Vector &vecDir, trace_t *ptr )
 {
 	CTakeDamageInfo info = inputInfo;
-	bool doTrace = false;
 
-	// Try to get the weapon and see if it wants hit location damage
-	CGEWeapon *pWeapon = NULL;
+	// Try to get the weapon's weaponinfo and see if it wants hit location damage
+	const CGEWeaponInfo *pWeaponInfo = NULL;
 	if ( info.GetWeapon() )
 	{
-		pWeapon = ToGEWeapon( (CBaseCombatWeapon*)info.GetWeapon() );
+		CGEWeapon *pWeapon = ToGEWeapon( (CBaseCombatWeapon*)info.GetWeapon() );
 
-		// Only do this calculation if we allow it for the weapon
-		if ( pWeapon->GetGEWpnData().iFlags & ITEM_FLAG_DOHITLOCATIONDMG )
-			doTrace = true;
+		if ( pWeapon )
+			pWeaponInfo = &pWeapon->GetGEWpnData();
+	}
+	else // The weapon no longer exists, but we can probably still infer what it was.
+	{
+		int weaponID = WeaponIDFromDamageInfo( &info );
+
+		if ( weaponID != WEAPON_NONE )
+		{
+			pWeaponInfo = WeaponInfoFromID(weaponID);
+		}
 	}
 
-	// If we want hitlocation dmg and we have a weapon to refer to do it!
-	if ( doTrace && pWeapon )
+	// If we have valid weaponinfo and the hitlocation flag, start our trace attack!
+	if ( pWeaponInfo && pWeaponInfo->iFlags & ITEM_FLAG_DOHITLOCATIONDMG )
 	{
 		// See if we would have hit a more sensitive area if this one hadn't blocked the shot.
 		// Used to prevent nonsense like attacking from the side and certain animations causing
@@ -732,36 +726,36 @@ void CGEPlayer::TraceAttack( const CTakeDamageInfo &inputInfo, const Vector &vec
 
 		switch ( newhitgroup )
 		{
-		case HITGROUP_GENERIC:
-			break;
-		case HITGROUP_GEAR:
-			KnockOffHat( false, &info );
-			info.ScaleDamage( 0 );
-			break;
-		case HITGROUP_HEAD:
-			KnockOffHat( false, &info );
-			info.ScaleDamage( pWeapon->GetHitBoxDataModifierHead() );
-			break;
-		case HITGROUP_CHEST:
-			info.ScaleDamage( pWeapon->GetHitBoxDataModifierChest() );
-			break;
-		case HITGROUP_STOMACH:
-			info.ScaleDamage( pWeapon->GetHitBoxDataModifierStomach() );
-			break;
-		case HITGROUP_LEFTARM:
-			info.ScaleDamage( pWeapon->GetHitBoxDataModifierLeftArm() );
-			break;
-		case HITGROUP_RIGHTARM:
-			info.ScaleDamage( pWeapon->GetHitBoxDataModifierRightArm() );
-			break;
-		case HITGROUP_LEFTLEG:
-			info.ScaleDamage( pWeapon->GetHitBoxDataModifierLeftLeg() );
-			break;
-		case HITGROUP_RIGHTLEG:
-			info.ScaleDamage( pWeapon->GetHitBoxDataModifierRightLeg() );
-			break;
-		default:
-			break;
+			case HITGROUP_GENERIC:
+				break;
+			case HITGROUP_GEAR:
+				KnockOffHat( false, &info );
+				info.ScaleDamage( 0 );
+				break;
+			case HITGROUP_HEAD:
+				KnockOffHat( false, &info );
+				info.ScaleDamage( pWeaponInfo->HitBoxDamage.fDamageHead );
+				break;
+			case HITGROUP_CHEST:
+				info.ScaleDamage( pWeaponInfo->HitBoxDamage.fDamageChest );
+				break;
+			case HITGROUP_STOMACH:
+				info.ScaleDamage( pWeaponInfo->HitBoxDamage.fDamageStomach );
+				break;
+			case HITGROUP_LEFTARM:
+				info.ScaleDamage( pWeaponInfo->HitBoxDamage.fLeftArm );
+				break;
+			case HITGROUP_RIGHTARM:
+				info.ScaleDamage( pWeaponInfo->HitBoxDamage.fRightArm );
+				break;
+			case HITGROUP_LEFTLEG:
+				info.ScaleDamage( pWeaponInfo->HitBoxDamage.fLefLeg );
+				break;
+			case HITGROUP_RIGHTLEG:
+				info.ScaleDamage( pWeaponInfo->HitBoxDamage.fRightLeg );
+				break;
+			default:
+				break;
 		}
 	}
 	else
