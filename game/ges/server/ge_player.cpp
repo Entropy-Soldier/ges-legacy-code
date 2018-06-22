@@ -334,7 +334,7 @@ void CGEPlayer::PostThink( void )
 		m_vDmgForceThisFrame *= m_iDmgTakenThisFrame / 160.0;
 		// Push force from explosions does not get scaled this way, however.
 		// Potential issue here in that simultaneous hits can result in weird push vectors, but it should be very uncommon.
-		m_vDmgForceThisFrame += m_vExpDmgForceThisFrame * ge_exp_pushscale.GetFloat();;
+		m_vDmgForceThisFrame += m_vExpDmgForceThisFrame * ge_exp_pushscale.GetFloat();
 		DevMsg("Scaled damage force is %f\n", m_vDmgForceThisFrame.Length());
 	}
 
@@ -473,8 +473,8 @@ int CGEPlayer::OnTakeDamage( const CTakeDamageInfo &inputinfo )
 			m_iExpDmgTakenThisInterval = 0;
 		}
 
-		// If the new damage is at least two bars higher than the old damage, hit them again.
-		if ( m_iExpDmgTakenThisInterval == 0 || m_iExpDmgTakenThisInterval < info.GetDamage() - 40 )
+		// If the new damage is at least one bar higher than the old damage, hit them again.
+		if ( m_iExpDmgTakenThisInterval == 0 || m_iExpDmgTakenThisInterval < info.GetDamage() - 20 )
 		{
 			info.SetDamage(info.GetDamage() - m_iExpDmgTakenThisInterval); // Adjust it so that they are only hit for the difference.
 			m_iExpDmgTakenThisInterval = info.GetDamage();
@@ -488,11 +488,15 @@ int CGEPlayer::OnTakeDamage( const CTakeDamageInfo &inputinfo )
 		else if (m_flEndExpDmgTime - INVULN_PERIOD == gpGlobals->curtime) // Add up any damage that was applied on the same frame as the invuln trigger.  
 		{
 			// Lower the damage from successive hits based on how much damage has already been done this frame.
-			int weighteddamage = info.GetDamage() * info.GetDamage() / (m_iExpDmgTakenThisInterval + info.GetDamage());
+			// 5 mines stacked on top of eachother will now do 2.5 times the damage of a single mine, and 10 will do ~4 times the damage.
+			// This is to prevent people from just stacking mines for an instant kill, but still provide some benefit to it.
+			int damagescale = info.GetDamage() / ( m_iExpDmgTakenThisInterval + info.GetDamage() );
+			info.ScaleDamageForce(damagescale);
 
-			info.ScaleDamageForce(info.GetDamage() / (m_iExpDmgTakenThisInterval + info.GetDamage()));
-			m_iExpDmgTakenThisInterval += weighteddamage;
+			// Now that we've figured out our damage scaling, adjust our damage!
+			int weighteddamage = info.GetDamage() * damagescale;
 			info.SetDamage(weighteddamage);
+			m_iExpDmgTakenThisInterval += weighteddamage;
 		}
 		else // If this hit isn't strong enough or didn't happen on the same frame as a relevant one, don't go any further.
 		{
