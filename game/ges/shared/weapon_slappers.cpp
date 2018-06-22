@@ -26,8 +26,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define	SLAPPER_RANGE		65.0f
-#define	STOCK_RANGE			65.0f
+#define	SLAPPER_RANGE		68.0f
+#define	STOCK_RANGE			72.0f
 #define STOCK_MODEL			"models/weapons/sniperrifle/v_buttstock.mdl"
 
 #ifdef CLIENT_DLL
