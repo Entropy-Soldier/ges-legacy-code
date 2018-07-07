@@ -119,20 +119,24 @@ protected:
 
 	virtual void FireGameEvent_Internal( IGameEvent *event )
 	{
+		CBasePlayer *pPlayer = CBasePlayer::GetLocalPlayer();
+		if (!pPlayer)
+			return;
+
 		if ( !Q_stricmp(event->GetName(), "round_end") )
 		{
-			if ( !CBasePlayer::GetLocalPlayer() || !event->GetBool("showreport") )
+			if ( !event->GetBool("showreport") )
 				return;
 
 			// If we won a round, we can't get the achievement this match.
 			if ( event->GetBool("isfinal") )
 			{ 
-				if ( m_bHasPlayedRoundAsChar && !m_bHasWonRound && event->GetBool("isfinal") && event->GetInt("winnerid") == CBasePlayer::GetLocalPlayer()->entindex() )
+				if ( m_bHasPlayedRoundAsChar && !m_bHasWonRound && event->GetBool("isfinal") && event->GetInt("winnerid") == pPlayer->entindex() )
 					IncrementCount();
 			}
 			else
 			{
-				if ( event->GetInt("winnerid") == CBasePlayer::GetLocalPlayer()->entindex() )
+				if ( event->GetInt("winnerid") == pPlayer->entindex() )
 					m_bHasWonRound = true;
 
 				// Make sure we played at least one normal round as our desired character and didn't switch off afterwards.
@@ -148,7 +152,7 @@ protected:
 		else if ( !Q_strcmp( event->GetName(), "player_changeident" ) )
 		{
 			// This is not us, ignore
-			if ( CBasePlayer::GetLocalPlayer()->entindex() != event->GetInt("playerid") )
+			if ( pPlayer->entindex() != event->GetInt("playerid") )
 				return;
 
 			// See if we changed to our required character

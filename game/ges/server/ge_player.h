@@ -165,6 +165,8 @@ public:
 
 	void CheckAimMode(void);
 
+	void AbortForcedLadderMove();
+
 	virtual float GetRadarSweepTime()					{ return m_flSweepTime; }
 	virtual void  SetRadarSweepTime(float newtime)		{ m_flSweepTime = newtime; }
 

@@ -158,6 +158,10 @@ void CGETeamMenu::FireGameEvent( IGameEvent *pEvent )
 	}
 	else // Someone is disconnecting so remake the buttons.
 	{
+		// Can't do anything without our player resource.
+		if ( !GEPlayerRes() )
+			return;
+
 		m_iMI6Offset = 0; // Calculate offsets since the disconnect event arives before the client team counters are updated.
 		m_iJanusOffset = 0; // Don't really need to do this since they always reset at the end, but could be a bit of future-proofing.
 		m_iSpecOffset = 0;
@@ -270,18 +274,25 @@ void CGETeamMenu::MakeTeamButtons()
 	if ( !GameResources() || !GetNumberOfTeams() )
 		return;
 
+	if ( !m_pTeamButtonList )
+		return;
+
 	// First we clear out the list
 	m_pTeamButtonList->DeleteAllItems();
 
 	char szLabel[32];
 
 	// Then create the Join Game or Auto Join Button
-	if ( m_bTeamplay ) {
+	if ( m_bTeamplay ) 
+	{
 		AddButton( "#TM_Auto_Join", MAX_GE_TEAMS );
 
 		// Now create the buttons for the teams if we need them
 		for (int i=FIRST_GAME_TEAM; i < MAX_GE_TEAMS; i++)
 		{
+			if ( !GetGlobalTeam(i) )
+				continue;
+
 			int offset = 0; // In case we need to predict team counts before they actually update.
 			if (i == TEAM_JANUS)
 				offset = m_iJanusOffset;
@@ -291,14 +302,19 @@ void CGETeamMenu::MakeTeamButtons()
 			Q_snprintf( szLabel, 32, "%s (%i)", GameResources()->GetTeamName(i), GetGlobalTeam(i)->Get_Number_Players() + offset );
 			AddButton( szLabel, i );
 		}
-	} else {
+	} 
+	else 
+	{
 		AddButton( "#TM_Join", TEAM_UNASSIGNED );
 	}
 
 	// Lastly create the Spectator button (always last)
-	wchar_t specs[64];
-	GEUTIL_ParseLocalization( specs, 64, VarArgs( "#TM_Spectator\r%i", GetGlobalTeam(TEAM_SPECTATOR)->Get_Number_Players() + m_iSpecOffset ) );
-	AddButton( specs, TEAM_SPECTATOR );
+	if ( GetGlobalTeam(TEAM_SPECTATOR) )
+	{
+		wchar_t specs[64];
+		GEUTIL_ParseLocalization(specs, 64, VarArgs("#TM_Spectator\r%i", GetGlobalTeam(TEAM_SPECTATOR)->Get_Number_Players() + m_iSpecOffset));
+		AddButton(specs, TEAM_SPECTATOR);
+	}
 }
 
 extern ConVar ge_allow_unbalanced_teamswitch;

@@ -859,6 +859,9 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 	// We are changing teams, drop any tokens we might have
 	DropAllTokens(); // Mostly just a failsafe against force switches at this point since we usually force suicide.
 
+	// Also make sure we aren't moving onto a ladder.
+	AbortForcedLadderMove();
+
 	if ( iTeam == TEAM_SPECTATOR )
 	{
 		RemoveAllItems( true );

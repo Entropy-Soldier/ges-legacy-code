@@ -17,6 +17,7 @@
 #include "engine/IEngineSound.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "ilagcompensationmanager.h"
+#include "reserve_player_spot.h"
 
 #include "ge_tokenmanager.h"
 #include "ge_player_shared.h"
@@ -848,7 +849,32 @@ void CGEPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	KnockOffHat(!m_bRemovableHat); // If our hat isn't removable we have to delete it on death.
 
+	// Make sure we don't resume our forced ladder move when we respawn
+	AbortForcedLadderMove();
+
 	BaseClass::Event_Killed( info );
+}
+
+void CGEPlayer::AbortForcedLadderMove()
+{
+	LadderMove_t* lm = GetLadderMove();
+
+	// We either have no ladder data or are currently not force moving onto one.
+	if ( !lm || !lm->m_bForceLadderMove )
+		return;
+
+	// Set the forced movement flag to false.
+	lm->m_bForceLadderMove = false;
+
+	// If we have a reserve spot, delete it.
+	if ( lm->m_hReservedSpot )
+	{
+		UTIL_Remove( lm->m_hReservedSpot );
+		lm->m_hReservedSpot = NULL;
+	}
+
+	SetSolid( SOLID_BBOX );
+	ExitLadder();
 }
 
 void CGEPlayer::DropAllTokens()

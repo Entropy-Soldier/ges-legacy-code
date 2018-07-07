@@ -13,6 +13,12 @@
 #include "hl2mp_gamerules.h"
 #endif
 
+#ifdef GE_DLL
+#ifndef CLIENT_DLL
+#include "reserve_player_spot.h"
+#endif
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -66,6 +72,7 @@ void CHL2GameMovement::SwallowUseKey()
 }
 
 #if !defined( CLIENT_DLL )
+#ifndef GE_DLL
 // This is a simple helper class to reserver a player sized hull at a spot, owned by the current player so that nothing
 //  can move into this spot and cause us to get stuck when we get there
 class CReservePlayerSpot : public CBaseEntity
@@ -137,7 +144,7 @@ void CReservePlayerSpot::Spawn()
 }
 
 LINK_ENTITY_TO_CLASS( reserved_spot, CReservePlayerSpot );
-
+#endif
 #endif
 //-----------------------------------------------------------------------------
 // Purpose: 

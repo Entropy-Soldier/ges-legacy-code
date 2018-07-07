@@ -381,6 +381,9 @@ void CGERadar::OnThink( void )
 
 	CBasePlayer *pLocalPlayer = CBasePlayer::GetLocalPlayer();
 
+	if (!pLocalPlayer)
+		return;
+
 	// Go through our Radar Resource to get any new entities / updates to existing ones
 	int iEntSerial;
 	int iLocalSerial = pLocalPlayer->GetRefEHandle().ToInt();
@@ -409,7 +412,7 @@ void CGERadar::OnThink( void )
 			}
 
 			// Never add a contact that is out of range initially or set to not draw on the radar (don't include campers!)
-			if ( !g_RR->GetAlwaysVisible(i) && !IsContactCamping(iEntSerial) && !IsContactInRange(g_RR->GetOrigin(i)) )
+			if ( !g_RR->GetAlwaysVisible(i) && !IsContactInRange(g_RR->GetOrigin(i)) )
 				continue;
 
 			UpdateContact( iEntSerial, g_RR->GetType(i), g_RR->GetAlwaysVisible(i), g_RR->GetColor(i) );
@@ -466,9 +469,12 @@ void CGERadar::ValidateContacts()
 		return;
 
 	bool bRemove = false;
-	CBasePlayer *pLocalPlayer = CBasePlayer::GetLocalPlayer();
 	CGERadarContact *pContact;
 	int index = -1;
+	CBasePlayer *pLocalPlayer = CBasePlayer::GetLocalPlayer();
+
+	if (!pLocalPlayer)
+		return;
 
 	// Loop through all our contacts and remove the ones that are out of range
 	for( int i = 0 ; i < m_iNumContacts ; i++ )
@@ -701,6 +707,9 @@ void CGERadar::Paint()
 //---------------------------------------------------------
 void CGERadar::DrawIconOnRadar( CGERadarContact *contact, Color col )
 {
+	if ( !contact )
+		return;
+
 	float x = contact->m_vScaledPos.x, 
 		y = contact->m_vScaledPos.y,
 		z_delta = contact->m_vScaledPos.z;
@@ -709,6 +718,9 @@ void CGERadar::DrawIconOnRadar( CGERadarContact *contact, Color col )
 
 	float floorheight = GEMPRules()->GetMapFloorHeight();
 	CBasePlayer *pLocalPlayer = CBasePlayer::GetLocalPlayer();
+
+	if (!pLocalPlayer)
+		return;
 
 	// Get the correct icon for this type of contact
 	CHudTexture *icon = NULL;
@@ -830,6 +842,9 @@ Vector CGERadar::GetContactPosition( CGERadarContact *contact )
 float CGERadar::GetRadarRange( void )
 {
 	CBasePlayer *pLocalPlayer = CBasePlayer::GetLocalPlayer();
+	if (!pLocalPlayer)
+		return ge_radar_range.GetFloat();
+
 	float flMod = g_RR->GetRangeModifier( g_RR->FindEntityIndex( pLocalPlayer->GetRefEHandle().ToInt() ) );
 	return ge_radar_range.GetFloat() * flMod;
 }

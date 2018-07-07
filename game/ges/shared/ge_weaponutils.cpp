@@ -90,8 +90,6 @@ const CGEWeaponInfo *WeaponInfoFromID(int id)
 		return dynamic_cast<CGEWeaponInfo*>(GetFileWeaponInfoFromHandle(h));
 	}
 
-	Warning("Failed to look up info for ID %d\n", id);
-
 	return NULL;
 }
 

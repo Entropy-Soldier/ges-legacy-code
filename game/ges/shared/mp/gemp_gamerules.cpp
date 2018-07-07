@@ -1646,6 +1646,9 @@ void CGEMPRules::ClientDisconnected( edict_t *pEntity )
 
 		player->RemoveLeftObjects();
 
+		// Also make sure we aren't moving onto a ladder.
+		player->AbortForcedLadderMove();
+
 		// If we're the host of a listen server, disconnecting means the server is shutting down which
 		// apparantly means the scenario already is starting to shut down.
 		//if (engine->IsDedicatedServer() || player != UTIL_GetListenServerHost())
