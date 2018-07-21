@@ -5304,6 +5304,23 @@ float C_BaseAnimating::SetPoseParameter( CStudioHdr *pStudioHdr, int iParameter,
 	return flValue;
 }
 
+#ifdef GE_DLL
+bool C_BaseAnimating::DirectlySetPoseParameter( CStudioHdr *pStudioHdr, int iParameter, float flValue )
+{
+	if ( pStudioHdr == NULL )
+		return false;
+
+	if ( pStudioHdr->GetNumPoseParameters() < iParameter )
+		return false;
+
+	if ( iParameter < 0 )
+		return false;
+
+	m_flPoseParameter[iParameter] = flValue;
+	return true;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *label - 

@@ -199,6 +199,9 @@ public:
 	float	SetPoseParameter( CStudioHdr *pStudioHdr, const char *szName, float flValue );
 	inline float SetPoseParameter( const char *szName, float flValue ) { return SetPoseParameter( GetModelPtr(), szName, flValue ); }
 	float	SetPoseParameter( CStudioHdr *pStudioHdr, int iParameter, float flValue );
+#ifdef GE_DLL
+	bool	DirectlySetPoseParameter( CStudioHdr *pStudioHdr, int iParameter, float flValue );
+#endif
 	inline float SetPoseParameter( int iParameter, float flValue ) { return SetPoseParameter( GetModelPtr(), iParameter, flValue ); }
 
 	float	GetPoseParameter( int iPoseParameter );
