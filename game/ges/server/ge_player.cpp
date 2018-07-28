@@ -141,8 +141,14 @@ int CGEPlayer::GetMaxArmor()
 {
 	int maxArmor = m_iMaxArmor;
 
+	// Total max armor can't limit your highest armor value, it only limits your pickups.
+	// However if we can't pick up any armor due to having no armor pickups left, we should
+	// set max armor to 0 to stop any pickup attempts and set the player's HUD bar to red.
 	if (m_iTotalMaxArmor >= 0)
-		maxArmor = min(maxArmor, m_iTotalMaxArmor - m_iTotalArmorPickup);
+	{
+		if ( m_iTotalMaxArmor - m_iTotalArmorPickup <= 0 )
+			maxArmor = min(maxArmor, 0);
+	}
 
 	return max(maxArmor, 0);
 }
@@ -155,6 +161,11 @@ bool CGEPlayer::AddArmor( int amount, int maxAmount )
 	if ( ArmorValue() < maxAmount )
 	{
 		int amountAdded = min(maxAmount - ArmorValue(), amount);
+
+		// If our total pickups are limited make sure we're not going to go over our limit.
+		if ( m_iTotalMaxArmor >= 0 )
+			amountAdded = min(amountAdded, m_iTotalMaxArmor - m_iTotalArmorPickup);
+
 		GEStats()->Event_PickedArmor(this, amountAdded);
 
 		if (m_iTotalMaxArmor >= 0) // Only keep track of total armor picked up if TotalMaxArmor is enabled.

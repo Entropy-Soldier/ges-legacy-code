@@ -110,7 +110,11 @@ void CGEHudLifebars::MsgFunc_Battery( bf_read &msg )
 	if ( !pPlayer )
 		return;
 
-	int maxArmor = pPlayer->GetMaxArmor();
+	// Make sure to never reduce the armor bar scaling below the typical max amount to reduce confusion.
+	// This is somewhat common for gamemodes to do but players typically interpret themselves as having a 
+	// full gauge when they really only have a tenth of one.  Increases to the max are a little more rare and
+	// the player should know their health percentage so it still makes sense to increase it in this case.
+	int maxArmor = max(pPlayer->GetMaxArmor(), MAX_ARMOR);
 	int newArmor = msg.ReadShort();
 
 	if(newArmor < 0) newArmor = 0;
@@ -191,15 +195,16 @@ void CGEHudLifebars::OnThink()
 		m_pAnimController->StartAnimationSequence("HideStatusBar");
 	}
 
+	int maxHealth = max(pPlayer->GetMaxHealth(), MAX_HEALTH);
 	int newHealth = pPlayer->GetHealth();
 	if (newHealth < 0) newHealth = 0;
-	if (newHealth > pPlayer->GetMaxHealth()) newHealth = pPlayer->GetMaxHealth();
+	if (newHealth > maxHealth) newHealth = maxHealth;
 
 	if(m_Health != newHealth)
 	{
 		m_Health = newHealth;
 		
-		float DialHP = CalcDialPoints( m_Health, pPlayer->GetMaxHealth() );
+		float DialHP = CalcDialPoints( m_Health, maxHealth );
 		m_HealthPercent = DialHP; /// (float)pPlayer->GetMaxHealth();
 		
 		m_pAnimController->StartAnimationSequence("StatusBarFlash");
