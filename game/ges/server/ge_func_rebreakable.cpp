@@ -17,6 +17,7 @@ public:
 	virtual void Spawn();
 
 	virtual void RespawnThink();
+	virtual void Break( CBaseEntity *pBreaker );
 	virtual void Die();
 	virtual bool KeyValue( const char *szKeyName, const char *szValue );
 
@@ -69,6 +70,20 @@ void CREBreakable::Spawn( void )
 	//m_CollMaxs = CollisionProp()->OBBMaxs();
 	m_CollMins -= GetAbsOrigin();
 	m_CollMaxs -= GetAbsOrigin();
+}
+
+void CREBreakable::Break( CBaseEntity *pBreaker )
+{
+	// GE_DLL - Only let us break ONCE per spawn
+	if ( IsBreakable() && !m_hBreaker.Get() )
+	{
+		QAngle angles, startingAngles = GetLocalAngles();
+		angles.y = m_angle;
+		SetLocalAngles( angles );
+		m_hBreaker = pBreaker;
+		Die();
+		SetLocalAngles( startingAngles );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -264,7 +279,7 @@ void CREBreakable::Die( void )
 	// Make ourselfs invisible
 	AddEffects( EF_NODRAW );
 	VPhysicsDestroyObject();
-	SetMoveType( MOVETYPE_PUSH ); //Still allow it to be moved, so that it respawns with parent
+	//SetMoveType( MOVETYPE_PUSH ); //Still allow it to be moved, so that it respawns with parent
 	AddSolidFlags( FSOLID_NOT_SOLID );
 
 	SetTouch( NULL );
@@ -320,8 +335,8 @@ void CREBreakable::RespawnThink( void )
 		}
 	}
 	
-	SetSolid( SOLID_BSP );
-    SetMoveType( MOVETYPE_PUSH );
+	//SetSolid( SOLID_BSP ); CreateVPhysics sets solid type.
+    //SetMoveType( MOVETYPE_PUSH );
 
 	RemoveEffects( EF_NODRAW );
 	RemoveSolidFlags( FSOLID_NOT_SOLID );

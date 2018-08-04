@@ -4635,6 +4635,11 @@ public:
 		
 		if ( pEntity )
 		{
+#ifdef GE_DLL
+			if ( pEntity->GetParent() == m_pDoor )
+				return false;
+#endif
+
 			if ( !pEntity->ShouldCollide( m_collisionGroup, contentsMask ) )
 				return false;
 			

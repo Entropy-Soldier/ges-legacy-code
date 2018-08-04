@@ -49,7 +49,11 @@ public:
 
 	void BreakTouch( CBaseEntity *pOther );
 	void DamageSound( void );
+#ifdef GE_DLL
+	virtual void Break( CBaseEntity *pBreaker );
+#else
 	void Break( CBaseEntity *pBreaker );
+#endif
 
 #ifdef GE_DLL
 	virtual void UpdateBulletProof( void );

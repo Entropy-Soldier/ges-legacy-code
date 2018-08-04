@@ -56,6 +56,10 @@ inline T Lerp_Hermite( float t, const T& p0, const T& p1, const T& p2 )
 	return output;
 }
 
+#ifdef GE_DLL
+// Thanks, azuisleet and friends!  This was a tough bug to track down.
+// https://github.com/ValveSoftware/source-sdk-2013/issues/404#issuecomment-403378667
+
 template <> 
 inline float Lerp_Hermite<float>( float t, const float& p0, const float& p1, const float& p2 )
 {
@@ -76,6 +80,7 @@ inline float Lerp_Hermite<float>( float t, const float& p0, const float& p1, con
 
 	return output;
 }
+#endif
 
 template <class T>
 inline T Derivative_Hermite( float t, const T& p0, const T& p1, const T& p2 )
