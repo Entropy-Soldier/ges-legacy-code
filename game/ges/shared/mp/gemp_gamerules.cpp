@@ -62,6 +62,8 @@
 	extern CBaseEntity *g_pLastJanusSpawn;
 
 	void GERoundTime_Callback( IConVar *var, const char *pOldString, float flOldValue );
+	void GEWinScore_Callback( IConVar *var, const char *pOldString, float flOldValue );
+	void GETeamWinScore_Callback( IConVar *var, const char *pOldString, float flOldValue );
 	void GERoundCount_Callback( IConVar *var, const char *pOldString, float flOldValue );
 	void GETeamplay_Callback( IConVar *var, const char *pOldString, float flOldValue );
 	void GEBotThreshold_Callback( IConVar *var, const char *pOldString, float fOldValue );
@@ -115,6 +117,8 @@ ConVar ge_bot_strict_openslot	( "ge_bot_strict_openslot", "0", FCVAR_REPLICATED,
 
 ConVar ge_roundtime	( "ge_roundtime", "0", FCVAR_REPLICATED, "Round time in seconds that can be played.", true, 0, true, 3000, GERoundTime_Callback );
 ConVar ge_roundcount( "ge_roundcount", "0", FCVAR_REPLICATED, "Number of rounds that should be held in the given match time (calculates ge_roundtime), use 0 to disable", GERoundCount_Callback );
+ConVar ge_winscore	( "ge_winscore", "0", FCVAR_REPLICATED, "Amount of points needed for a given player to win the round in non-teamplay.  use 0 to disable.", true, 0, true, 99999, GEWinScore_Callback );
+ConVar ge_teamwinscore	( "ge_teamwinscore", "0", FCVAR_REPLICATED, "Amount of team points needed for a given team to win the round in teamplay.  use 0 to disable.", true, 0, true, 99999, GETeamWinScore_Callback );
 ConVar ge_teamplay	( "ge_teamplay", "0", FCVAR_REPLICATED, "Turns on team play if the current scenario supports it.", GETeamplay_Callback );
 ConVar ge_velocity	( "ge_velocity", "1.0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Player movement velocity multiplier, applies in multiples of 0.25 [0.7 to 2.0]", true, 0.7, true, 2.0, GEVelocity_Callback );
 ConVar ge_infiniteammo( "ge_infiniteammo", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Players never run out of ammo!", GEInfAmmo_Callback );
@@ -159,6 +163,45 @@ void GERoundTime_Callback( IConVar *var, const char *pOldString, float flOldValu
 
 	// Reset our guard
 	in_func = false;
+}
+
+// Condense the winscore callback logic into one function while maintaining performance.
+void GEWinScore_CallbackSwitch( int new_goal_score, bool is_team_score )
+{
+    static bool in_func = false;
+	if ( in_func || !GEMPRules() )
+		return;
+
+	// Guard against recursion
+	in_func = true;
+
+    GEMPRules()->ChangeGoalScore( new_goal_score, is_team_score );
+
+    if ( is_team_score )
+        ge_teamwinscore.SetValue(new_goal_score);
+    else
+        ge_winscore.SetValue(new_goal_score);
+
+	// Reset our guard
+	in_func = false;
+}
+
+void GEWinScore_Callback( IConVar *var, const char *pOldString, float flOldValue )
+{
+	// Grab the desired round time
+	ConVar *cVar = static_cast<ConVar*>(var);
+	int new_goal_score = cVar->GetInt();
+
+    GEWinScore_CallbackSwitch( new_goal_score, false );
+}
+
+void GETeamWinScore_Callback( IConVar *var, const char *pOldString, float flOldValue )
+{
+	// Grab the desired round time
+	ConVar *cVar = static_cast<ConVar*>(var);
+	int new_goal_score = cVar->GetInt();
+
+    GEWinScore_CallbackSwitch( new_goal_score, true );
 }
 
 void GERoundCount_Callback( IConVar *var, const char *pOldString, float flOldValue )
@@ -643,6 +686,10 @@ BEGIN_NETWORK_TABLE_NOBASE( CGEMPRules, DT_GEMPRules )
 	RecvPropBool( RECVINFO( m_bGamemodeInfAmmo )),
 	RecvPropBool( RECVINFO( m_bAllowXMusic )),
 	RecvPropBool( RECVINFO( m_bShouldShowHUDTimer )),
+	RecvPropInt( RECVINFO( m_iHighestRoundScore ) ),
+    RecvPropInt( RECVINFO( m_iHighestTeamRoundScore ) ),
+	RecvPropInt( RECVINFO( m_iGoalScore ) ),
+	RecvPropInt( RECVINFO( m_iGoalTeamScore ) ),
 	RecvPropInt( RECVINFO( m_iTeamplayMode ) ),
 	RecvPropInt( RECVINFO( m_iScoreboardMode )),
 	RecvPropInt( RECVINFO( m_iScoreboardScorePerLevel ) ),
@@ -659,7 +706,11 @@ BEGIN_NETWORK_TABLE_NOBASE( CGEMPRules, DT_GEMPRules )
 	SendPropBool( SENDINFO( m_bGamemodeInfAmmo ) ),
 	SendPropBool( SENDINFO( m_bAllowXMusic ) ),
 	SendPropBool( SENDINFO( m_bShouldShowHUDTimer ) ),
-	SendPropInt( SENDINFO( m_iTeamplayMode ) ),
+	SendPropInt( SENDINFO( m_iHighestRoundScore ) ),
+	SendPropInt( SENDINFO( m_iHighestTeamRoundScore ) ),
+	SendPropInt( SENDINFO( m_iGoalScore ) ),
+    SendPropInt( SENDINFO( m_iGoalTeamScore ) ),
+    SendPropInt( SENDINFO( m_iTeamplayMode ) ),
 	SendPropInt( SENDINFO( m_iScoreboardMode ) ),
 	SendPropInt( SENDINFO( m_iScoreboardScorePerLevel ) ),
 	SendPropInt( SENDINFO( m_iAwardEventCode )),
@@ -758,6 +809,12 @@ CGEMPRules::CGEMPRules()
 	m_bEnableAmmoSpawns	 = true;
 	m_bEnableArmorSpawns = true;
 	m_bEnableWeaponSpawns= true;
+
+	m_iGoalScore = 0;
+    m_iGoalTeamScore = 0;
+    m_iHighestRoundScore = INT_MIN;
+    m_iHighestScoreHolderID = -1;
+    m_iHighestTeamRoundScore = INT_MIN;
 
 	m_iScoreboardMode = 0;
 
@@ -987,6 +1044,11 @@ void CGEMPRules::OnRoundStart()
 	SetRoundWinner( 0 );
 	SetRoundTeamWinner( TEAM_UNASSIGNED );
 
+	// Reset highest score tracking.
+	m_iHighestRoundScore = 0;
+    m_iHighestScoreHolderID = -1;
+    m_iHighestTeamRoundScore = 0;
+
 	// Update the teamplay global variable to make sure it's right.
 	// If the game thinks it's teamplay when it isn't, it won't do any clientside prediction since it thinks both players
 	// are on the same team and shouldn't be able to damage each other.
@@ -1215,11 +1277,32 @@ int CGEMPRules::GetRoundTeamWinner()
 	return winnerid;
 }
 
+// Should probably be paired with a "GetMatchLeaderAndScore" function and combined into GetRoundWinner()
+void CGEMPRules::GetRoundLeaderAndScore(int &leaderID, int &leaderScore)
+{
+    int score = 0;
+    int highscore = INT_MIN;
+    int winnerid = -1;
+
+	FOR_EACH_MPPLAYER( pPlayer )
+		score = pPlayer->GetRoundScore();
+
+		if ( score > highscore )
+		{
+			highscore = score;
+			winnerid = pPlayer->entindex();
+		}
+    END_OF_PLAYER_LOOP()
+
+    leaderID = winnerid;
+    leaderScore = highscore;
+}
+
 int CGEMPRules::GetRoundWinner()
 {
 	bool game_over = GEGameplay()->IsInFinalIntermission();
-	int score  = 0, maxscore  = 0, 
-		deaths = 0, maxdeaths = 0, 
+	int score  = 0, maxscore  = INT_MIN, 
+		deaths = 0, maxdeaths = INT_MIN, 
 		winnerid = 0;
 
 	if ( UTIL_PlayerByIndex( m_iPlayerWinner ) && !game_over )
@@ -2048,6 +2131,94 @@ void CGEMPRules::StopRoundTimer()
 	Assert( m_hRoundTimer.Get() != NULL );
 	UTIL_ClientPrintAll( HUD_PRINTTALK, "#GES_RoundTime_Disabled" );
 	m_hRoundTimer->Stop();
+}
+
+void CGEMPRules::RegisterPlayerScoreChange( CGEMPPlayer* player, int newScore )
+{
+    if (!player)
+        return;
+
+    int playerID = player->GetUserID();
+
+    // If we've exceeded our highest score then it doesn't matter who held it previously, we have a new leader!
+    if ( newScore > m_iHighestRoundScore )
+    {
+        m_iHighestScoreHolderID = playerID;
+        m_iHighestRoundScore = newScore;
+    }
+    else if ( playerID == m_iHighestScoreHolderID && m_iHighestRoundScore > newScore ) // Our leader lost points.
+    {
+        // This is rare enough that it's probably not worth tracking anyone but the leader and instead just recalculating
+        // the highest score and the leader whenever the leader loses a point.  Potentially the player in second could be tracked
+        // and the recalculation done only if the leader drops below their score, but this is probably a lot easier and more reliable
+        // in the end.
+        int recalculatedHighestScore;
+        GetRoundLeaderAndScore( m_iHighestScoreHolderID, recalculatedHighestScore );
+        m_iHighestRoundScore = recalculatedHighestScore; // Net variable so we can't stick it directly in the function.
+    }
+}
+
+void CGEMPRules::ChangeGoalScore( int new_score, bool team_score, bool announce )
+{
+    int scoreValue = m_iGoalScore;
+    const char *changeText = "#GES_GoalScore_Changed";
+    const char *disableText = "#GES_GoalScore_Disabled";
+
+    // If we want to change the team score instead be sure to switch to it.
+    // Just using a pointer for this is a bit tricker than normal due to the score values being networked.
+    if ( team_score )
+    {
+        scoreValue = m_iGoalTeamScore;
+        changeText = "#GES_GoalTeamScore_Changed";
+        disableText = "#GES_GoalTeamScore_Disabled";
+    }
+
+	// Check to make sure we will actually make a change
+	if ( new_score != scoreValue )
+	{
+		// Notify if we increased or decreased the score
+		if ( announce )
+		{
+			if ( new_score > 0 )
+			{
+				char szDir[16], szScore[8];
+				Q_snprintf( szScore, 8, "%d", new_score );
+
+				if (new_score > scoreValue)
+					Q_strncpy(szDir, "#Increased", 16);
+				else
+					Q_strncpy(szDir, "#Decreased", 16);
+
+				UTIL_ClientPrintAll(HUD_PRINTTALK, changeText, szDir, szScore);
+			}
+            else
+            {
+                UTIL_ClientPrintAll(HUD_PRINTTALK, disableText);
+            }
+		}
+
+        // No need to check here if changing the goal score caused someone to win the round, as round ends are checked
+		// via polling.
+        if ( !team_score )
+			m_iGoalScore = max(new_score, 0);
+        else
+            m_iGoalTeamScore = max(new_score, 0);
+	}
+}
+
+int CGEMPRules::GetHighestTeamRoundScore()
+{
+    if ( !IsTeamplay() )
+        return -1;
+
+    int highestScore = INT_MIN;
+
+    for ( int i = FIRST_GAME_TEAM; i < MAX_GE_TEAMS; i++ )
+	{
+		highestScore = max( GetGlobalTeam(i)->GetRoundScore(), highestScore );
+	}
+
+    return highestScore;
 }
 
 void CGEMPRules::SetSpawnInvulnInterval(float duration)

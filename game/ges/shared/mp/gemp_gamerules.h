@@ -97,6 +97,16 @@ public:
 	void SetRoundTimerPaused( bool state );
 	void StopRoundTimer();
 	
+	// Just used to keep track of the highest score for now, but could potentially be expanded in the future.
+	void RegisterPlayerScoreChange(CGEMPPlayer* player, int newScore);
+	// Change score that must be reached to instantly end the match.
+	void ChangeGoalScore( int new_score, bool team_score, bool announce = true );
+
+    int GetGoalScore()  { return m_iGoalScore; }
+    int GetTeamGoalScore()  { return m_iGoalTeamScore; }
+    int GetHighestRoundScore()  { return m_iHighestRoundScore; }
+    int GetHighestTeamRoundScore();
+
 	void SetSpawnInvulnInterval(float duration);
 	void SetSpawnInvulnCanBreak(bool canbreak);
 	float GetSpawnInvulnInterval();
@@ -121,6 +131,10 @@ public:
 	int GetNumAlivePlayers();
 	int GetNumInRoundPlayers();
 
+    // Gets the player with the highest score in the round.  In the event of a tie, one of the leader's IDs will be returned.
+    void GetRoundLeaderAndScore( int &leaderID, int &leaderScore );
+
+    // Gets the round winner according to the gamerules.
 	int GetRoundWinner();
 	int GetRoundTeamWinner();
 	void SetRoundWinner( int winner )		{ m_iPlayerWinner = winner; }
@@ -294,6 +308,9 @@ private:
 	int	  m_iPlayerWinner;
 	int   m_iTeamWinner;
 
+    // ID of player responsible for the current m_iHighestScore value.
+    int	  m_iHighestScoreHolderID;
+
 	// Per frame update variables
 	// -- updates on first call to the count functions per frame
 	// Player counts 
@@ -309,6 +326,10 @@ private:
 	CNetworkVar( bool,  m_bGamemodeInfAmmo );
 	CNetworkVar( bool,  m_bAllowXMusic );
 	CNetworkVar( bool,  m_bShouldShowHUDTimer );
+	CNetworkVar( int,	m_iHighestRoundScore );
+    CNetworkVar( int,	m_iHighestTeamRoundScore );
+	CNetworkVar( int,	m_iGoalScore );
+    CNetworkVar( int,	m_iGoalTeamScore );
 	CNetworkVar( int,	m_iTeamplayMode );
 	CNetworkVar( int, m_iScoreboardMode );
 	CNetworkVar( int, m_iScoreboardScorePerLevel );

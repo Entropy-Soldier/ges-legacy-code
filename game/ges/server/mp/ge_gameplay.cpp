@@ -98,6 +98,8 @@ void CGEBaseScenario::LoadConfig()
 {
 	char szCommand[255];
 
+	Msg( "Executing gameplay.cfg config file\n" );
+	engine->ServerCommand( "exec gameplay.cfg\n" );
 	Msg( "Executing gamemode [%s.cfg] config file\n", GetIdent() );
 	Q_snprintf( szCommand,sizeof(szCommand), "exec %s.cfg\n", GetIdent() );
 	engine->ServerCommand( szCommand );
@@ -823,13 +825,25 @@ float CGEBaseGameplayManager::GetRemainingIntermission()
 
 bool CGEBaseGameplayManager::ShouldEndRound()
 {
+	// Make sure the gameplay says we can end.
+	if ( !GetScenario()->CanRoundEnd() )
+		return false;
+
 	// Check time constraints
 	if ( GEMPRules()->IsRoundTimeRunning() && GEMPRules()->GetRoundTimeRemaining() <= 0 )
-	{
-		// We ran out of time and our scenario says we can end
-		if ( GetScenario()->CanRoundEnd() )
-			return true;
-	}
+		return true;
+
+    // Check score constraints
+    if (!GEMPRules()->IsTeamplay())
+    {
+        if ( GEMPRules()->GetGoalScore() != 0 && GEMPRules()->GetGoalScore() <= GEMPRules()->GetHighestRoundScore() )
+            return true;
+    }
+    else
+    {
+        if ( GEMPRules()->GetTeamGoalScore() != 0 && GEMPRules()->GetTeamGoalScore() <= GEMPRules()->GetHighestTeamRoundScore() )
+            return true;
+    }
 
 	return false;
 }

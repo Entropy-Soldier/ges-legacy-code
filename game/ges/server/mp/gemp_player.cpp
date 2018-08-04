@@ -248,6 +248,30 @@ void CGEMPPlayer::UpdateJumpPenalty()
 	}
 }
 
+void CGEMPPlayer::SetRoundScore( int val )	
+{ 
+    m_iRoundScore = val;
+
+    if ( GEMPRules() )
+        GEMPRules()->RegisterPlayerScoreChange( this, m_iRoundScore );
+}
+
+void CGEMPPlayer::AddRoundScore( int val )	
+{ 
+    m_iRoundScore += val; 
+
+    if ( GEMPRules() )
+        GEMPRules()->RegisterPlayerScoreChange( this, m_iRoundScore );
+}
+
+void CGEMPPlayer::ResetRoundScore()			
+{ 
+    m_iRoundScore = 0; 
+
+    if ( GEMPRules() )
+        GEMPRules()->RegisterPlayerScoreChange( this, m_iRoundScore );
+}
+
 void CGEMPPlayer::PickDefaultSpawnTeam()
 {
 	if ( GetTeamNumber() == TEAM_UNASSIGNED )

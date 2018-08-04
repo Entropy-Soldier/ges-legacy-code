@@ -41,9 +41,9 @@ public:
 	// Scoring System
 	// -------------------------------------------------
 	virtual int  GetRoundScore()			{ return m_iRoundScore; }
-	virtual void SetRoundScore( int val )	{ m_iRoundScore = val; }
-	virtual void AddRoundScore( int val )	{ m_iRoundScore += val; }
-	virtual void ResetRoundScore()			{ m_iRoundScore = 0; }
+	virtual void SetRoundScore( int val );
+	virtual void AddRoundScore( int val );
+	virtual void ResetRoundScore();
 	
 	virtual int  GetMatchScore()			{ return m_iMatchScore; }
 	virtual void SetMatchScore( int val )	{ m_iMatchScore = val; }
