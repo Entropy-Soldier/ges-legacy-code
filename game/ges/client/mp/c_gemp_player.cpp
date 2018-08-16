@@ -60,6 +60,8 @@ C_GEMPPlayer::C_GEMPPlayer()
 	m_flRunTime = 0;
 	m_flRunCode = 0;
 
+    m_vLastWalkPos = Vector( -1, -1, -1 );
+
 	memset(m_iWeaponSkinInUse, 0, WEAPON_RANDOM);
 }
 

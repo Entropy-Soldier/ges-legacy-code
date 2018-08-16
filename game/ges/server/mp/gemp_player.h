@@ -95,7 +95,7 @@ public:
 	virtual void NotifyOnDeath();
 
 	// GE Special Functions
-	virtual void UpdateCampingTime();
+	virtual void UpdateCampingTimeAndWalkPos();
 	virtual int  GetCampingPercent();
 
 	virtual int			 GetSteamHash()			{ return m_iSteamIDHash; }
@@ -158,6 +158,9 @@ public:
 	virtual int   GetRunCode()					{ return m_flRunCode; }
 	virtual void  SetRunCode(float code)		{ m_flRunCode = code; }
 
+    virtual Vector GetLastWalkPosition()        { return m_vLastWalkPos; }
+    virtual void SetLastWalkPosition( Vector pos )          { m_vLastWalkPos = pos; }
+
 	virtual CBaseEntity	*GiveNamedItem( const char *szName, int iSubType = 0, bool giveDefaultClip = true );
 	virtual void  GiveDefaultItems();
 	virtual bool  ClientCommand( const CCommand &args );
@@ -194,6 +197,8 @@ protected:
 	// Used during team swaps
 	float m_flTeamJoinTime;
 	int m_iAutoTeamSwaps;
+
+    Vector m_vLastWalkPos;
 
 	// Used to throttle bunnyhopping
 	CNetworkVar( float,	m_flStartJumpZ );

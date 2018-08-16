@@ -55,6 +55,10 @@ public:
 	virtual int   GetRunCode()					{ return m_flRunCode; }
 	virtual void  SetRunCode(float code)		{ m_flRunCode = code; }
 
+    // Do nothing for the moment, might be useful later.
+    virtual Vector GetLastWalkPosition()        { return m_vLastWalkPos; }
+    virtual void SetLastWalkPosition( Vector pos )          { m_vLastWalkPos = pos; }
+
 	virtual int  GetSteamHash()					{ return m_iSteamIDHash; }
 
 	virtual int	  GetUsedWeaponSkin(int weapid)	{ return m_iWeaponSkinInUse[weapid]; }
@@ -71,6 +75,7 @@ private:
 	float m_flLastLandVelocity;
 	float m_flRunTime;
 	int m_flRunCode;
+    Vector m_vLastWalkPos;
 	int m_iSteamIDHash; // We need this to decode our save files.
 
 	int m_iWeaponSkinInUse[WEAPON_RANDOM];

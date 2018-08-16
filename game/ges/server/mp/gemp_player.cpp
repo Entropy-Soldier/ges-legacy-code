@@ -62,7 +62,8 @@ extern ConVar ge_debug_playerspawns;
 
 #define MODEL_CHANGE_INTERVAL	4.0f
 #define TEAM_CHANGE_INTERVAL	4.0f
-#define GE_MIN_CAMP_DIST		36.0f	// 3 ft
+#define GE_MIN_CAMP_DIST		90.0f	// 7.5 ft, make sure GE_MIN_CAMP_DIST/GE_CAMP_CHECK_INTERVAL is less than the walkspeed.
+#define GE_CAMP_CHECK_INTERVAL  0.5f    // Half a second, shorter values will be more forgiving as to who's considered camping.
 #define GE_MAX_THROWN_OBJECTS	25
 #define GE_CLEARSPAWN_DIST		512.0f
 #define GEPLAYER_PHYSDAMAGE_SCALE 1.0f
@@ -110,6 +111,8 @@ CGEMPPlayer::CGEMPPlayer()
 
 	m_vLastDeath = Vector(-1, -1, -1);
 	m_vLastSpawn = Vector(-1, -1, -1);
+
+    m_vLastWalkPos = Vector(-1, -1, -1);
 
 	for (int i = 0; i < WEAPON_RANDOM; i++)
 	{
@@ -176,10 +179,20 @@ void CGEMPPlayer::AddThrownObject( CBaseEntity *pObj )
 	m_hThrownObjects[loc] = pObj;
 }
 
-void CGEMPPlayer::UpdateCampingTime()
+void CGEMPPlayer::UpdateCampingTimeAndWalkPos()
 {
 	if ( m_flNextCampCheck > gpGlobals->curtime )
 		return;
+
+    Vector curPos = GetAbsOrigin();
+
+    // We're currently standing on something so update our last valid walkpos.
+    // Might as well take advantage of the periodic checks of the camper calculation
+    // rather than create a new system that does pretty much the same thing.
+    if ( GetGroundEntity() != NULL )
+    {
+        m_vLastWalkPos = curPos;
+    }
 
 	if ( IsObserver() )
 	{
@@ -187,18 +200,18 @@ void CGEMPPlayer::UpdateCampingTime()
 		return;
 	}
 
-	float movement = m_vLastOrigin.DistTo( GetAbsOrigin() );
+	float movement = m_vLastOrigin.DistTo( curPos );
 	// Copy it over for the next measurement
-	m_vLastOrigin = GetAbsOrigin();
+	m_vLastOrigin = curPos;
 
 	if ( movement > GE_MIN_CAMP_DIST )
 	{
 		m_flLastMoveTime = gpGlobals->curtime;
-		m_flCampingTime = max( 0, m_flCampingTime - 0.5f );
+		m_flCampingTime = max( 0, m_flCampingTime - GE_CAMP_CHECK_INTERVAL * 2.5 );
 	}
 	else
 	{
-		m_flCampingTime += 0.2f;
+		m_flCampingTime += GE_CAMP_CHECK_INTERVAL;
 	}
 
 	int newState, percent = GetCampingPercent();
@@ -222,7 +235,7 @@ void CGEMPPlayer::UpdateCampingTime()
 	}
 
 	m_iCampingState = newState;
-	m_flNextCampCheck = gpGlobals->curtime + 0.2f;
+	m_flNextCampCheck = gpGlobals->curtime + GE_CAMP_CHECK_INTERVAL;
 }
 
 int CGEMPPlayer::GetCampingPercent()
@@ -829,8 +842,8 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 			}
 		}
 
-		// Only suicide the player if they are switching teams and not observing and not forced to switch
-		if (GetTeamNumber() != TEAM_UNASSIGNED && !IsObserver() && !bWasForced)
+		// Only suicide the player if they are switching teams and not observing, not forced to switch, and it's not an intermission.
+		if ( GetTeamNumber() != TEAM_UNASSIGNED && !IsObserver() && !bWasForced && ( !GEMPRules() || !GEMPRules()->IsIntermission() ) )
 			bKill = true;
 
 		// The player is trying to Auto Join a team so set them up!
@@ -848,7 +861,7 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 				iTeam = random->RandomInt( TEAM_MI6, TEAM_JANUS );
 		}
 	}
-	else if ( GetTeamNumber() == TEAM_UNASSIGNED && !m_bPreSpawn && IsAlive() && !bWasForced ) //Use alternate rules for non-teamplay.
+	else if ( GetTeamNumber() == TEAM_UNASSIGNED && !m_bPreSpawn && IsAlive() && !bWasForced && ( !GEMPRules() || !GEMPRules()->IsIntermission() ) ) //Use alternate rules for non-teamplay.
 		bKill = true;
 	
 	// Coming on spectator we end pre spawn, but going from spectator
@@ -1532,7 +1545,7 @@ void CGEMPPlayer::PostThink()
 	BaseClass::PostThink();
 	
 	// Check our camping status
-	UpdateCampingTime();
+	UpdateCampingTimeAndWalkPos();
 }
 
 void CGEMPPlayer::OnWebDataRetreived( GEPlayerWebInfo *webInfo )

@@ -2589,36 +2589,6 @@ bool CGameMovement::CheckJumpButton( void )
 //	if ( !ge_allowjump.GetBool() || (((CGEPlayer*)player)->IsMPPlayer() && gpGlobals->curtime < ((CGEMPPlayer*)player)->GetNextJumpTime()) )
 	if (!ge_allowjump.GetBool() || (((CGEPlayer*)player)->IsMPPlayer() && ((CGEMPPlayer*)player)->GetJumpPenalty() > 50) )
 		return false;
-
-	// Cap out movement speed on subsequent jumps to prevent bhopping exploits.
-	if (((CGEPlayer*)player)->IsMPPlayer() && (gpGlobals->curtime < ((CGEMPPlayer*)player)->GetNextJumpTime()))
-	{
-		float jumpPenalty = ((CGEMPPlayer*)player)->GetJumpPenalty();
-		float jumpCap = 250;
-		Vector PLVelocity = player->GetAbsVelocity();
-		Vector PLVelocity2D = PLVelocity;
-		PLVelocity2D.z = 0;
-		float PLSpeed2D = PLVelocity2D.Length();
-		float heightdelta = abs(((CGEMPPlayer*)player)->GetStartJumpZ() - player->GetAbsOrigin().z);
-
-		//If the jump penalty exceeds 20, start applying jump speed cap reductions
-		if (jumpPenalty > 20)
-		{
-			//If significant height change, don't be as harsh on crouch jump reduction
-			if (heightdelta < 30)
-				jumpCap -= player->IsDucked() ? (max(jumpPenalty - 20, 0) * 5) : max(jumpPenalty - 20, 0); //Max value reduces cap to 180 on crouch, 220 otherwise
-			else
-				jumpCap -= player->IsDucked() ? (jumpPenalty - 20) : (jumpPenalty - 20); //Max value reduces cap to 220 on crouch, 220 otherwise
-		}
-		if (heightdelta > 30 && jumpPenalty < 40) // Give a slight speedcap boost for special cases, this is mostly for jumping down ramps and off railings.  Will only work for the second jump since any subsequent ones will almost always put the penalty past 40.
-			jumpCap += 50;
-
-		if (PLSpeed2D > jumpCap)
-		{
-			VectorNormalize(PLVelocity2D);
-			mv->m_vecVelocity = PLVelocity2D * jumpCap + Vector(0, 0, PLVelocity.z);
-		}
-	}
 #endif
 
 	// See if we are waterjumping.  If so, decrement count and return.
@@ -2677,6 +2647,42 @@ bool CGameMovement::CheckJumpButton( void )
 	if ( player->m_Local.m_flDuckJumpTime > 0.0f )
 		return false;
 
+#ifdef GE_DLL
+    // All checks are clear, time to jump!
+
+    // First, force update our last ground position to prevent bunnyhopping players from updating theirs.
+    ((CGEMPPlayer*)player)->SetLastWalkPosition( player->GetAbsOrigin() );
+
+	// Cap out movement speed on subsequent jumps to prevent bhopping exploits.
+	if (((CGEPlayer*)player)->IsMPPlayer() && (gpGlobals->curtime < ((CGEMPPlayer*)player)->GetNextJumpTime()))
+	{
+		float jumpPenalty = ((CGEMPPlayer*)player)->GetJumpPenalty();
+		float jumpCap = 250;
+		Vector PLVelocity = player->GetAbsVelocity();
+		Vector PLVelocity2D = PLVelocity;
+		PLVelocity2D.z = 0;
+		float PLSpeed2D = PLVelocity2D.Length();
+		float heightdelta = abs(((CGEMPPlayer*)player)->GetStartJumpZ() - player->GetAbsOrigin().z);
+
+		//If the jump penalty exceeds 20, start applying jump speed cap reductions
+		if (jumpPenalty > 20)
+		{
+			//If significant height change, don't be as harsh on crouch jump reduction
+			if (heightdelta < 30)
+				jumpCap -= player->IsDucked() ? (max(jumpPenalty - 20, 0) * 5) : max(jumpPenalty - 20, 0); //Max value reduces cap to 180 on crouch, 220 otherwise
+			else
+				jumpCap -= player->IsDucked() ? (jumpPenalty - 20) : (jumpPenalty - 20); //Max value reduces cap to 220 on crouch, 220 otherwise
+		}
+		if (heightdelta > 30 && jumpPenalty < 40) // Give a slight speedcap boost for special cases, this is mostly for jumping down ramps and off railings.  Will only work for the second jump since any subsequent ones will almost always put the penalty past 40.
+			jumpCap += 50;
+
+		if (PLSpeed2D > jumpCap)
+		{
+			VectorNormalize(PLVelocity2D);
+			mv->m_vecVelocity = PLVelocity2D * jumpCap + Vector(0, 0, PLVelocity.z);
+		}
+	}
+#endif
 
 	// In the air now.
     SetGroundEntity( NULL );
