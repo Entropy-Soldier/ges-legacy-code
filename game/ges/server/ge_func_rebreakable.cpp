@@ -57,7 +57,12 @@ CREBreakable::CREBreakable()
 
 void CREBreakable::Spawn( void )
 {
+    // Undo the angle hack in the baseclass since it's potentially causing issues.
+	QAngle startAngle = GetLocalAngles();
+
 	BaseClass::Spawn();
+
+    SetLocalAngles( startAngle );
 
 	// Cache off values for our respawning
 	m_iTakeDmgValue = m_takedamage;
