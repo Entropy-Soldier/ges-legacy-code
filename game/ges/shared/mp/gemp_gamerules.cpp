@@ -810,8 +810,8 @@ CGEMPRules::CGEMPRules()
 	m_bEnableArmorSpawns = true;
 	m_bEnableWeaponSpawns= true;
 
-	m_iGoalScore = 0;
-    m_iGoalTeamScore = 0;
+	m_iGoalScore = ge_winscore.GetInt();
+    m_iGoalTeamScore = ge_teamwinscore.GetInt();
     m_iHighestRoundScore = INT_MIN;
     m_iHighestScoreHolderID = -1;
     m_iHighestTeamRoundScore = INT_MIN;
