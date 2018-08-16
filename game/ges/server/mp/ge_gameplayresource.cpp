@@ -103,9 +103,9 @@ void CGEGameplayResource::OnLoadoutChanged( const char *ident, const char *name,
 
 void CGEGameplayResource::SetCharacterExclusion( const char *str_list )
 {
-	char tmp[64];
+	char tmp[128];
 	int i, k;
-	for ( i=0, k=0; i < 64; i++ )
+	for ( i=0, k=0; i < 128; i++ )
 	{
 		if ( str_list[i] == '\0' )
 			break;
@@ -121,6 +121,6 @@ void CGEGameplayResource::SetCharacterExclusion( const char *str_list )
 		}
 	}
 
-	tmp[min(k,63)] = '\0';
-	Q_strncpy( m_CharExclusion.GetForModify(), tmp, 64 );
+	tmp[min(k,127)] = '\0';
+	Q_strncpy( m_CharExclusion.GetForModify(), tmp, 128 );
 }

@@ -49,7 +49,7 @@ protected:
 	CNetworkString( m_LoadoutName,  64 );
 	CNetworkArray( int, m_LoadoutWeapons, MAX_WEAPON_SPAWN_SLOTS );
 	// Character Data
-	CNetworkString( m_CharExclusion, 64 );
+	CNetworkString( m_CharExclusion, 128 );
 };
 
 extern CGEGameplayResource *g_pGameplayResource;

@@ -69,7 +69,7 @@ protected:
 	int  m_LoadoutWeapons[MAX_WEAPON_SPAWN_SLOTS];
 
 	// Character Data
-	char m_CharExclusion[64];
+	char m_CharExclusion[128];
 };
 
 extern C_GEGameplayResource *GEGameplayRes();
