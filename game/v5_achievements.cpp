@@ -407,18 +407,22 @@ protected:
 
 	virtual void ListenForEvents()
 	{
-		ListenForGameEvent("player_death");
+		ListenForGameEvent( "player_death" );
 	}
 
 	virtual void Event_EntityKilled(CBaseEntity *pVictim, CBaseEntity *pAttacker, CBaseEntity *pInflictor, IGameEvent *event)
 	{
-		if (!pVictim)
+		if ( !pVictim )
 			return;
 
+        // LTK doesn't count.
+        if ( IsScenario( "ltk", false ) )
+            return;
+
 		// If the attacker is us, we're using the developer klobb, and the victim is a developer, we did it!
-		if (pAttacker == C_BasePlayer::GetLocalPlayer() && event->GetInt("weaponid") == WEAPON_KLOBB && event->GetInt("weaponskin") == 3 && GEPlayerRes()->GetDevStatus(pVictim->entindex()) == 1)
+		if ( pAttacker == C_BasePlayer::GetLocalPlayer() && event->GetInt("weaponid") == WEAPON_KLOBB && event->GetInt("weaponskin") == 3 && GEPlayerRes()->GetDevStatus(pVictim->entindex()) == 1 )
 			IncrementCount();
-	}
+    }
 };
 DECLARE_GE_ACHIEVEMENT(CAchDevideAndConquer, ACHIEVEMENT_GES_DEVIDE_AND_CONQUER, "GES_DEVIDE_AND_CONQUER", 100, GE_ACH_UNLOCKED);
 
