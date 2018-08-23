@@ -17,6 +17,7 @@
 #include "ge_gamerules.h"
 #include "gemp_gamerules.h"
 #include "ge_utils.h"
+#include "ge_scoreutilities.h"
 
 #include <KeyValues.h>
 
@@ -337,6 +338,7 @@ int CGEScoreBoard::GetSectionFromTeamNumber( int teamNumber )
 
 	return -1;
 }
+
 //-----------------------------------------------------------------------------
 // Purpose: Adds a new row to the scoreboard, from the playerinfo structure
 //-----------------------------------------------------------------------------
@@ -355,19 +357,12 @@ bool CGEScoreBoard::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
 		kv->SetInt("score", GEPlayerRes()->GetPlayerScore(playerIndex));
 	else if (GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_TIME)
 	{
-		int seconds = GEPlayerRes()->GetPlayerScore(playerIndex);
-		int displayseconds = seconds % 60;
-		int displayminutes = floor(seconds / 60);
-
-		Q_snprintf(name, sizeof(name), "%d:%s%d", displayminutes, displayseconds < 10 ? "0" : "", displayseconds);
+		GetTimeFormatString( GEPlayerRes()->GetPlayerScore(playerIndex), name, sizeof(name) );
 		kv->SetString("score", name);
 	}
 	else if (GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_LEVELS)
 	{
-		int points = GEPlayerRes()->GetPlayerScore(playerIndex);
-		int pointsPerLevel = GEMPRules()->GetScorePerScoreLevel();
-
-		Q_snprintf(name, sizeof(name), "%d | %d", (points / pointsPerLevel) + 1, points % pointsPerLevel);
+        GetLevelsFormatString( GEPlayerRes()->GetPlayerScore(playerIndex), name, sizeof(name) );
 		kv->SetString("score", name);
 	}
 	else
@@ -626,44 +621,31 @@ void CGEScoreBoard::UpdatePlayerInfo()
 
 void CGEScoreBoard::UpdateTeamScores( void )
 {
-	Panel *mi6 = FindChildByName( "MI6Score" );
-	Panel *janus = FindChildByName( "JanusScore" );
+    Panel *teamPanels[2]; // We're never going to have more than 2 teamplay teams so it's okay to hardcode the team amount.
+    teamPanels[0] = FindChildByName( "MI6Score" );
+	teamPanels[1] = FindChildByName( "JanusScore" );
 
-	if ( (!mi6 || !janus) || !GEMPRules() || !GEPlayerRes() )
+    int teamIDs[2] = { TEAM_MI6, TEAM_JANUS };
+
+	if ( (!teamPanels[0] || !teamPanels[1]) || !GEMPRules() || !GEPlayerRes() )
 		return;
 
 	if ( GEMPRules()->IsTeamplay() )
 	{
-		wchar_t *scoreFmt = g_pVGuiLocalize->Find( "#ScoreBoard_TeamScore" );
-		if ( !scoreFmt )
-			scoreFmt = L"Score: %s1";
+        for ( int i = 0; i < 2; i++ )
+        {
+            teamPanels[i]->SetVisible(true);
+            int teamScore = GetGlobalTeam(teamIDs[i])->GetRoundScore();
 
-		mi6->SetVisible(true);
-		janus->SetVisible(true);
-
-		char rounds[8];
-		wchar_t score[32], wszRounds[8];
-
-		// Score for Janus
-		Q_snprintf( rounds, 8, "%i", GetGlobalTeam(TEAM_JANUS)->GetRoundScore() );
-		g_pVGuiLocalize->ConvertANSIToUnicode( rounds, wszRounds, sizeof(wszRounds) );
-
-		g_pVGuiLocalize->ConstructString( score, sizeof(score), scoreFmt, 1, wszRounds );
-		PostMessage( janus, new KeyValues( "SetText", "text", score ) );
-		janus->SetFgColor( GEPlayerRes()->GetTeamColor(TEAM_JANUS) );
-
-		// Score for MI6
-		Q_snprintf( rounds, 8, "%i", GetGlobalTeam(TEAM_MI6)->GetRoundScore() );
-		g_pVGuiLocalize->ConvertANSIToUnicode( rounds, wszRounds, sizeof(wszRounds) );
-
-		g_pVGuiLocalize->ConstructString( score, sizeof(score), scoreFmt, 1, wszRounds );
-		PostMessage( mi6, new KeyValues( "SetText", "text", score ) );
-		mi6->SetFgColor( GEPlayerRes()->GetTeamColor(TEAM_MI6) );
+            UpdateTeamScorePanel( this, teamPanels[i], teamScore, true, true, GEPlayerRes()->GetTeamColor(teamIDs[i]) );
+        }
 	}
 	else
 	{
-		mi6->SetVisible(false);
-		janus->SetVisible(false);
+        for ( int i = 0; i < 2; i++ )
+        {
+            teamPanels[i]->SetVisible(false);
+        }
 	}
 }
 

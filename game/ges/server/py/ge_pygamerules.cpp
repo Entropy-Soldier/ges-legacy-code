@@ -301,6 +301,21 @@ void pyEnableLevelBasedScoring()
 	GEMPRules()->SetScoreboardMode(SCOREBOARD_POINTS_LEVELS);
 }
 
+void pyEnableTeamStandardScoring()
+{
+	GEMPRules()->SetTeamScoreboardMode(SCOREBOARD_POINTS_STANDARD);
+}
+
+void pyEnableTeamTimeBasedScoring()
+{
+	GEMPRules()->SetTeamScoreboardMode(SCOREBOARD_POINTS_TIME);
+}
+
+void pyEnableTeamLevelBasedScoring()
+{
+	GEMPRules()->SetTeamScoreboardMode(SCOREBOARD_POINTS_LEVELS);
+}
+
 void pySetLevelBasedScoringPointsPerLevel( int scoreThresh )
 {
 	GEMPRules()->SetScorePerScoreLevel(scoreThresh);
@@ -560,6 +575,10 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 	def("EnableTimeBasedScoring", pyEnableTimeBasedScoring);
 	def("EnableStandardScoring", pyEnableStandardScoring);
 	def("EnableLevelBasedScoring", pyEnableLevelBasedScoring);
+
+    def("EnableTeamTimeBasedScoring", pyEnableTeamTimeBasedScoring);
+	def("EnableTeamStandardScoring", pyEnableTeamStandardScoring);
+	def("EnableTeamLevelBasedScoring", pyEnableTeamLevelBasedScoring);
 
 	def("SetLevelScoringPointsPerLevel", pySetLevelBasedScoringPointsPerLevel);
 

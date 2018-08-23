@@ -208,6 +208,9 @@ public:
 	int  GetScoreboardMode()  { return m_iScoreboardMode; };
 	void  SetScoreboardMode( int newmode )  { m_iScoreboardMode = newmode; };
 
+    int  GetTeamScoreboardMode()  { return m_iTeamScoreboardMode; };
+	void  SetTeamScoreboardMode( int newmode )  { m_iTeamScoreboardMode = newmode; };
+
 	int  GetScorePerScoreLevel()  { return m_iScoreboardScorePerLevel; };
 	void  SetScorePerScoreLevel( int newscorethresh )  { m_iScoreboardScorePerLevel = newscorethresh; };
 
@@ -332,6 +335,7 @@ private:
     CNetworkVar( int,	m_iGoalTeamScore );
 	CNetworkVar( int,	m_iTeamplayMode );
 	CNetworkVar( int, m_iScoreboardMode );
+	CNetworkVar( int, m_iTeamScoreboardMode );
 	CNetworkVar( int, m_iScoreboardScorePerLevel );
 	CNetworkVar( int, m_iAwardEventCode );
 

@@ -28,6 +28,7 @@
 #include "ge_gamerules.h"
 #include "gemp_gamerules.h"
 #include "ge_utils.h"
+#include "ge_scoreutilities.h"
 
 #include <KeyValues.h>
 #include "IGameUIFuncs.h" // for key bindings
@@ -542,19 +543,12 @@ bool CGERoundReport::GetPlayerScoreInfo( int playerIndex, KeyValues *kv )
 		kv->SetInt("score", GEPlayerRes()->GetPlayerScore(playerIndex));
 	else if ( GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_TIME )
 	{
-		int seconds = GEPlayerRes()->GetPlayerScore(playerIndex);
-		int displayseconds = seconds % 60;
-		int displayminutes = floor(seconds / 60);
-
-		Q_snprintf(name, sizeof(name), "%d:%s%d", displayminutes, displayseconds < 10 ? "0" : "", displayseconds);
+        GetTimeFormatString( GEPlayerRes()->GetPlayerScore(playerIndex), name, sizeof(name) );
 		kv->SetString("score", name);
 	}
 	else if (GEMPRules()->GetScoreboardMode() == SCOREBOARD_POINTS_LEVELS)
 	{
-		int points = GEPlayerRes()->GetPlayerScore(playerIndex);
-		int pointsPerLevel = GEMPRules()->GetScorePerScoreLevel();
-
-		Q_snprintf(name, sizeof(name), "%d | %d", (points / pointsPerLevel) + 1, points % pointsPerLevel);
+		GetLevelsFormatString( GEPlayerRes()->GetPlayerScore(playerIndex), name, sizeof(name) );
 		kv->SetString("score", name);
 	}
 	else
@@ -669,42 +663,37 @@ void CGERoundReport::SetupAwardPanel( const char *name, CBasePlayer *player, int
 
 void CGERoundReport::UpdateTeamScores( void )
 {
-	Panel *mi6 = FindChildByName( "MI6Score" );
-	Panel *janus = FindChildByName( "JanusScore" );
+    Panel *teamPanels[2]; // We're never going to have more than 2 teamplay teams so it's okay to hardcode the team amount.
+	teamPanels[0] = FindChildByName( "MI6Score" );
+	teamPanels[1] = FindChildByName( "JanusScore" );
 
-	if ( (!mi6 || !janus) || !GERules() || !GEPlayerRes() || m_RoundData.is_locked )
+    int teamIDs[2] = { TEAM_MI6, TEAM_JANUS };
+
+	if ( (!teamPanels[0] || !teamPanels[1]) || !GERules() || !GEPlayerRes() || m_RoundData.is_locked )
 		return;
 
 	if ( m_RoundData.is_teamplay )
 	{
-		mi6->SetVisible(true);
-		janus->SetVisible(true);
+        for ( int i = 0; i < 2; i++ )
+        {
+            teamPanels[i]->SetVisible(true);
+            int teamScore;
 
-		char score_text[32];
-		int score;
-		
-		// Janus Scores
-		if ( m_RoundData.is_match )
-			score = GetGlobalTeam(TEAM_JANUS)->GetMatchScore();
-		else
-			score = GetGlobalTeam(TEAM_JANUS)->GetRoundScore();
-			
-		Q_snprintf( score_text, sizeof(score_text), "%i", score );
-		PostMessage( janus, new KeyValues( "SetText", "text", score_text ) );
+            // Figure out which type of score to use.
+		    if ( m_RoundData.is_match )
+			    teamScore = GetGlobalTeam(teamIDs[i])->GetMatchScore();
+		    else
+			    teamScore = GetGlobalTeam(teamIDs[i])->GetRoundScore();
 
-		// MI6 Scores
-		if ( m_RoundData.is_match )
-			score = GetGlobalTeam(TEAM_MI6)->GetMatchScore();
-		else
-			score = GetGlobalTeam(TEAM_MI6)->GetRoundScore();
-		
-		Q_snprintf( score_text, sizeof(score_text), "%i", score );
-		PostMessage( mi6, new KeyValues( "SetText", "text", score_text ) );
+            UpdateTeamScorePanel( this, teamPanels[i], teamScore, false );
+        }
 	}
 	else
 	{
-		mi6->SetVisible(false);
-		janus->SetVisible(false);
+        for ( int i = 0; i < 2; i++ )
+        {
+            teamPanels[i]->SetVisible(false);
+        }
 	}
 }
 

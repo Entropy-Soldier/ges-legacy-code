@@ -692,6 +692,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CGEMPRules, DT_GEMPRules )
 	RecvPropInt( RECVINFO( m_iGoalTeamScore ) ),
 	RecvPropInt( RECVINFO( m_iTeamplayMode ) ),
 	RecvPropInt( RECVINFO( m_iScoreboardMode )),
+    RecvPropInt( RECVINFO( m_iTeamScoreboardMode )),
 	RecvPropInt( RECVINFO( m_iScoreboardScorePerLevel ) ),
 	RecvPropInt( RECVINFO( m_iAwardEventCode )),
 	RecvPropFloat(RECVINFO( m_flMapFloorHeight )),
@@ -712,6 +713,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CGEMPRules, DT_GEMPRules )
     SendPropInt( SENDINFO( m_iGoalTeamScore ) ),
     SendPropInt( SENDINFO( m_iTeamplayMode ) ),
 	SendPropInt( SENDINFO( m_iScoreboardMode ) ),
+	SendPropInt( SENDINFO( m_iTeamScoreboardMode ) ),
 	SendPropInt( SENDINFO( m_iScoreboardScorePerLevel ) ),
 	SendPropInt( SENDINFO( m_iAwardEventCode )),
 	SendPropFloat( SENDINFO( m_flMapFloorHeight )),
@@ -817,6 +819,7 @@ CGEMPRules::CGEMPRules()
     m_iHighestTeamRoundScore = INT_MIN;
 
 	m_iScoreboardMode = 0;
+	m_iTeamScoreboardMode = 0;
 
 	m_iAwardEventCode = 0;
 
@@ -967,7 +970,8 @@ void CGEMPRules::OnScenarioInit()
 	SetGamemodeInfAmmoState( false );
 	SetShouldShowHUDTimer( true );
 	SetAllowXMusic( true );
-	SetScoreboardMode( SCOREBOARD_POINTS_STANDARD ); //Default points.
+	SetScoreboardMode( SCOREBOARD_POINTS_STANDARD ); // Default player score display.
+	SetTeamScoreboardMode( SCOREBOARD_POINTS_STANDARD ); // Default team point display.
 	SetScorePerScoreLevel( 2 ); // Default level thresh for this score mode.
 
 	SetSpawnInvulnInterval( GES_DEFAULT_SPAWNINVULN );
