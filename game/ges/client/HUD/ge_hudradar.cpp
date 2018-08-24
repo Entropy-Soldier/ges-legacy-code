@@ -724,6 +724,7 @@ void CGERadar::DrawIconOnRadar( CGERadarContact *contact, Color col )
 
 	// Get the correct icon for this type of contact
 	CHudTexture *icon = NULL;
+    float overlayAlphaMult = 1.0f;
 
 	if ( contact->m_Icon )
 	{
@@ -761,6 +762,9 @@ void CGERadar::DrawIconOnRadar( CGERadarContact *contact, Color col )
 
 		width = max( icon->EffectiveWidth(m_flScaleX), 8 );
 		height = max( icon->EffectiveHeight(m_flScaleY), 8 );
+
+        // Adjust our overlay alpha to match the alpha reduction of the friendly radar dots.
+        overlayAlphaMult = 0.25f;
 	}
 	else
 	{
@@ -789,7 +793,8 @@ void CGERadar::DrawIconOnRadar( CGERadarContact *contact, Color col )
 		// For contact token overlay
 		if ( contact->m_Overlay )
 		{
-			vgui::surface()->DrawSetColor( contact->m_OverlayColorOverride[0], contact->m_OverlayColorOverride[1], contact->m_OverlayColorOverride[2], contact->m_OverlayColorOverride[3]*contact->m_flAlphaMod );
+            float overlayAlpha = contact->m_OverlayColorOverride[3] * contact->m_flAlphaMod * overlayAlphaMult;
+			vgui::surface()->DrawSetColor( contact->m_OverlayColorOverride[0], contact->m_OverlayColorOverride[1], contact->m_OverlayColorOverride[2], overlayAlpha );
 			vgui::surface()->DrawSetTexture( contact->m_Overlay->textureId );
 			vgui::surface()->DrawTexturedRect(x, y, x + width, y + height);
 
