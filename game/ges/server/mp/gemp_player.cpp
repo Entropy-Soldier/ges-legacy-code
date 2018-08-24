@@ -189,7 +189,7 @@ void CGEMPPlayer::UpdateCampingTimeAndWalkPos()
     // We're currently standing on something so update our last valid walkpos.
     // Might as well take advantage of the periodic checks of the camper calculation
     // rather than create a new system that does pretty much the same thing.
-    if ( GetGroundEntity() != NULL )
+    if ( GetGroundEntity() != NULL && GetGroundEntity()->IsWorld() )
     {
         m_vLastWalkPos = curPos;
     }

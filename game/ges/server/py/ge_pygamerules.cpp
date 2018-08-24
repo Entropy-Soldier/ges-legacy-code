@@ -494,6 +494,7 @@ bp::object pySetupCaptureArea( bp::tuple args, bp::dict kw )
 	pDef->glowDist   = GE_Extract<float>(kw, "glow_dist",	pDef->glowDist);
 	pDef->fRadius    = GE_Extract<float>(kw, "radius", pDef->fRadius);
 	pDef->fSpread    = GE_Extract<float>(kw, "spread", pDef->fSpread);
+    pDef->spawnManually  = GE_Extract<bool>(kw, "spawn_manually", pDef->spawnManually);
 
 	return bp::object();
 }
@@ -656,6 +657,8 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 		.def("CaptureToken", &CGETokenManager::CaptureToken)
 		.def("GetTokens", pyGetTokens)
 		.def("SetupCaptureArea", raw_function(pySetupCaptureArea))
+		.def("SpawnCaptureAreaNearPlayer", &CGETokenManager::SpawnCaptureAreaNearPlayer)
+        .def("SpawnCaptureAreaAtPoint", &CGETokenManager::SpawnCaptureAreaAtPoint)
 		.def("RemoveCaptureArea", &CGETokenManager::RemoveCaptureAreaDef)
 		.def("SetGlobalAmmo", &CGETokenManager::SetGlobalAmmo, CGETokenManager_SetGlobalAmmo_overloads())
 		.def("RemoveGlobalAmmo", &CGETokenManager::RemoveGlobalAmmo);

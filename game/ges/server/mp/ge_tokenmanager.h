@@ -14,7 +14,7 @@
 #endif
 
 #include "baseentity.h"
-#include "ge_player.h"
+#include "gemp_player.h"
 #include "ge_weapon.h"
 #include "ge_spawner.h"
 #include "ge_ammocrate.h"
@@ -69,6 +69,8 @@ public:
 	// Requirements to "enter" the capture area
 	char  rqdToken[MAX_ENTITY_NAME];
 	int   rqdTeam;
+
+    bool spawnManually; // No longer spawns on spawn points and allows the gamemode to spawn capture points of this defintion manually.
 
 	bool  bDirty;	// Indicates we need to refresh our spawned capture areas
 
@@ -140,6 +142,9 @@ public:
 	void SpawnCaptureAreas( const char *name = NULL );
 	void RemoveCaptureAreas( const char *name = NULL, int count = -1 );
 
+    void SpawnCaptureAreaNearPlayer( CGEMPPlayer *pGEPlayer, const char *definition_name );
+    void SpawnCaptureAreaAtPoint( Vector spawnLocation, const char *definition_name );
+
 	// Called from CGEWeapon
 
 	// Returns true if entity is allowed to spawn, false if not.
@@ -175,7 +180,7 @@ public:
 	};
 
 private:
-	// Accessors to our dictionary
+    // Accessors to our dictionary
 	CGETokenDef			*GetTokenDef( const char *szClassName );
 	CGECaptureAreaDef	*GetCapAreaDef( const char *szName );
 

@@ -2650,8 +2650,11 @@ bool CGameMovement::CheckJumpButton( void )
 #ifdef GE_DLL
     // All checks are clear, time to jump!
 
-    // First, force update our last ground position to prevent bunnyhopping players from updating theirs.
-    ((CGEMPPlayer*)player)->SetLastWalkPosition( player->GetAbsOrigin() );
+#if !defined( CLIENT_DLL )
+    // First, force update our last ground position to prevent bunnyhopping players from stopping the updating of theirs.
+    if ( player->GetGroundEntity()->IsWorld() ) // Only record jumps off of the world and not entities.
+        ((CGEMPPlayer*)player)->SetLastWalkPosition( player->GetAbsOrigin() );
+#endif
 
 	// Cap out movement speed on subsequent jumps to prevent bhopping exploits.
 	if (((CGEPlayer*)player)->IsMPPlayer() && (gpGlobals->curtime < ((CGEMPPlayer*)player)->GetNextJumpTime()))

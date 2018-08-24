@@ -51,6 +51,7 @@ CGECaptureAreaDef::CGECaptureAreaDef()
 	glowColor.SetColor(0,0,0,0);
 	glowDist = 350.0f;
 	iLimit = 0;
+    spawnManually = false;
 	fRadius = 32.0f;
 	fSpread = 500.0f;
 	iLocations = CGETokenManager::LOC_NONE;
@@ -612,13 +613,18 @@ void CGETokenManager::SpawnCaptureAreas( const char *name /*=NULL*/ )
 		{
 			CGECaptureAreaDef *ca = m_vCaptureAreas[idx];
 
-			// Get the full list of available spawning places
+            // This capture point defintion is marked for manual spawning so we don't want to try and stick them at spawners ASAP.
+            if ( ca->spawnManually )
+                continue;
+
+            // Get the full list of available spawning places
 			// this is based on our parameters set in Python
 			CUtlVector<EHANDLE> spawners;
 			FindSpawnersForCapArea( ca, spawners );
 
-			// Spawn capture areas using the spawners gathered above
+            // Now determine how many capture areas are left to spawn, by subtracting the existing count from the desired amount.
 			int numToSpawn = ca->iLimit - ca->vAreas.Count();
+
 			for ( int i=0; i < spawners.Count() && numToSpawn > 0; i++ )
 			{
 				CBaseEntity *pSpawner = spawners[i].Get();
@@ -674,6 +680,31 @@ void CGETokenManager::RemoveCaptureAreas( const char *name /*=NULL*/, int count 
 		FOR_EACH_DICT( m_vCaptureAreas, idx )
 			m_vCaptureAreas[idx]->vAreas.RemoveAll();
 	}
+}
+
+void CGETokenManager::SpawnCaptureAreaNearPlayer( CGEMPPlayer *pGEPlayer, const char *definition_name )
+{
+    SpawnCaptureAreaAtPoint( pGEPlayer->GetLastWalkPosition(), definition_name );
+}
+
+void CGETokenManager::SpawnCaptureAreaAtPoint( Vector spawnLocation, const char *definition_name )
+{
+    CGECaptureAreaDef *pDef = GetCapAreaDef(definition_name);
+
+    if ( pDef == NULL )
+    {
+        // This will be a common mistake so let's make sure our community gameplay creators see it in the console.
+        Warning( "-----GAMEPLAY WARNING-----\n" );
+        Warning( "Attempted to manually spawn capture area definition, %s, that does not exist!\n", definition_name );
+        Warning( "Be sure to define a capture defintion with SetupCaptureArea and reference that when spawning manually.\n" );
+        Warning( "--------------------------\n" );
+        return;
+    }
+
+    CGECaptureArea *pCapture = (CGECaptureArea*) CBaseEntity::CreateNoSpawn( "ge_capturearea", spawnLocation, vec3_angle );
+	pCapture->SetGroupName( definition_name );
+	ApplyCapAreaSettings( pDef, pCapture );
+	DispatchSpawn( pCapture );
 }
 
 // TODO: Min Token Spread??
@@ -1029,6 +1060,10 @@ void CGETokenManager::EnforceTokens( void )
 		{
 			ApplyCapAreaSettings( pDef );
 			pDef->bDirty = false;
+
+            // We don't want to automatically correct capture point amounts for manually spawned capture points.
+            if ( pDef->spawnManually )
+                continue;
 
 			// Adjust capture area amounts if needed
 			int diff = pDef->iLimit - pDef->vAreas.Count();
