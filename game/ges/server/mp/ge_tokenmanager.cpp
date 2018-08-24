@@ -682,12 +682,12 @@ void CGETokenManager::RemoveCaptureAreas( const char *name /*=NULL*/, int count 
 	}
 }
 
-void CGETokenManager::SpawnCaptureAreaNearPlayer( CGEMPPlayer *pGEPlayer, const char *definition_name )
+CGECaptureArea* CGETokenManager::SpawnCaptureAreaNearPlayer( CGEMPPlayer *pGEPlayer, const char *definition_name )
 {
-    SpawnCaptureAreaAtPoint( pGEPlayer->GetLastWalkPosition(), definition_name );
+    return SpawnCaptureAreaAtPoint( pGEPlayer->GetLastWalkPosition(), definition_name );
 }
 
-void CGETokenManager::SpawnCaptureAreaAtPoint( Vector spawnLocation, const char *definition_name )
+CGECaptureArea* CGETokenManager::SpawnCaptureAreaAtPoint( Vector spawnLocation, const char *definition_name )
 {
     CGECaptureAreaDef *pDef = GetCapAreaDef(definition_name);
 
@@ -698,13 +698,15 @@ void CGETokenManager::SpawnCaptureAreaAtPoint( Vector spawnLocation, const char 
         Warning( "Attempted to manually spawn capture area definition, %s, that does not exist!\n", definition_name );
         Warning( "Be sure to define a capture defintion with SetupCaptureArea and reference that when spawning manually.\n" );
         Warning( "--------------------------\n" );
-        return;
+        return NULL;
     }
 
     CGECaptureArea *pCapture = (CGECaptureArea*) CBaseEntity::CreateNoSpawn( "ge_capturearea", spawnLocation, vec3_angle );
 	pCapture->SetGroupName( definition_name );
 	ApplyCapAreaSettings( pDef, pCapture );
 	DispatchSpawn( pCapture );
+
+    return pCapture;
 }
 
 // TODO: Min Token Spread??

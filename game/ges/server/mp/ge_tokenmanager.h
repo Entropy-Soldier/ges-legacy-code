@@ -142,8 +142,12 @@ public:
 	void SpawnCaptureAreas( const char *name = NULL );
 	void RemoveCaptureAreas( const char *name = NULL, int count = -1 );
 
-    void SpawnCaptureAreaNearPlayer( CGEMPPlayer *pGEPlayer, const char *definition_name );
-    void SpawnCaptureAreaAtPoint( Vector spawnLocation, const char *definition_name );
+    // Spawns a capture area as close to the given player as possible, in an area garunteed to be within the level bounds.
+    // Returns a pointer to said capture point.
+    CGECaptureArea* SpawnCaptureAreaNearPlayer( CGEMPPlayer *pGEPlayer, const char *definition_name );
+
+    // Spawns capture area at the given point, returning a pointer to it.
+    CGECaptureArea* SpawnCaptureAreaAtPoint( Vector spawnLocation, const char *definition_name );
 
 	// Called from CGEWeapon
 
