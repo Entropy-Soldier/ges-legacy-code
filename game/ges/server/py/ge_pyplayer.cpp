@@ -195,6 +195,26 @@ void pyPlayerSetAbsAngles( CBaseCombatCharacter *player, QAngle angles )
 	// DO NOTHING!!
 }
 
+void pyPlayerSetOrigin( CBaseCombatCharacter *player, Vector origin )
+{
+    player->SetAbsOrigin(origin);
+}
+
+Vector pyPlayerGetOrigin( CBaseCombatCharacter *player )
+{
+    return player->GetAbsOrigin();
+}
+
+void pyPlayerSetVelocity( CBaseCombatCharacter *player, Vector velocity )
+{
+    player->SetAbsVelocity(velocity);
+}
+
+Vector pyPlayerGetVelocity( CBaseCombatCharacter *player )
+{
+    return player->GetAbsVelocity();
+}
+
 void pySetPlayerModel( CGEPlayer *pPlayer, const char *szChar, int nSkin )
 {
 	if ( pPlayer )
@@ -301,6 +321,10 @@ BOOST_PYTHON_MODULE(GEPlayer)
 		.def("GetPlayerModel", &CGEPlayer::GetCharIdent)
 		.def("SetPlayerModel", pySetPlayerModel)
 		.def("SetHat", &CGEPlayer::SpawnHat)
+        .def("SetPosition", pyPlayerSetOrigin)
+        .def("GetPosition", pyPlayerGetOrigin)
+        .def("SetVelocity", pyPlayerSetVelocity)
+        .def("GetVelocity", pyPlayerGetVelocity)
 		.def("KnockOffHat", &CGEPlayer::KnockOffHat, KnockOffHat_overloads())
 		.def("MakeInvisible", pyMakeInvisible)
 		.def("MakeVisible", pyMakeVisible)
@@ -328,6 +352,7 @@ BOOST_PYTHON_MODULE(GEPlayer)
 		.def("AddMatchScore", &CGEMPPlayer::AddMatchScore)
 		.def("SetDeaths", &CGEMPPlayer::SetDeaths)
 		.def("ForceRespawn", &CGEMPPlayer::ForceRespawn)
+		.def("GetLastWalkPosition", &CGEMPPlayer::GetLastWalkPosition)
 		.def("ChangeTeam", &CGEMPPlayer::ChangeTeam, ChangeTeam_overloads())
 		.def("GetCleanPlayerName", &CGEMPPlayer::GetSafeCleanPlayerName)
 		.def("SetInitialSpawn", &CGEMPPlayer::SetInitialSpawn)
