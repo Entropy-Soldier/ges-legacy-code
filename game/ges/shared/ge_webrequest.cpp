@@ -84,6 +84,7 @@ size_t CGEWebRequest::WriteData( void *ptr, size_t size, size_t nmemb, void *use
 {
 	CUtlBuffer *result = (CUtlBuffer*) userdata;
 	result->PutString( (char*)ptr );
+
 	return size * nmemb;
 }
 
@@ -139,6 +140,10 @@ int CGEWebRequest::Run()
 
 void CGEWebRequest::OnExit()
 {
+    // Make sure we're always null terminated!
+    // Not a problem unless we get a valid response with no data at all, but that can indeed happen.
+    m_Result.PutString("\0");
+
 	if ( m_pCallback )
 		m_pCallback( (char*) m_Result.Base(), m_pError, m_pInternalData );
 }

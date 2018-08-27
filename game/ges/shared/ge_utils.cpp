@@ -772,8 +772,8 @@ void ExtractXMLTagSubstring( char *dest, int destLength, const char *XMLData, co
 	Q_snprintf(openingTag, MAX_XML_TAG_SIZE, "<%s>", tagString);
 	Q_snprintf(closingTag, MAX_XML_TAG_SIZE, "</%s>", tagString);
 
-	const char *startingPos = Q_strstr(XMLData, openingTag);
-	const char *endingPos = Q_strstr(XMLData, closingTag);
+	const char *startingPos = Q_strstr( XMLData, openingTag );
+	const char *endingPos = Q_strstr( XMLData, closingTag );
 
 	if (!startingPos || !endingPos)
 	{
