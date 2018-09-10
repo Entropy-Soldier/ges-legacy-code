@@ -143,6 +143,9 @@ public:
 	void SpawnCaptureAreas( const char *name = NULL );
 	void RemoveCaptureAreas( const char *name = NULL, int count = -1 );
 
+    // Forces the respawn of all capture areas for a given definition.
+    void RefreshCaptureAreaDefinition( const char *name );
+
     // Spawns a capture area as close to the given player as possible, in an area garunteed to be within the level bounds.
     // Returns a pointer to said capture point.
     CGECaptureArea* SpawnCaptureAreaNearPlayer( CGEMPPlayer *pGEPlayer, const char *definition_name );

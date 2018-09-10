@@ -661,6 +661,7 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 		.def("SpawnCaptureAreaNearPlayer", &CGETokenManager::SpawnCaptureAreaNearPlayer, return_value_policy<reference_existing_object>())
         .def("SpawnCaptureAreaAtPoint", &CGETokenManager::SpawnCaptureAreaAtPoint, return_value_policy<reference_existing_object>())
 		.def("RemoveCaptureArea", &CGETokenManager::RemoveCaptureAreaDef)
+        .def("RefreshCaptureArea", &CGETokenManager::RefreshCaptureAreaDefinition)
 		.def("SetGlobalAmmo", &CGETokenManager::SetGlobalAmmo, CGETokenManager_SetGlobalAmmo_overloads())
 		.def("RemoveGlobalAmmo", &CGETokenManager::RemoveGlobalAmmo);
 

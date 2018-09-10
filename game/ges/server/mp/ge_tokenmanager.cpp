@@ -683,6 +683,23 @@ void CGETokenManager::RemoveCaptureAreas( const char *name /*=NULL*/, int count 
 	}
 }
 
+void CGETokenManager::RefreshCaptureAreaDefinition( const char *name )
+{
+    CGECaptureAreaDef *ca = GetCapAreaDef( name );
+    if (ca)
+    {
+        int count = ca->vAreas.Count();
+
+        while (count > 0)
+        {
+            ca->vAreas[count - 1]->Remove(); // This will call OnCaptureAreaRemoved which will handle removing the capture area from our vector.
+            count--;
+        }
+    }
+    else
+        Warning( "Attempted to refresh capture area definition %s, which doesn't exist!\n", name );
+}
+
 CGECaptureArea* CGETokenManager::SpawnCaptureAreaNearPlayer( CGEMPPlayer *pGEPlayer, const char *definition_name )
 {
     return SpawnCaptureAreaAtPoint( pGEPlayer->GetLastWalkPosition(), definition_name );
