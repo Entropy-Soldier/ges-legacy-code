@@ -493,6 +493,7 @@ bp::object pySetupCaptureArea( bp::tuple args, bp::dict kw )
 	pDef->glowColor  = GE_Extract<Color>(kw, "glow_color",	pDef->glowColor);
 	pDef->glowDist   = GE_Extract<float>(kw, "glow_dist",	pDef->glowDist);
 	pDef->fRadius    = GE_Extract<float>(kw, "radius", pDef->fRadius);
+    pDef->fZRadius    = GE_Extract<float>(kw, "z_radius", pDef->fZRadius);
 	pDef->fSpread    = GE_Extract<float>(kw, "spread", pDef->fSpread);
     pDef->spawnManually  = GE_Extract<bool>(kw, "spawn_manually", pDef->spawnManually);
 

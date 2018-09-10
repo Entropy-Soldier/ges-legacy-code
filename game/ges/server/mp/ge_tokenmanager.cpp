@@ -53,6 +53,7 @@ CGECaptureAreaDef::CGECaptureAreaDef()
 	iLimit = 0;
     spawnManually = false;
 	fRadius = 32.0f;
+    fZRadius = -1.0f; // By default just match the normal radius.
 	fSpread = 500.0f;
 	iLocations = CGETokenManager::LOC_NONE;
 	bDirty = true;
@@ -1150,7 +1151,7 @@ void CGETokenManager::ApplyCapAreaSettings( CGECaptureAreaDef *ca, CGECaptureAre
 			bool bGlow = ca->glowColor.a() > 0;
 			pCapture->SetupGlow( bGlow, ca->glowColor, ca->glowDist );
 			pCapture->SetModel( ca->szModelName );
-			pCapture->SetRadius( ca->fRadius );
+			pCapture->SetCaptureBounds( ca->fRadius );
 			pCapture->ChangeTeam( ca->rqdTeam );
 			pCapture->m_nSkin = ca->nSkin;
 		}

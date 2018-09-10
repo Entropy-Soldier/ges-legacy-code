@@ -64,7 +64,8 @@ public:
 	float glowDist;			// Glow distance
 	int	  iLimit;
 	int   iLocations;
-	float fRadius;
+	float fRadius;          // Circle in the x and y coordinates within which the capture zone is defined.
+    float fZRadius;         // Height extending both up and down within which the capture zone is defined.  Final result is a cylinder.
 	float fSpread;
 	// Requirements to "enter" the capture area
 	char  rqdToken[MAX_ENTITY_NAME];

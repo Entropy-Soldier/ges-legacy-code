@@ -33,6 +33,7 @@ CGECaptureArea::CGECaptureArea()
 {
 	m_szGroupName[0] = '\0';
 	m_fRadius = 32.0f;
+    m_fZRadius = 32.0f;
 
 	AddEFlags( EFL_USE_PARTITION_WHEN_NOT_SOLID );
 }
@@ -80,7 +81,7 @@ void CGECaptureArea::SetGroupName( const char* name )
 	Q_strncpy( m_szGroupName, name, 32 );
 }
 
-void CGECaptureArea::SetRadius( float radius )
+void CGECaptureArea::SetCaptureBounds( float radius, float z_radius /*==-1.0f*/ )
 {
 	// Warn if we exceed our threshold radius
 	if ( radius > 255.0f )
@@ -89,17 +90,28 @@ void CGECaptureArea::SetRadius( float radius )
 		radius = 255.0f;
 	}
 
+    // Make sure our largest radius is within our prop's collision bounds as that's what determines if we do capture validity
+    // checks in the first place.
+    float biggest_radius = max( radius, z_radius );
+
 	// Set the collision bloat, this makes sure we don't affect tracing!
-	if ( radius > 0 )
-	{
-		CollisionProp()->UseTriggerBounds( true, radius );
-		m_fRadius = radius;
-	}
+    // If we have no radius set, just use the prop's standard collision bounds.
+	if ( biggest_radius > 0 )
+		CollisionProp()->UseTriggerBounds( true, biggest_radius );
 	else
-	{
 		CollisionProp()->UseTriggerBounds( false );
-		m_fRadius = CollisionProp()->BoundingRadius2D();
-	}
+
+    // If radius isn't set, use the prop's bounding radius for it to make sure we have some sort of radius value.
+    if ( radius > 0 )
+        m_fRadius = radius;
+    else
+        m_fRadius = CollisionProp()->BoundingRadius2D();
+
+    // If z_radius isn't set, just use 1/4 the standard radius for it to have good compatability with legacy values.
+    if (z_radius < 0)
+        m_fZRadius = m_fRadius / 4;
+    else
+        m_fZRadius = z_radius;
 
 	// Recalculate our bounds
 	CollisionProp()->MarkSurroundingBoundsDirty();
@@ -133,20 +145,36 @@ void CGECaptureArea::Touch( CBaseEntity *pOther )
 	if ( m_hTouchingEntities.Find( hPlayer ) != m_hTouchingEntities.InvalidIndex() )
 		return;
 
-	// We have passed all filters and this is a fresh touch, now enforce the radius
-	if ( pOther->GetAbsOrigin().DistTo( GetAbsOrigin() ) <= m_fRadius )
+	// We have passed all filters and this is a fresh touch, now enforce the radius.  First do a check in 2D.
+	if ( (pOther->GetAbsOrigin() - GetAbsOrigin()).Length2D() <= m_fRadius )
 	{
+        // Resolve the player (or bot proxy)
+		CGEPlayer *pPlayer = ToGEMPPlayer( pOther );
+		if ( !pPlayer ) // We know we must be either a player or a bot.
+			pPlayer = ToGEBotPlayer( pOther );
+
+        float zdiff = pOther->GetAbsOrigin().z - GetAbsOrigin().z;
+
+        // Get the difference between the player's eyes and their feet, so we have a good idea of their general height.  This will
+        // account for crouching players, whereas using the bounds values directly would require a check for it.  
+        float playerViewHeight = pPlayer->EyePosition().z - pPlayer->GetAbsOrigin().z;
+
+        // Now make sure the player is within the Z radius, accounting for their height so tokens spawned
+        // in the air with small radii don't require jumping.  The distance is measured from the player's absolute origin, which
+        // is the bottom of their feet.  Extending the bounds downward by the player's height means that the distance is measured
+        // both from the top of their head and the bottom of their feet, leading to more intuitive behavior.
+        // This model creates a cylinder instead of a sphere, oriented along the Z axis.  It will also now extend through
+        // the floor slightly, though any prospective capturing player will need to get their feet into said capture zone which
+        // might prove difficult for most capture radius settings.
+        if ( ( zdiff < -1 * (playerViewHeight + m_fZRadius) ) || ( zdiff > m_fZRadius ) )
+            return;
+
 		// Put us on the touching list
 		m_hTouchingEntities.AddToTail( hPlayer );
 
 		// Resolve our held token (note we must use the pOther)
 		const char *szToken = GEMPRules()->GetTokenManager()->GetCaptureAreaToken(m_szGroupName);
 		CGEWeapon *pToken = (CGEWeapon*) pOther->MyCombatCharacterPointer()->Weapon_OwnsThisType( szToken );
-
-		// Resolve the player (or bot proxy)
-		CGEPlayer *pPlayer = ToGEMPPlayer( pOther );
-		if ( !pPlayer )
-			pPlayer = ToGEBotPlayer( pOther );
 
 		// Notify the Gameplay
 		GEGameplay()->GetScenario()->OnCaptureAreaEntered( this, pPlayer, pToken );

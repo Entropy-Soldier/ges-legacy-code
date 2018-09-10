@@ -35,7 +35,7 @@ public:
 	// TokenManager Settings
 	void SetGroupName( const char* name );
 	const char *GetGroupName() { return m_szGroupName; }
-	void SetRadius( float radius );
+	void SetCaptureBounds( float radius, float z_radius = -1.0f );
 
 	void SetupGlow( bool state, Color glowColor = Color(255,255,255), float glowDist = 350.0f );
 
@@ -50,6 +50,7 @@ private:
 
 	char m_szGroupName[32];
 	float m_fRadius;
+    float m_fZRadius;
 
 	// Entities currently being touched by this capture area
 	CUtlVector< EHANDLE >	m_hTouchingEntities;
