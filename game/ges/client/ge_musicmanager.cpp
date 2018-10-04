@@ -373,6 +373,8 @@ void CGEMusicManager::InternalPlayXMusic()
 	if ( !GEMPRules() || !GEGameplayRes() || m_iState != STATE_PLAYING || m_flNextXMusicCheck > curtime )
 		return;
 
+    m_Lock.Lock();
+
 	float roundtime = GEMPRules()->GetRoundTimeRemaining();
 	float maptime = GEMPRules()->GetMatchTimeRemaining();
 	bool isLastRound = false;
@@ -388,8 +390,6 @@ void CGEMusicManager::InternalPlayXMusic()
 
 	if ( !m_bPlayingXMusic && isLastRound && roundtime <= 60 && GEMPRules()->AllowXMusic() )
 	{
-		m_Lock.Lock();
-
 		// Cache this bad boy away
 		CUtlVector<char*> *oldlist = m_CurrPlaylist;
 
@@ -413,13 +413,9 @@ void CGEMusicManager::InternalPlayXMusic()
 		// Load a song from the list if it changed
 		if ( m_CurrPlaylist != oldlist )
 			NextSong( 0.1 );
-
-		m_Lock.Unlock();
 	}
 	else if (m_bPlayingXMusic && ( !isLastRound || roundtime > 60 || roundtime == 0 || !GEMPRules()->AllowXMusic() )) // We're playing X music but something has changed!
 	{
-		m_Lock.Lock();
-
 		// Go back to default
 		EnforcePlaylist( true );
 		NextSong();
@@ -430,20 +426,19 @@ void CGEMusicManager::InternalPlayXMusic()
 			StartFade(FADE_OUT);
 
 		m_bPlayingXMusic = false;
-
-		m_Lock.Unlock();
 	}
 
 	m_flNextXMusicCheck = curtime + 0.5;
+    m_Lock.Unlock();
 }
 
 
 void CGEMusicManager::InternalLoadSoundscape()
 {
+    m_Lock.Lock();
+
 	if ( !m_bPlayingXMusic && m_bLoadSoundscape )
 	{
-		m_Lock.Lock();
-
 		// Cache this bad boy away
 		CUtlVector<char*> *oldlist = m_CurrPlaylist;
 
@@ -467,9 +462,9 @@ void CGEMusicManager::InternalLoadSoundscape()
 			NextSong();
 
 		m_bLoadSoundscape = false;
-
-		m_Lock.Unlock();
 	}
+
+    m_Lock.Unlock();
 }
 
 void CGEMusicManager::NextSong( float fadeDuration /* == 1.5 */ ) 
@@ -568,12 +563,10 @@ void CGEMusicManager::StartFade( int type, float duration /* == 1.5 */ )
 	// Don't set actual fade progress here so we can smoothly switch from fade in to fade out.
 
 	if (duration > 0) // Make sure duration is a feasable value.
-		m_flFadeSpeed = 1 / duration; // amount every 1 second = 1 second / duration seconds
+		m_flFadeSpeed = 1.0f / duration; // amount every 1 second = 1 second / duration seconds
 	else
-		m_flFadeSpeed = 1000; // Pretty much instant.  Sadly we cannot go into the past and have the song play then for negative values.
+		m_flFadeSpeed = 1000.0f; // Pretty much instant.  Sadly we cannot go into the past and have the song play then for negative values.
 
-
-	m_flFadeSpeed = 1 / duration; // amount every 1 second = 1 second / duration seconds
 	m_iFadeMode = type;
 	m_fFadeStartTime = CurrTime();
 	m_flLastFadeThink = m_fFadeStartTime;
@@ -590,7 +583,6 @@ void CGEMusicManager::FadeThink( void )
 	m_flLastFadeThink = now;
 
 	float df = dt * m_flFadeSpeed; // df = change in volume since last calculation.
-
 
 	// Last song always fades out.
 	if ( m_pLastSong && m_pLastSong != m_pCurrSong )
