@@ -457,6 +457,9 @@ int CGEPlayer::OnTakeDamage( const CTakeDamageInfo &inputinfo )
 	// Copy over inputinfo so we can modify the damage when we pass it to the baseclass.
 	CTakeDamageInfo info = inputinfo;
 
+    // Our base damage is the damage after hit location scaling but before invulnerability and damage multipliers.
+    info.CopyDamageToBaseDamage();
+
 	// Get the attacker and convert them to GE player, if they cannot be converted do not run GE:S specific damage code.
 	CGEPlayer *pGEAttacker = ToGEPlayer(inputinfo.GetAttacker());
 

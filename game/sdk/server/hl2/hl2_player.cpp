@@ -2365,10 +2365,12 @@ int	CHL2_Player::OnTakeDamage( const CTakeDamageInfo &info )
 		}
 	}
 
+#ifndef GE_DLL
 	if( bAdjustForSkillLevel )
 	{
 		playerDamage.AdjustPlayerDamageTakenForSkillLevel();
 	}
+#endif
 
 	gamestats->Event_PlayerDamage( this, info );
 

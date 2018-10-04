@@ -615,6 +615,7 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 		.def("GetAttacker", &CTakeDamageInfo::GetAttacker, return_value_policy<reference_existing_object>())
 		.def("GetWeapon", &CTakeDamageInfo::GetWeapon, return_value_policy<reference_existing_object>())
 		.def("GetDamage", &CTakeDamageInfo::GetDamage)
+    	.def("GetBaseDamage", &CTakeDamageInfo::GetBaseDamage)
 		.def("GetDamageType", &CTakeDamageInfo::GetDamageType)
 		.def("GetAmmoName", &CTakeDamageInfo::GetAmmoName);
 

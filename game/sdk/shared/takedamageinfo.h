@@ -107,8 +107,12 @@ protected:
 	EHANDLE			m_hWeapon;
 	float			m_flDamage;
 	float			m_flMaxDamage;
+#ifdef GE_DLL
+	float			m_flBaseDamage;			// The damage before gamemode multipliers and invulnerability.  Used for uniform damage forces and so gamemodes can know the original attack damage.
+#else
 	float			m_flBaseDamage;			// The damage amount before skill leve adjustments are made. Used to get uniform damage forces.
-	int				m_bitsDamageType;
+#endif
+    int				m_bitsDamageType;
 	int				m_iDamageCustom;
 	int				m_iDamageStats;
 	int				m_iAmmoType;			// AmmoType of the weapon used to cause this damage, if any
