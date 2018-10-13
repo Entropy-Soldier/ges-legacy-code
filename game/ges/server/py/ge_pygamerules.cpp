@@ -111,6 +111,14 @@ const char *pyGetMainModeIdent()
     return "__NONAME__";
 }
 
+const char *pyGetPostWarmupModeIdent()
+{
+    if (GEGameplay())
+        return GEGameplay()->GetPostWarmupModeIdent();
+
+    return "__NONAME__";
+}
+
 void pyToggleRoundTimer( bool state )
 {
 	GEMPRules()->SetRoundTimerEnabled( state );
@@ -560,6 +568,7 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 	def("AllowRoundTimer", pyToggleRoundTimer);
 
     def("GetMainModeIdent", pyGetMainModeIdent);
+    def("GetPostWarmupModeIdent", pyGetPostWarmupModeIdent);
 
 	def("SetSpawnInvulnTime", pySetSpawnInvulnTime);
 

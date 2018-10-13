@@ -156,6 +156,10 @@ public:
     // If it's currently a warmup mode it will return the next mode, otherwise it will return whatever the current mode is.
     const char *GetMainModeIdent();
 
+    // Gets the identity of the next mode, if we're currently in warmup.
+    // Differs from GetMainModeIdent() as it will always return __NONAME__ if we're not currently in warmup.
+    const char *GetPostWarmupModeIdent();
+
     // Returns true if we're in a warmup mode and should switch when the round ends.
     bool IsInWarmupMode()       { return Q_strcmp(m_sNextGameplayIdent, "\0") != 0; }
 

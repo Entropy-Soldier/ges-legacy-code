@@ -104,8 +104,18 @@ void CGEBaseScenario::LoadConfig()
 {
 	char szCommand[255];
 
-	Msg( "Executing gameplay.cfg config file\n" );
-	engine->ServerCommand( "exec gameplay.cfg\n" );
+    // Warmup modes use a different base config file.
+    if ( GEGameplay()->IsInWarmupMode() )
+    {
+        Msg("Executing gameplay_warmup_base.cfg config file\n");
+        engine->ServerCommand("exec gameplay_warmup_base.cfg\n");
+    }
+    else
+    {
+        Msg("Executing gameplay_base.cfg config file\n");
+        engine->ServerCommand("exec gameplay_base.cfg\n");
+    }
+
 	Msg( "Executing gamemode [%s.cfg] config file\n", GetIdent() );
 	Q_snprintf( szCommand,sizeof(szCommand), "exec %s.cfg\n", GetIdent() );
 	engine->ServerCommand( szCommand );
@@ -275,6 +285,14 @@ const char *CGEBaseGameplayManager::GetMainModeIdent()
     return currIdent;
 }
 
+const char *CGEBaseGameplayManager::GetPostWarmupModeIdent()
+{
+    if ( GetScenario() && IsInWarmupMode() )
+        return m_sNextGameplayIdent;
+
+    return "__NONAME__";
+}
+
 void CGEBaseGameplayManager::GetRecentModes(CUtlVector<const char*> &modenames)
 {
 	modenames.RemoveAll();
@@ -298,8 +316,17 @@ void CGEBaseGameplayManager::BroadcastMatchStart()
 		gameeventmanager->FireEvent(pEvent);
 	}
 
-	// Print it to the chat
-	UTIL_ClientPrintAll( HUD_PRINTTALK, "#GES_Gameplay_Changed", GetScenario()->GetPrintName() );
+	// First check if we're a compound printname, containing multiple localized strings.
+    // Our localization infastructure can't actually handle nested localized strings built on the server 
+    // but this is the only area where it's a problem for gamemode titles...
+    // As it's a pretty niche feature, and most don't notice this chat message anyway, just skip displaying it
+    // for the rare case the gamemode title is a compound localized string.  There are nicer ways of handling this edge 
+    // case, but I feel this is the most cost-effective one all around.
+    if ( !Q_strrchr(GetScenario()->GetPrintName(), '\r') )
+    {
+        // We're a normal printname, so print to the chat
+        UTIL_ClientPrintAll(HUD_PRINTTALK, "#GES_Gameplay_Changed", GetScenario()->GetPrintName());
+    }
 }
 
 void CGEBaseGameplayManager::BroadcastRoundStart()
@@ -447,7 +474,7 @@ bool CGEBaseGameplayManager::LoadWarmupScenario()
 
     // First try to load the gamemode specific config file, but if the value doesn't exist there then try loading it from the general gamemode file.
     if ( !ExtractConfigConvarValue(szConfigName, ge_gameplay_warmup_time.GetName(), warmupTimeStr, sizeof(warmupTimeStr)) && 
-         !ExtractConfigConvarValue("cfg/gameplay.cfg", ge_gameplay_warmup_time.GetName(), warmupTimeStr, sizeof(warmupTimeStr)))
+         !ExtractConfigConvarValue("cfg/gameplay_base.cfg", ge_gameplay_warmup_time.GetName(), warmupTimeStr, sizeof(warmupTimeStr)))
     {
         warmupTime = ge_gameplay_warmup_time.GetFloat();
     }
@@ -463,9 +490,8 @@ bool CGEBaseGameplayManager::LoadWarmupScenario()
     
     // First try to load the gamemode specific config file, but if the value doesn't exist there then try loading it from the general gamemode file.
     if ( !ExtractConfigConvarValue(szConfigName, ge_gameplay_warmup_mode.GetName(), warmupModeName, sizeof(warmupModeName)) &&
-         !ExtractConfigConvarValue("cfg/gameplay.cfg", ge_gameplay_warmup_mode.GetName(), warmupModeName, sizeof(warmupModeName)) )
+         !ExtractConfigConvarValue("cfg/gameplay_base.cfg", ge_gameplay_warmup_mode.GetName(), warmupModeName, sizeof(warmupModeName)) )
     {
-        Warning("Using convar for warmup mode!\n");
         Q_strncpy( warmupModeName, ge_gameplay_warmup_mode.GetString(), 64 ); // Didn't find it, just use the CVar value
     }
     else // We found it.  Update our CVar value.
@@ -664,9 +690,8 @@ void CGEBaseGameplayManager::InitScenario()
 	// Reset our precache state
 	CBaseEntity::SetAllowPrecache( precache );
 
-	// Load the configuration for the scenario, but only once we're out of warmup.
-    if ( !IsInWarmupMode() )
-	    GetScenario()->LoadConfig();
+	// Load the configuration for the scenario
+	GetScenario()->LoadConfig();
 
 	// Call into reconnect each player again to run initializations
 	FOR_EACH_MPPLAYER( pPlayer )		
@@ -803,8 +828,6 @@ void CGEBaseGameplayManager::StartRoundIfNotWarmup()
     // See if we're in warmup mode and it's time to switch to our normal mode.
     if ( IsInWarmupMode() )
     {
-        GEMPRules()->GetLoadoutManager()->KeepLoadoutOnNextChange(); // Don't switch loadouts from warmup.
-
         char newGameplayIdent[128];
         Q_strcpy(newGameplayIdent, m_sNextGameplayIdent); // Move our new gameplay ident into a temporary holding value.
         Q_strcpy(m_sNextGameplayIdent, "\0"); // Mark that we're no longer in warmup for the new gameplay load.

@@ -73,6 +73,9 @@ void CGEGameplayResource::OnGameplayEvent( GPEvent event )
 			return;
 
 		m_GameplayHelp = pScenario->GetHelpString();
+
+        // Copy name again to capture any updates that may have happened during initialization.
+        Q_strncpy( m_GameplayName.GetForModify(),  pScenario->GetPrintName(), 64 );
 	}
 	else if ( event == ROUND_START )
 	{

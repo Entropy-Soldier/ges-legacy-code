@@ -223,10 +223,7 @@ bool ExtractConfigConvarValue( const char *configpath, const char *convarname, c
 
     // No config found.
     if (!contents)
-    {
-        Warning("Failed to load %s", configpath);
         return false;
-    }
 
 	CUtlVector<char*> lines;
     CUtlVector<char*> data;
@@ -260,11 +257,6 @@ bool ExtractConfigConvarValue( const char *configpath, const char *convarname, c
 	ClearStringVector(lines);
     ClearStringVector(data);
 	delete[] contents;
-
-    if (!foundConVar)
-    {
-        Warning("Did not find convar %s in %s", convarname, configpath);
-    }
 
     return foundConVar;
 }
@@ -568,11 +560,8 @@ wchar_t *GEUTIL_GetGameplayName( wchar_t *out, int byte_size )
 	if ( !GEGameplayRes() )
 		return out;
 
-	wchar_t *found = g_pVGuiLocalize->Find( GEGameplayRes()->GetGameplayName() );
-	if ( found )
-		Q_wcsncpy( out, found, byte_size );
-	else
-		g_pVGuiLocalize->ConvertANSIToUnicode( GEGameplayRes()->GetGameplayName(), out, byte_size );
+    // Do the full localization workup to support dynamic gameplay names.
+    GEUTIL_ParseLocalization( out, byte_size/sizeof(wchar_t), GEGameplayRes()->GetGameplayName() );
 
 	if ( !GEGameplayRes()->GetGameplayOfficial() )
 		wcsncat( out, L" (MOD)", byte_size );
