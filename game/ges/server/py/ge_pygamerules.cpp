@@ -103,6 +103,14 @@ bool pyIsRoundLocked()
 	return GEGameplay() && GEGameplay()->IsRoundLocked();
 }
 
+const char *pyGetMainModeIdent()
+{
+    if ( GEGameplay() )
+        return GEGameplay()->GetMainModeIdent();
+
+    return "__NONAME__";
+}
+
 void pyToggleRoundTimer( bool state )
 {
 	GEMPRules()->SetRoundTimerEnabled( state );
@@ -550,6 +558,8 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 	def("UnlockRound", pyUnlockRound);
 	def("IsRoundLocked", pyIsRoundLocked);
 	def("AllowRoundTimer", pyToggleRoundTimer);
+
+    def("GetMainModeIdent", pyGetMainModeIdent);
 
 	def("SetSpawnInvulnTime", pySetSpawnInvulnTime);
 

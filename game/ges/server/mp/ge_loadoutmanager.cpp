@@ -360,7 +360,7 @@ bool CGELoadoutManager::SpawnWeapons( void )
 		Assert( GEGameplay()->GetScenario() );
 
 		char ident[32] = "\0";
-		Q_strncpy( ident, GEGameplay()->GetScenario()->GetIdent(), 32 );
+		Q_strncpy( ident, GEGameplay()->GetMainModeIdent(), 32 );
 		Q_strlower( ident );
 
 		// First see if we have a set for the current scenario

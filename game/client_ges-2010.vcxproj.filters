@@ -1761,6 +1761,9 @@
     <ClCompile Include="ges\shared\ge_weaponutils.cpp">
       <Filter>GES\Shared</Filter>
     </ClCompile>
+    <ClCompile Include="ges\client\VGUI\ge_scoreutilities.cpp">
+      <Filter>GES\VGUI\InGame</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ges\client\clientmode_ge.h">
@@ -3643,6 +3646,9 @@
     </ClInclude>
     <ClInclude Include="ges\shared\ge_weaponutils.h">
       <Filter>GES\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="ges\client\VGUI\ge_scoreutilities.h">
+      <Filter>GES\VGUI\InGame</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

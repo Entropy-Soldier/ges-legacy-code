@@ -256,6 +256,7 @@
     <ClCompile Include="ges\client\VGUI\ge_ImageButton.cpp" />
     <ClCompile Include="ges\client\VGUI\ge_popup.cpp" />
     <ClCompile Include="ges\client\VGUI\ge_scenariohelp.cpp" />
+    <ClCompile Include="ges\client\VGUI\ge_scoreutilities.cpp" />
     <ClCompile Include="ges\client\VGUI\ge_VertListPanel.cpp" />
     <ClCompile Include="ges\client\VGUI\ge_creditsvgui.cpp" />
     <ClCompile Include="ges\client\VGUI\ge_introvideo.cpp" />
@@ -953,6 +954,7 @@
     <ClInclude Include="ges\client\VGUI\ge_ImageButton.h" />
     <ClInclude Include="ges\client\VGUI\ge_popup.h" />
     <ClInclude Include="ges\client\VGUI\ge_scenariohelp.h" />
+    <ClInclude Include="ges\client\VGUI\ge_scoreutilities.h" />
     <ClInclude Include="ges\client\VGUI\ge_VertListPanel.h" />
     <ClInclude Include="ges\client\VGUI\ge_creditsvgui.h" />
     <ClInclude Include="ges\client\VGUI\ge_introvideo.h" />

@@ -71,7 +71,13 @@ ConVar ge_autoautoteam("ge_autoautoteam", "1", FCVAR_GAMEDLL, "If set to 1, serv
 ConVar ge_gameplay_mode( "ge_gameplay_mode", "1", FCVAR_GAMEDLL, "Mode to choose next gameplay: \n\t0=Same as last map, \n\t1=Random from current map file, \n\t2=Ordered from Gameplay Cycle file" );
 ConVar ge_gameplay( "ge_gameplay", "DeathMatch", FCVAR_GAMEDLL, "Sets the current gameplay mode.\nDefault is 'deathmatch'", GEGameplay_Callback );
 
-ConVar ge_gameplay_threshold("ge_gameplay_threshold", "4", FCVAR_GAMEDLL, "Playercount that must be exceeded before gamemodes other than Deathmatch will be randomly chosen.");
+ConVar ge_gameplay_threshold("ge_gameplay_threshold", "4", FCVAR_GAMEDLL, "Playercount that must be exceeded before gamemodes other than ge_gameplay_default will be randomly chosen.");
+ConVar ge_gameplay_default("ge_gameplay_default", "deathmatch", FCVAR_GAMEDLL, "Gamemode that is always chosen when the playercount is below ge_gameplay_threshold.");
+
+ConVar ge_gameplay_check_warmup("ge_gameplay_check_warmup", "1", FCVAR_GAMEDLL, "Set to 0 to disable automatic warmup behavior for all gamemodes.");
+ConVar ge_gameplay_warmup_time("ge_gameplay_warmup_time", "0.0", FCVAR_GAMEDLL, "Warmup time before actual gamemode is loaded.");
+ConVar ge_gameplay_warmup_mode("ge_gameplay_warmup_mode", "Warmup", FCVAR_GAMEDLL, "Mode to use as warmup for a single round before loading the actual gameplay.");
+
 
 ConVar ge_gameplay_modebuffercount("ge_gameplay_modebuffercount", "5", FCVAR_GAMEDLL, "How many other maps need to be played since the last time a map was played before it can be selected randomly without penalties.");
 ConVar ge_gameplay_modebufferpenalty("ge_gameplay_modebufferpenalty", "500", FCVAR_GAMEDLL, "How much to take off of the weight of a mode for each time it appears in the buffer.");
@@ -177,6 +183,7 @@ int g_iScenarioIndex = -1;
 CGEBaseGameplayManager::CGEBaseGameplayManager()
 {
 	ResetState();
+    Q_strcpy(m_sNextGameplayIdent, "\0"); // Can't stick this in ResetState as that executes on loading a new gamemode.
 }
 
 CGEBaseGameplayManager::~CGEBaseGameplayManager()
@@ -194,8 +201,10 @@ void CGEBaseGameplayManager::Init()
 	// Load our past gameplays
 	ParseLogData();
 
-	// Load the scenario
-	LoadScenario();
+    if (ge_gameplay_check_warmup.GetBool())
+        LoadWarmupScenario(); // Check to see if we want to load our warmup scenario first.
+    else
+        LoadScenario(); // Legacy behavior
 }
 
 void CGEBaseGameplayManager::Shutdown()
@@ -251,6 +260,19 @@ void CGEBaseGameplayManager::ParseLogData()
 	// NOTE: We do not purge the data!
 	ClearStringVector(lines);
 	delete[] contents;
+}
+
+const char *CGEBaseGameplayManager::GetMainModeIdent()
+{
+    if ( !GetScenario() )
+        return "__NONAME__";
+
+    const char *currIdent = GetScenario()->GetIdent();
+
+    if ( IsInWarmupMode() )
+        currIdent = m_sNextGameplayIdent;
+
+    return currIdent;
 }
 
 void CGEBaseGameplayManager::GetRecentModes(CUtlVector<const char*> &modenames)
@@ -408,8 +430,75 @@ void CGEBaseGameplayManager::BroadcastMatchEnd()
 	UTIL_ClientPrintAll( HUD_PRINTTALK, "#GES_MatchEnd" );
 }
 
+bool CGEBaseGameplayManager::LoadWarmupScenario()
+{
+    // Record the ident of our next gamemode so we know what to switch to when our warmup time is over, if we use it.
+    Q_strncpy(m_sNextGameplayIdent, GetNextScenario(), sizeof(m_sNextGameplayIdent) / sizeof(char));
+
+    // We don't want to prematurely execute a gameplay's config file before its unique CVar values exist...so instead
+    // let's just manually search for the config values we care about.
+
+    char szConfigName[255];
+	Q_snprintf( szConfigName, sizeof(szConfigName), "cfg/%s.cfg", m_sNextGameplayIdent );
+
+    // WARMUP TIME
+    char warmupTimeStr[64];
+    float warmupTime;
+
+    // First try to load the gamemode specific config file, but if the value doesn't exist there then try loading it from the general gamemode file.
+    if ( !ExtractConfigConvarValue(szConfigName, ge_gameplay_warmup_time.GetName(), warmupTimeStr, sizeof(warmupTimeStr)) && 
+         !ExtractConfigConvarValue("cfg/gameplay.cfg", ge_gameplay_warmup_time.GetName(), warmupTimeStr, sizeof(warmupTimeStr)))
+    {
+        warmupTime = ge_gameplay_warmup_time.GetFloat();
+    }
+    else // We found it, update our CVar value and convert it to a format we can use.
+    {
+        warmupTime = strtof(warmupTimeStr, NULL);
+        ge_gameplay_warmup_time.SetValue(warmupTime);
+    }
+        
+
+    // WARMUP MODE NAME
+    char warmupModeName[64];
+    
+    // First try to load the gamemode specific config file, but if the value doesn't exist there then try loading it from the general gamemode file.
+    if ( !ExtractConfigConvarValue(szConfigName, ge_gameplay_warmup_mode.GetName(), warmupModeName, sizeof(warmupModeName)) &&
+         !ExtractConfigConvarValue("cfg/gameplay.cfg", ge_gameplay_warmup_mode.GetName(), warmupModeName, sizeof(warmupModeName)) )
+    {
+        Warning("Using convar for warmup mode!\n");
+        Q_strncpy( warmupModeName, ge_gameplay_warmup_mode.GetString(), 64 ); // Didn't find it, just use the CVar value
+    }
+    else // We found it.  Update our CVar value.
+    {
+        ge_gameplay_warmup_mode.SetValue( warmupModeName );
+    }
+
+	// Load the warmup scenario if we have any warmup time.  Otherwise load the base scenario.
+    if ( warmupTime > 0.0f )
+    {
+        Msg( "Loading warmup mode %s for gamemode %s!\n", warmupModeName, m_sNextGameplayIdent );
+        
+        char pyDir[128];
+		Q_snprintf( pyDir, 128, "python\\ges\\GamePlay\\%s.py", warmupModeName );
+
+        if (filesystem->FileExists(pyDir))
+            return LoadScenario( warmupModeName );
+        else
+            return LoadScenario( "Warmup" );
+    }
+    else
+    {
+        char newGameplayIdent[128];
+        Q_strcpy(newGameplayIdent, m_sNextGameplayIdent); // Move our new gameplay ident into a temporary holding value.
+        Q_strcpy(m_sNextGameplayIdent, "\0"); // Mark that we're no longer in warmup for the new gameplay load.
+
+        return LoadScenario( newGameplayIdent );
+    }
+}
+
 bool CGEBaseGameplayManager::LoadScenario()
 {
+    Q_strcpy( m_sNextGameplayIdent, "\0" ); // Make sure we know this is our main scenario.
 	return LoadScenario( GetNextScenario() );
 }
 
@@ -493,9 +582,9 @@ const char *CGEBaseGameplayManager::GetNextScenario()
 		CUtlVector<int>		weights;
 		CUtlVector<const char*>	recentgamemodes;
 
-		// Don't select random modes above a certain playercount.
-		if (iNumConnections <= ge_gameplay_threshold.GetInt())
-			return "deathmatch";
+		// Don't select random modes when we're below a certain playercount.
+        if (iNumConnections <= ge_gameplay_threshold.GetInt())
+            return ge_gameplay_default.GetString();
 
 		// Random game mode according to map script.  
 		GEMPRules()->GetMapManager()->GetMapGameplayList(gamemodes, weights, iNumConnections >= teamthresh);
@@ -575,8 +664,9 @@ void CGEBaseGameplayManager::InitScenario()
 	// Reset our precache state
 	CBaseEntity::SetAllowPrecache( precache );
 
-	// Load the configuration for the scenario
-	GetScenario()->LoadConfig();
+	// Load the configuration for the scenario, but only once we're out of warmup.
+    if ( !IsInWarmupMode() )
+	    GetScenario()->LoadConfig();
 
 	// Call into reconnect each player again to run initializations
 	FOR_EACH_MPPLAYER( pPlayer )		
@@ -672,7 +762,7 @@ void CGEBaseGameplayManager::OnThink()
 		if ( ShouldEndMatch() )
 			EndMatch();
 		else
-			StartRound();
+			StartRoundIfNotWarmup();
 
 		return;
 	}
@@ -706,6 +796,24 @@ void CGEBaseGameplayManager::StartMatch()
 
 	// Let our clients know what scenario we are playing
 	BroadcastMatchStart();
+}
+
+void CGEBaseGameplayManager::StartRoundIfNotWarmup()
+{
+    // See if we're in warmup mode and it's time to switch to our normal mode.
+    if ( IsInWarmupMode() )
+    {
+        GEMPRules()->GetLoadoutManager()->KeepLoadoutOnNextChange(); // Don't switch loadouts from warmup.
+
+        char newGameplayIdent[128];
+        Q_strcpy(newGameplayIdent, m_sNextGameplayIdent); // Move our new gameplay ident into a temporary holding value.
+        Q_strcpy(m_sNextGameplayIdent, "\0"); // Mark that we're no longer in warmup for the new gameplay load.
+
+        LoadScenario(newGameplayIdent);
+        return; // Don't actually start this round since we just started a new gamemode instead.
+    }
+
+    StartRound(); // Start the round as normal.
 }
 
 void CGEBaseGameplayManager::StartRound()

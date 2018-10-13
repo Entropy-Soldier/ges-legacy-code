@@ -40,6 +40,11 @@ const char *Q_SkipData( const char *in, int offset = 0 );
 // TODO: Candidate for deletion
 int Q_ExtractData( const char *in, CUtlVector<char*> &out );
 
+// Parses the config file at the given location for the specified convar, 
+// copying its value into returnDest and returning true if found.
+// Does not execute the specified config file.
+bool ExtractConfigConvarValue( const char *configpath, const char *convarname, char *returnDest, size_t returnDestSize );
+
 #ifdef CLIENT_DLL
 
 // Draw a sprite in 3D space

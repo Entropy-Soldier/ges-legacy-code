@@ -217,6 +217,58 @@ int Q_ExtractData( const char *in, CUtlVector<char*> &out )
 	return cnt;
 }
 
+bool ExtractConfigConvarValue( const char *configpath, const char *convarname, char *returnDest, size_t returnDestSize )
+{
+	char *contents = (char*)UTIL_LoadFileForMe(configpath, NULL);
+
+    // No config found.
+    if (!contents)
+    {
+        Warning("Failed to load %s", configpath);
+        return false;
+    }
+
+	CUtlVector<char*> lines;
+    CUtlVector<char*> data;
+	Q_SplitString(contents, "\n", lines);
+
+    bool foundConVar = false;
+
+	for (int i = 0; i < lines.Count(); i++)
+	{
+		// Ignore comments
+		if (!Q_strncmp(lines[i], "//", 2))
+			continue;
+
+        // This line doesn't have our warmup info.
+        if ( Q_strnicmp(lines[i], convarname, Q_strlen(convarname)) )
+            continue;
+
+        // This one does, so pull the second value from it and use that as our latest value.
+        foundConVar = true;
+
+        if (Q_ExtractData(lines[i], data))
+        {
+            if (data.Count() >= 2)
+            {
+                Q_strncpy( returnDest, data[1], returnDestSize );
+                GEUTIL_StripWhitespace( returnDest ); // Make sure we don't have any extra characters hanging on the end.
+            }
+        }
+	}
+
+	ClearStringVector(lines);
+    ClearStringVector(data);
+	delete[] contents;
+
+    if (!foundConVar)
+    {
+        Warning("Did not find convar %s in %s", convarname, configpath);
+    }
+
+    return foundConVar;
+}
+
 #ifdef CLIENT_DLL
 
 void GEUTIL_DrawSprite3D( IMaterial *pMaterial, Vector offset, float width, float height, int alpha /*= 255*/ )

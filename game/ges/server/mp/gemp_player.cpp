@@ -1801,6 +1801,8 @@ int CGEMPPlayer::GetNextObserverSearchStartPoint( bool bReverse )
 	}
 }
 
+extern bool UTIL_ItemCanBeTouchedByPlayer( CBaseEntity *pItem, CBasePlayer *pPlayer );
+
 bool CGEMPPlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 {
 	// Don't allow weapon pickup in between rounds
@@ -1821,7 +1823,9 @@ bool CGEMPPlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 	}
 
 	bool ret = BaseClass::BumpWeapon(pWeapon);
-	if (!ret && (forcepickup || ((pGEWeapon->GetWeaponID() == WEAPON_MOONRAKER || pGEWeapon->GetWeaponID() == WEAPON_KNIFE) && IsAllowedToPickupWeapons())))
+    bool canReachWeapon = UTIL_ItemCanBeTouchedByPlayer( pWeapon, this ) && IsAllowedToPickupWeapons();
+
+	if (!ret && (forcepickup || ((pGEWeapon->GetWeaponID() == WEAPON_MOONRAKER || pGEWeapon->GetWeaponID() == WEAPON_KNIFE) && canReachWeapon)))
 	{
 		// If we didn't pick it up and the game rules say we should have anyway remove it from the world
 		pWeapon->SetOwner( NULL );

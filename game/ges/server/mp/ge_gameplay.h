@@ -142,12 +142,25 @@ public:
 	virtual void Init();
 	virtual void Shutdown();
 
+	// Checks to see if warmup time is > 0, and if so first loads the warmup scenario and then the normal one when the time expires.
+    // Otherwise just loads the standard scenario.
+	bool LoadWarmupScenario();
 	// Loads the next scenario to play
 	bool LoadScenario();
 	// Loads the named scenario to play
 	bool LoadScenario( const char *ident );
 
 	void GetRecentModes(CUtlVector<const char*> &modenames);
+
+    // Gets the identity of the "main" mode, that being the mode intended to be played for most of the map.
+    // If it's currently a warmup mode it will return the next mode, otherwise it will return whatever the current mode is.
+    const char *GetMainModeIdent();
+
+    // Returns true if we're in a warmup mode and should switch when the round ends.
+    bool IsInWarmupMode()       { return Q_strcmp(m_sNextGameplayIdent, "\0") != 0; }
+
+    // Check to see if we should switch from the warmup mode.  If we should, load the new gameplay.  If not, start the round as normal.
+    void StartRoundIfNotWarmup();
 
 	// Round controls (does not check conditions)
 	void StartRound();
@@ -189,6 +202,9 @@ private:
 	void ShutdownScenario();
 	void ParseLogData();
 
+    // Parses a given config file and attempts to determine the value of ge_warmuptime, if any.  Returns FLOAT32_NAN if none found.
+    float ExtractConfigWarmupTimes( const char *gamemodeName );
+
 	void BroadcastMatchStart();
 	void BroadcastRoundStart();
 	void BroadcastRoundEnd( bool showreport );
@@ -227,6 +243,9 @@ private:
 	CUtlVector<char*> m_vScenarioList;
 	CUtlVector<string_t> m_vScenarioCycle;
 	CUtlVector<const char*> m_vRecentScenarioList;
+
+    // If warmup 
+    char m_sNextGameplayIdent[128];
 
 protected:
 	// To satisfy Boost::Python requirements of a wrapper

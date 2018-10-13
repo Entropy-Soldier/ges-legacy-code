@@ -239,6 +239,10 @@ void CGETKnife::PickupTouch( CBaseEntity *pOther )
 	if ( !pPicker->IsAllowedToPickupWeapons() )
 		return;
 
+    // Make sure the gameplay is fine with us picking this up.
+    if ( !GEGameplay()->GetScenario()->CanPlayerHaveItem( ToGEPlayer(pPicker), this ) )
+        return;
+
 	if ( MyTouch( pPicker ) )
 	{
 		SetTouch( NULL );

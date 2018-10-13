@@ -673,6 +673,11 @@ Activity CHL2MP_Player::TranslateTeamActivity( Activity ActToTranslate )
 extern ConVar hl2_normspeed;
 
 extern int	gEvilImpulse101;
+
+#ifdef GE_DLL
+extern bool UTIL_ItemCanBeTouchedByPlayer( CBaseEntity *pItem, CBasePlayer *pPlayer );
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Player reacts to bumping a weapon. 
 // Input  : pWeapon - the weapon that the player bumped into.
@@ -695,11 +700,18 @@ bool CHL2MP_Player::BumpWeapon( CBaseCombatWeapon *pWeapon )
 		return false;
 	}
 
+#ifndef GE_DLL
 	// Don't let the player fetch weapons through walls (use MASK_SOLID so that you can't pickup through windows)
 	if( !pWeapon->FVisible( this, MASK_SOLID ) && !(GetFlags() & FL_NOTARGET) )
 	{
 		return false;
 	}
+#else
+    if ( !UTIL_ItemCanBeTouchedByPlayer( pWeapon, this ) ) // Use the same rules for weapons that we use for other items.
+    {
+        return false;
+    }
+#endif
 
 	bool bOwnsWeaponAlready = !!Weapon_OwnsThisType( pWeapon->GetClassname(), pWeapon->GetSubType());
 

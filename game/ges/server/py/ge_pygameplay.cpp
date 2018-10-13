@@ -373,6 +373,7 @@ public:
 
 	virtual void OnCVarChanged(const char* name, const char* oldvalue, const char* newvalue)
 	{
+        PY_CALLHOOKS( FUNC_GP_CVARCHANGED, bp::make_tuple(name, oldvalue, newvalue) );
 		TRYFUNC( this->get_override("OnCVarChanged")(name, oldvalue, newvalue) );
 	}
 

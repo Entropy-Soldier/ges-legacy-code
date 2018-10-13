@@ -1812,6 +1812,12 @@
     <ClCompile Include="ges\server\mp\ge_pickupitem.cpp">
       <Filter>GES\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="ges\shared\ge_weaponutils.cpp">
+      <Filter>GES\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="ges\server\reserve_player_spot.cpp">
+      <Filter>GES\Entities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sdk\server\plasma.h">
@@ -3572,6 +3578,12 @@
     </ClInclude>
     <ClInclude Include="ges\shared\ge_webkeys.h">
       <Filter>GES</Filter>
+    </ClInclude>
+    <ClInclude Include="ges\shared\ge_weaponutils.h">
+      <Filter>GES\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="ges\server\reserve_player_spot.h">
+      <Filter>GES\Entities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -498,6 +498,8 @@
     <ClCompile Include="ges\server\ge_recipientfilter.cpp" />
     <ClCompile Include="ges\server\ge_triggers.cpp" />
     <ClCompile Include="ges\server\prop_ge_dynamic.cpp" />
+    <ClCompile Include="ges\server\reserve_player_spot.cpp" />
+    <ClCompile Include="ges\shared\ge_weaponutils.cpp" />
     <ClCompile Include="ges\shared\ge_webrequest.cpp" />
     <ClCompile Include="ges\shared\weapon_watchlaser.cpp" />
     <ClCompile Include="sdk\server\hl2\npc_bullseye.cpp" />
@@ -1421,6 +1423,8 @@
     <ClInclude Include="ges\server\mp\ge_playerspawn.h" />
     <ClInclude Include="ges\server\mp\gebot_player.h" />
     <ClInclude Include="ges\server\py\ge_pyfuncs.h" />
+    <ClInclude Include="ges\server\reserve_player_spot.h" />
+    <ClInclude Include="ges\shared\ge_weaponutils.h" />
     <ClInclude Include="ges\shared\ge_webkeys.h" />
     <ClInclude Include="ges\shared\ge_webrequest.h" />
     <ClInclude Include="ges\shared\weapon_shotgun.h" />
