@@ -211,10 +211,12 @@ bp::dict pyWeaponInfo( bp::object weap, CBaseCombatCharacter *pOwner = NULL )
 			info["printname"] = weap->szPrintName;
 			info["weight"] = weap->iWeight;
 			info["damage"] = weap->m_iDamage;
+            info["damage_radius"] = weap->m_flDamageRadius;
 			info["penetration"] = weap->m_flMaxPenetration > 1.5f ? weap->m_flMaxPenetration : 0;
 			info["viewmodel"] = weap->szViewModel;
 			info["worldmodel"] = weap->szWorldModel;
 			info["melee"] = weap->m_bMeleeWeapon;
+            info["explosive"] = weap->m_flDamageRadius > 0.0f;
 			info["uses_clip"] = weap->iMaxClip1 != WEAPON_NOCLIP;
 			info["clip_size"] = weap->iMaxClip1;
 			info["clip_def"] = weap->iDefaultClip1;
