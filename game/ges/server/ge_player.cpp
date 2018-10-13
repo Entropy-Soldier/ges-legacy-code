@@ -479,7 +479,17 @@ int CGEPlayer::OnTakeDamage( const CTakeDamageInfo &inputinfo )
 	// Scale the damage before doing invuln related stuff.
 	info.ScaleDamage(pGEAttacker->GetDamageMultiplier());
 
-	// First apply explosion invulnerability, which is seperate from regular invuln in that it just tries to use the highest explosion damage taken in a given interval.
+    
+    //---------------
+    //Invulnerability
+    //---------------
+
+	// Get the weaponID for invuln calcs.
+	int weapid = WeaponIDFromDamageInfo( &info );
+
+    int adjdmg = 0;
+
+	// First try to apply explosion invulnerability, which is seperate from regular invuln in that it just tries to use the highest explosion damage taken in a given interval.
 	// This will make explosion damage more consistent and running through the center of explosions way more consistently painful.
 	if (info.GetDamageType() & DMG_BLAST)
 	{
@@ -492,8 +502,8 @@ int CGEPlayer::OnTakeDamage( const CTakeDamageInfo &inputinfo )
 		// If the new damage is at least one bar higher than the old damage, hit them again.
 		if ( m_iExpDmgTakenThisInterval == 0 || m_iExpDmgTakenThisInterval < info.GetDamage() - 20 )
 		{
-			info.SetDamage(info.GetDamage() - m_iExpDmgTakenThisInterval); // Adjust it so that they are only hit for the difference.
-			m_iExpDmgTakenThisInterval = info.GetDamage();
+            adjdmg = info.GetDamage() - m_iExpDmgTakenThisInterval; // Adjust it so that they are only hit for the difference.
+			m_iExpDmgTakenThisInterval = adjdmg;
 			m_flEndExpDmgTime = gpGlobals->curtime + INVULN_PERIOD; // If we get hit again, we get more invuln time.
 
 			if (inputinfo.GetDamage() == 398)
@@ -510,23 +520,25 @@ int CGEPlayer::OnTakeDamage( const CTakeDamageInfo &inputinfo )
 			info.ScaleDamageForce(damagescale);
 
 			// Now that we've figured out our damage scaling, adjust our damage!
-			int weighteddamage = info.GetDamage() * damagescale;
-			info.SetDamage(weighteddamage);
-			m_iExpDmgTakenThisInterval += weighteddamage;
+			adjdmg = info.GetDamage() * damagescale;
+			m_iExpDmgTakenThisInterval += adjdmg;
 		}
 		else // If this hit isn't strong enough or didn't happen on the same frame as a relevant one, don't go any further.
 		{
 			return 0;
 		}
 	}
-
-	// Get the weaponID for invuln calcs.
-	int weapid = WeaponIDFromDamageInfo( &info );
-
-	int adjdmg = CalcInvul(info.GetDamage(), pGEAttacker, weapid);
+    else // If we're not an explosion, just use normal invulnerability.
+    {
+        adjdmg = CalcInvul(info.GetDamage(), pGEAttacker, weapid);
+    }
 
 	// Now set the damage in our custom damage info and give it to the base function to deal with.
 	info.SetDamage(adjdmg);
+
+    //--------------------
+    // End Invulnerability
+    //--------------------
 
 	int dmg = BaseClass::OnTakeDamage(info);
 

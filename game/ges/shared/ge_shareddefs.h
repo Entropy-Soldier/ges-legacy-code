@@ -298,6 +298,10 @@ enum WeaponEvents
 };
 
 #define MAX_WEAPON_SPAWN_SLOTS	8
+
+// How long each explosion waits between each damage attempt.
+#define GE_EXPLOSION_THINK_INTERVAL	0.1f
+
 const int MAX_NET_RADAR_ENTS = MAX_PLAYERS + 10;
 enum RadarEntState
 {

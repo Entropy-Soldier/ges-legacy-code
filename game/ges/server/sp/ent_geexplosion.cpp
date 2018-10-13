@@ -275,12 +275,12 @@ void CGE_Explosion::Think()
 		}
 
 		// Apply another round of damage in 1/10 of a second
-		SetNextThink( gpGlobals->curtime + 0.1f );
+		SetNextThink( gpGlobals->curtime + GE_EXPLOSION_THINK_INTERVAL );
 	}
 	else
 	{
 		DestroyHeatWave();
-		SetNextThink( gpGlobals->curtime + 0.1f );
+		SetNextThink( gpGlobals->curtime + GE_EXPLOSION_THINK_INTERVAL );
 	}
 }
 
