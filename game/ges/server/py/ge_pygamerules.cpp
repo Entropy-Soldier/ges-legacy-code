@@ -119,6 +119,20 @@ const char *pyGetPostWarmupModeIdent()
     return "__NONAME__";
 }
 
+const char *pyGetPostWarmupModeExternalPrintName()
+{
+    if ( GEGameplay() )
+    {
+        const char *ident = GEGameplay()->GetPostWarmupModeIdent();
+
+        // If we actually have a post warmup mode, grab its printname.
+        if ( Q_strcmp(ident, "__NONAME__") )
+            return GEGameplay()->GetModeExternalPrintName( ident );
+    }
+
+    return "__NONAME__";
+}
+
 void pyToggleRoundTimer( bool state )
 {
 	GEMPRules()->SetRoundTimerEnabled( state );
@@ -569,6 +583,7 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 
     def("GetMainModeIdent", pyGetMainModeIdent);
     def("GetPostWarmupModeIdent", pyGetPostWarmupModeIdent);
+    def("GetPostWarmupModeExternalPrintName", pyGetPostWarmupModeExternalPrintName);
 
 	def("SetSpawnInvulnTime", pySetSpawnInvulnTime);
 

@@ -169,6 +169,10 @@ public:
     // Differs from GetMainModeIdent() as it will always return __NONAME__ if we're not currently in warmup.
     const char *GetPostWarmupModeIdent();
 
+    // Gets the external print name of the specified mode.  Usually just the normal print name or a short version.
+    // Returns "__NONAME__" on failure or if the mode hasn't defined an external print name.
+    virtual const char *GetModeExternalPrintName( const char *ident )    { return "__NONAME__"; }
+
     // Returns true if we're in a warmup mode and should switch when the round ends.
     bool IsInWarmupMode()       { return Q_strcmp(m_sNextGameplayIdent, "\0") != 0; }
 

@@ -316,17 +316,27 @@ void CGEBaseGameplayManager::BroadcastMatchStart()
 		gameeventmanager->FireEvent(pEvent);
 	}
 
+    const char *modeName = GetScenario()->GetIdent(); // We're garunteed to have an identifier.
+
 	// First check if we're a compound printname, containing multiple localized strings.
     // Our localization infastructure can't actually handle nested localized strings built on the server 
-    // but this is the only area where it's a problem for gamemode titles...
-    // As it's a pretty niche feature, and most don't notice this chat message anyway, just skip displaying it
-    // for the rare case the gamemode title is a compound localized string.  There are nicer ways of handling this edge 
-    // case, but I feel this is the most cost-effective one all around.
+    // Ex: "The gamemode is now + ( (Next Gamemode Title) + Warmup )"
+    // but this is the only area where it's a problem for gamemode titles...luckily we have the external printname
+    // to fall back on, and if that doesn't exist we can just use the identifier itself.
     if ( !Q_strrchr(GetScenario()->GetPrintName(), '\r') )
     {
-        // We're a normal printname, so print to the chat
-        UTIL_ClientPrintAll(HUD_PRINTTALK, "#GES_Gameplay_Changed", GetScenario()->GetPrintName());
+        modeName = GetScenario()->GetPrintName(); // We're a normal printname.
     }
+    else
+    {
+        const char *externalPrintName = GetModeExternalPrintName( GetScenario()->GetIdent() );
+
+        if ( Q_strcmp(externalPrintName, "__NONAME__") )
+            modeName = externalPrintName; // Our normal printname is too fancy, but luckily we have a fallback option.
+    }
+
+    // Print our selected title to the chat.
+    UTIL_ClientPrintAll(HUD_PRINTTALK, "#GES_Gameplay_Changed", modeName);
 }
 
 void CGEBaseGameplayManager::BroadcastRoundStart()

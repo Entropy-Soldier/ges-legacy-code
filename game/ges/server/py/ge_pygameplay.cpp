@@ -654,6 +654,29 @@ public:
 		return true;
 	}
 
+    const char *GetModeExternalPrintName(const char *ident)
+    {
+        bp::str printname;
+
+        try
+        {
+            // Load the scenario from Python Gameplay Manager
+            printname = bp::call<bp::str>(this->get_override("GetScenarioExternalPrintName").ptr(), ident);
+
+            // Check for load failure
+            if (printname.is_none())
+                return "__NONAME__";
+
+            // Extract the C++ instance
+            return bp::extract<char*>(printname);
+        }
+        catch (bp::error_already_set const &)
+        {
+            HandlePythonException();
+            return "__NONAME__";
+        }
+    }
+
 	void LoadScenarioMD5File( void )
 	{
 		// Clear out the MD5 list
