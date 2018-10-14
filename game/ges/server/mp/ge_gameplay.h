@@ -145,6 +145,15 @@ public:
 	// Checks to see if warmup time is > 0, and if so first loads the warmup scenario and then the normal one when the time expires.
     // Otherwise just loads the standard scenario.
 	bool LoadWarmupScenario();
+
+	// Loads the main scenario to play, and cancels warmup status.
+    // If we're not currently in a warmup mode this will default to LoadScenario() behavior.
+	bool LoadMainScenario();
+
+    // Loads the specified scenario as the main scenario.
+    // It does this by canceling warmup status and then loading the specified scenario.
+    bool LoadMainScenario( const char *ident );
+
 	// Loads the next scenario to play
 	bool LoadScenario();
 	// Loads the named scenario to play

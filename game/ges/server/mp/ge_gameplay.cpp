@@ -52,7 +52,7 @@ void GEGameplay_Callback( IConVar *var, const char *pOldString, float flOldValue
 		return;
 
 	ConVar *cVar = static_cast<ConVar*>(var);
-	GEGameplay()->LoadScenario( cVar->GetString() );
+	GEGameplay()->LoadMainScenario( cVar->GetString() ); // Cancel warmup status if applicable.
 }
 
 void GEGPCVar_Callback( IConVar *var, const char *pOldString, float flOldValue )
@@ -460,6 +460,7 @@ void CGEBaseGameplayManager::BroadcastMatchEnd()
 bool CGEBaseGameplayManager::LoadWarmupScenario()
 {
     // Record the ident of our next gamemode so we know what to switch to when our warmup time is over, if we use it.
+    // Otherwise this will serve as the ident of the gamemode we'll be switching to immediately.
     Q_strncpy(m_sNextGameplayIdent, GetNextScenario(), sizeof(m_sNextGameplayIdent) / sizeof(char));
 
     // We don't want to prematurely execute a gameplay's config file before its unique CVar values exist...so instead
@@ -514,12 +515,35 @@ bool CGEBaseGameplayManager::LoadWarmupScenario()
     }
     else
     {
+        // Load our selected scenario as the main scenario.
+        return LoadMainScenario( m_sNextGameplayIdent );
+    }
+}
+
+bool CGEBaseGameplayManager::LoadMainScenario()
+{
+    if ( IsInWarmupMode() )
+    {
         char newGameplayIdent[128];
         Q_strcpy(newGameplayIdent, m_sNextGameplayIdent); // Move our new gameplay ident into a temporary holding value.
         Q_strcpy(m_sNextGameplayIdent, "\0"); // Mark that we're no longer in warmup for the new gameplay load.
 
         return LoadScenario( newGameplayIdent );
     }
+    else // We don't have a main scenario queued so just pick a random one as the main scenario.
+    {
+        return LoadScenario();
+    }
+}
+
+bool CGEBaseGameplayManager::LoadMainScenario(const char *ident)
+{
+    // Just in case we pass m_sNextGameplayIdent into this function.
+    char newGameplayIdent[128];
+    Q_strcpy(newGameplayIdent, ident); // Move our new gameplay ident into a temporary holding value.
+    Q_strcpy(m_sNextGameplayIdent, "\0"); // Mark that we're no longer in warmup for the new gameplay load.
+
+    return LoadScenario( newGameplayIdent );
 }
 
 bool CGEBaseGameplayManager::LoadScenario()
@@ -698,7 +722,9 @@ void CGEBaseGameplayManager::InitScenario()
 		GetScenario()->ClientConnect( pPlayer );
 	END_OF_PLAYER_LOOP()
 
-	m_vRecentScenarioList.AddToHead(GetScenario()->GetIdent());
+    // Only record this scenario if it's not a warmup mode.
+    if (!IsInWarmupMode())
+	    m_vRecentScenarioList.AddToHead(GetScenario()->GetIdent());
 
 	// Now let anyone who is interested know we are finished initilazing.  
 	// Added to fix the help bug and avoid making any more by switching the order of things, but should be useful in its own right.
@@ -828,11 +854,7 @@ void CGEBaseGameplayManager::StartRoundIfNotWarmup()
     // See if we're in warmup mode and it's time to switch to our normal mode.
     if ( IsInWarmupMode() )
     {
-        char newGameplayIdent[128];
-        Q_strcpy(newGameplayIdent, m_sNextGameplayIdent); // Move our new gameplay ident into a temporary holding value.
-        Q_strcpy(m_sNextGameplayIdent, "\0"); // Mark that we're no longer in warmup for the new gameplay load.
-
-        LoadScenario(newGameplayIdent);
+        LoadMainScenario(); // Time to load the main scenario.
         return; // Don't actually start this round since we just started a new gamemode instead.
     }
 
