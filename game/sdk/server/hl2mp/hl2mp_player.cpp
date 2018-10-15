@@ -707,7 +707,7 @@ bool CHL2MP_Player::BumpWeapon( CBaseCombatWeapon *pWeapon )
 		return false;
 	}
 #else
-    if ( !UTIL_ItemCanBeTouchedByPlayer( pWeapon, this ) ) // Use the same rules for weapons that we use for other items.
+    if ( pWeapon->UseWorldSpacePickupChecks() && !UTIL_ItemCanBeTouchedByPlayer( pWeapon, this ) ) // Use the same rules for weapons that we use for other items.
     {
         return false;
     }

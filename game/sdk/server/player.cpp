@@ -5755,6 +5755,7 @@ CBaseEntity	*CBasePlayer::GiveNamedItem( const char *pszName, int iSubType )
 
 #ifdef GE_DLL
 		pWeapon->SetShouldGiveDefaultClip( giveDefaultClip );
+        pWeapon->SetUseWorldSpacePickupChecks( false ); // Make sure we always pick up this weapon if we can carry it.
 #endif
 	}
 

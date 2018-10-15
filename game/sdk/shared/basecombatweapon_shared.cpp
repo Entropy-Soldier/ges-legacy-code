@@ -86,6 +86,10 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 #if !defined( CLIENT_DLL )
 	m_pConstraint = NULL;
 	OnBaseCombatWeaponCreated( this );
+
+#ifdef GE_DLL
+    m_bUseWorldSpacePickupChecks = true;
+#endif
 #endif
 
 	m_hWeaponFileInfo = GetInvalidWeaponInfoHandle();
@@ -662,6 +666,11 @@ void CBaseCombatWeapon::Drop( const Vector &vecVelocity )
 	SetGroundEntity( NULL );
 	SetThink( &CBaseCombatWeapon::SetPickupTouch );
 	SetTouch(NULL);
+
+#ifdef GE_DLL
+    // Make sure we're checking world space checks again so players can't pick us up through walls.
+    m_bUseWorldSpacePickupChecks = true;
+#endif
 
 	if( hl2_episodic.GetBool() )
 	{

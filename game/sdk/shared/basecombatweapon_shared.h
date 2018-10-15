@@ -375,6 +375,9 @@ public:
 	void					DestroyItem( void );
 	virtual void			Kill( void );
 
+    virtual void			SetUseWorldSpacePickupChecks( bool state ) { m_bUseWorldSpacePickupChecks = state; }
+	virtual bool			UseWorldSpacePickupChecks() { return m_bUseWorldSpacePickupChecks; }
+
 	virtual int				CapabilitiesGet( void ) { return 0; }
 	virtual	int				ObjectCaps( void );
 
@@ -573,6 +576,12 @@ private:
 	COutputEvent			m_OnPlayerPickup;	// Fired when the player picks up the weapon.
 	COutputEvent			m_OnNPCPickup;		// Fired when an NPC picks up the weapon.
 	COutputEvent			m_OnCacheInteraction;	// For awarding lambda cache achievements in HL2 on 360. See .FGD file for details 
+
+#ifdef GE_DLL
+    // Used to toggle world space pickup checks, the ones that determine if a player has line of sight to a weapon and is able
+    // to pick it up.  Useful for weapons that should always be picked up, like ones given through gameplay commands.
+    bool					m_bUseWorldSpacePickupChecks;
+#endif
 
 #else // Client .dll only
 	bool					m_bJustRestored;
