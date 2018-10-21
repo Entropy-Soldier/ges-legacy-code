@@ -988,27 +988,33 @@ float CGEBaseGameplayManager::GetRemainingIntermission()
 
 bool CGEBaseGameplayManager::ShouldEndRound()
 {
-	// Make sure the gameplay says we can end.
-	if ( !GetScenario()->CanRoundEnd() )
-		return false;
+    bool timerExpired = false;
+    bool scoreExpired = false;
 
 	// Check time constraints
 	if ( GEMPRules()->IsRoundTimeRunning() && GEMPRules()->GetRoundTimeRemaining() <= 0 )
-		return true;
+		timerExpired = true;
 
     // Check score constraints
     if (!GEMPRules()->IsTeamplay())
     {
         if ( GEMPRules()->GetGoalScore() != 0 && GEMPRules()->GetGoalScore() <= GEMPRules()->GetHighestRoundScore() )
-            return true;
+            scoreExpired = true;
     }
     else
     {
         if ( GEMPRules()->GetTeamGoalScore() != 0 && GEMPRules()->GetTeamGoalScore() <= GEMPRules()->GetHighestTeamRoundScore() )
-            return true;
+            scoreExpired = true;
     }
 
-	return false;
+    // Make sure the gameplay says we can end, only asking once the normal checks have passed.
+    // This gives the gameplay the final say on if the round will end or not, and lets it know that
+    // if this callback gets triggered the round would normally be ending.
+    if ( scoreExpired || timerExpired )
+        return GetScenario()->CanRoundEnd();
+
+    // We still have remaining time and score, no need to try and end the round yet.
+    return false;
 }
 
 bool CGEBaseGameplayManager::ShouldEndMatch()
