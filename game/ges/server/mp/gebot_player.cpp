@@ -285,6 +285,9 @@ void CGEBotPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 	if ( !bWasForced && !GEGameplay()->GetScenario()->CanPlayerChangeTeam( this, GetTeamNumber(), iTeam ) )
 		return;
 
+    // Cache team number since it's about to change.
+    int oldTeam = GetTeamNumber();
+
 	// Skip GEMPPlayer explicitly
 	CGEPlayer::ChangeTeam( iTeam );
 
@@ -299,6 +302,10 @@ void CGEBotPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 		SetPlayerTeamModel();
 	else
 		SetPlayerModel();
+
+    // Let the gameplay know we've changed teams, doing so before we actually spawn so that way the gamemode
+    // can block the spawn if it wishes.
+    GEGameplay()->GetScenario()->OnPlayerChangeTeam( this, oldTeam, iTeam, bWasForced );
 
 	if ( !GEMPRules()->IsIntermission() && !m_bPreSpawn )
 		Spawn();

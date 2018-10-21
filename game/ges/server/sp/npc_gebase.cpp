@@ -926,6 +926,8 @@ bool CNPC_GEBase::BumpWeapon( CGEWeapon *pWeapon )
 		Weapon_Equip( pWeapon );
 		pWeapon->SetWeaponVisible( false );
 
+        GEGameplay()->GetScenario()->OnPlayerGetItem( pBot, pWeapon );
+
 		ClearCondition(COND_LOW_WEAPON_WEIGHT);
 
 		if (pBot)

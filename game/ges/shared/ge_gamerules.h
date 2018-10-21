@@ -103,6 +103,8 @@ public:
 	virtual bool CanHaveItem( CBasePlayer *pPlayer, CItem *pItem );
 	virtual bool CanHavePlayerItem( CBasePlayer *pPlayer, CBaseCombatWeapon *pWeapon );
 	
+    virtual void PlayerGotItem( CBasePlayer *pPlayer, CItem *pItem );
+
 	virtual bool ClientConnected( edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen );
 	virtual bool ClientCommand( CBaseEntity *pEdict, const CCommand &args );
 	virtual void ClientSettingsChanged( CBasePlayer *pPlayer );

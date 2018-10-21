@@ -364,6 +364,11 @@ bool CGERules::CanHaveItem( CBasePlayer *pPlayer, CItem *pItem )
 	return GEGameplay()->GetScenario()->CanPlayerHaveItem( ToGEPlayer(pPlayer), pItem );
 }
 
+void CGERules::PlayerGotItem( CBasePlayer *pPlayer, CItem *pItem )
+{
+	return GEGameplay()->GetScenario()->OnPlayerGetItem( ToGEPlayer(pPlayer), pItem );
+}
+
 bool CGERules::ShouldForcePickup( CBasePlayer *pPlayer, CBaseEntity *pItem )
 {
 	return GEGameplay()->GetScenario()->ShouldForcePickup( ToGEPlayer(pPlayer), pItem );

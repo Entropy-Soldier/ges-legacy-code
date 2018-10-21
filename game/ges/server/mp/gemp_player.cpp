@@ -883,6 +883,9 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 	if ( iTeam == TEAM_SPECTATOR && bKill )
 		CommitSuicide(false, true);
 
+    // Record our old team for later since it's about to change.
+    int oldTeam = GetTeamNumber();
+
 	BaseClass::ChangeTeam( iTeam );
 
 	m_flNextTeamChangeTime = gpGlobals->curtime + TEAM_CHANGE_INTERVAL;
@@ -898,6 +901,10 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 
 	// Also make sure we aren't moving onto a ladder.
 	AbortForcedLadderMove();
+
+    // Let the gameplay know we've changed teams, doing so before we actually spawn so that way the gamemode
+    // can block the spawn if it wishes.
+    GEGameplay()->GetScenario()->OnPlayerChangeTeam( this, oldTeam, iTeam, bWasForced );
 
 	if ( iTeam == TEAM_SPECTATOR )
 	{
@@ -1835,8 +1842,9 @@ bool CGEMPPlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 	}
 	else if ( ret )
 	{
-		// Tell plugins what we picked up
+		// Tell plugins and gamemode what we picked up
 		NotifyPickup( pWeapon->GetClassname(), 0 );
+        GEGameplay()->GetScenario()->OnPlayerGetItem( this, pGEWeapon );
 
 		// Kill radar invisibility if this weapon is too powerful.
 		if (GetStrengthOfWeapon(pGEWeapon->GetWeaponID()) > 4 && GEMPRules()->GetSpawnInvulnCanBreak())

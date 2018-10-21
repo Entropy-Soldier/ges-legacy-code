@@ -36,6 +36,8 @@ public:
 	virtual void OnRoundBegin() { Msg( "[PYGP] Called OnRoundBegin()\n" ); }
 	virtual void OnRoundEnd() { Msg( "[PYGP] Called OnRoundEnd()\n" ); }
 
+    virtual void BeforeSetupRound() { Msg( "[PYGP] Called BeforeSetupRound()\n" ); }
+
 	virtual void OnCVarChanged(const char* name, const char* oldvalue, const char* newvalue) { 
 		Msg( "[PYGP] Called OnCVarChanged()\n" );
 	}
@@ -48,13 +50,19 @@ public:
 		Msg( "[PYGP] Called CanPlayerHaveItem()\n" );
 		return true;
 	}
+	virtual void OnPlayerGetItem(CGEPlayer *pPlayer, CBaseEntity *pEntity) { 
+		Msg( "[PYGP] Called OnPlayerGetItem()\n" );
+	}
 	virtual bool CanPlayerChangeChar(CGEPlayer* pPlayer, const char* szIdent) { 
 		Msg( "[PYGP] Called CanPlayerChangeChar()\n" ); 
 		return true;
 	}
-	virtual bool CanPlayerChangeTeam(CGEPlayer *pPlayer, int iOldTeam, int iNewTeam) { 
+	virtual bool CanPlayerChangeTeam(CGEPlayer *pPlayer, int iOldTeam, int iNewTeam, bool wasForced) { 
 		Msg( "[PYGP] Called CanPlayerChangeTeam()\n" ); 
 		return true;
+	}
+	virtual void OnPlayerChangeTeam(CGEPlayer *pPlayer, int iOldTeam, int iNewTeam, bool wasForced) { 
+		Msg( "[PYGP] Called OnPlayerChangeTeam()\n" ); 
 	}
 	virtual void CalculateCustomDamage(CGEPlayer *pVictim, const CTakeDamageInfo &inputInfo, float &health, float &armor) { 
 		Msg( "[PYGP] Called CalculateCustomDamage()\n" );
@@ -64,6 +72,14 @@ public:
 		return false;
 	}
 	
+    virtual void OnItemTracked( CBaseEntity *pItem, int trackerList ){
+	    Msg( "[PYGP] Called OnItemTracked()\n" );
+	}
+
+	virtual void OnItemUntracked( CBaseEntity *pItem, int trackerList ){
+	    Msg( "[PYGP] Called OnItemUntracked()\n" );
+	}
+
 	virtual void OnPlayerSpawn(CGEPlayer *pPlayer) { Msg( "[PYGP] Called OnPlayerSpawn()\n" ); }
 	virtual void OnPlayerObserver(CGEPlayer *pPlayer) { Msg( "[PYGP] Called OnPlayerObserver()\n" ); }
 	virtual void OnPlayerKilled(CGEPlayer *pVictim, CGEPlayer *pKiller, CBaseEntity *pWeapon) { Msg( "[PYGP] Called OnPlayerKilled()\n" ); }

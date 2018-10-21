@@ -245,6 +245,8 @@ void CGETKnife::PickupTouch( CBaseEntity *pOther )
 
 	if ( MyTouch( pPicker ) )
 	{
+        GEGameplay()->GetScenario()->OnPlayerGetItem( ToGEPlayer(pPicker), this );
+
 		SetTouch( NULL );
 		SetThink( NULL );
 

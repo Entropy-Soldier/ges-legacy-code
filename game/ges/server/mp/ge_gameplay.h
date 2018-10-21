@@ -63,7 +63,9 @@ public:
 	virtual bool CanPlayerRespawn(CGEPlayer *pPlayer)=0;
 	virtual bool CanPlayerChangeChar(CGEPlayer* pPlayer, const char* szIdent)=0;
 	virtual bool CanPlayerChangeTeam(CGEPlayer *pPlayer, int iOldTeam, int iNewTeam, bool wasForced = false)=0;
+    virtual void OnPlayerChangeTeam(CGEPlayer *pPlayer, int iOldTeam, int iNewTeam, bool wasForced = false)=0;
 	virtual bool CanPlayerHaveItem(CGEPlayer *pPlayer, CBaseEntity *pEntity)=0;
+	virtual void OnPlayerGetItem(CGEPlayer *pPlayer, CBaseEntity *pEntity)=0;
 	virtual bool ShouldForcePickup(CGEPlayer *pPlayer, CBaseEntity *pEntity)=0;
 	virtual void CalculateCustomDamage(CGEPlayer *pVictim, const CTakeDamageInfo &inputInfo, float &health, float &armor)=0;
 
