@@ -426,6 +426,8 @@ void CGEWeaponGrenade::ThrowGrenade( float throwforce, bool deathThrow /* == fal
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 	m_flTimeWeaponIdle = gpGlobals->curtime + GE_GRENADE_IDLE_DELAY;
+    m_bPreThrow = false;
+    m_bSpawnWait = false;
 	m_bDrawNext = true;
 
 	WeaponSound( SINGLE );
