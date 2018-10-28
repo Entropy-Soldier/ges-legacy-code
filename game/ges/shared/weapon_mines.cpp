@@ -143,6 +143,30 @@ void CGEWeaponMine::PrimaryAttack( void )
 #ifdef GAME_DLL
 void CGEWeaponMine::FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles )
 {
+    if ( m_nSkin == FAMILY_GROUP_REMOTE && GetOwner() && GetOwner()->GetAmmoCount(GetPrimaryAmmoType()) < 2 )
+    {
+        WeaponSound( SPECIAL1 );
+        CGEBotPlayer *pOwner = NULL;
+
+        CNPC_GEBase *pNPC = (CNPC_GEBase*) GetOwner();
+		if ( pNPC->GetBotPlayer() )
+			pOwner = pNPC->GetBotPlayer();
+
+        if ( !pOwner )
+            return;
+
+		CGEMine *pMine = static_cast<CGEMine*>(gEntList.FindEntityByClassname( NULL, "npc_mine_remote" ));
+		while ( pMine != NULL)
+		{
+			if ( pMine->GetThrower() == pOwner )
+				g_EventQueue.AddEvent( pMine, "Explode", 0.30, pOwner, pMine );
+
+			pMine = static_cast<CGEMine*>(gEntList.FindEntityByClassname( pMine, "npc_mine_remote" ));
+		}
+
+        return;
+    }
+
 	if ( pOperator->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
 		return;
 
