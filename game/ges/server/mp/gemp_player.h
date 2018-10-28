@@ -90,6 +90,8 @@ public:
 	virtual bool IsInitialSpawn()				{ return m_bFirstSpawn; }
 	virtual void SetInitialSpawn()				{ m_bFirstSpawn = true; }
 
+    virtual void UpdateGameplaySpawnStatus();
+
 	// Death functions
 	virtual void Event_Killed( const CTakeDamageInfo &info );
 	virtual void NotifyOnDeath();

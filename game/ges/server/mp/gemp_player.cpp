@@ -1592,12 +1592,22 @@ void CGEMPPlayer::Event_Killed( const CTakeDamageInfo &info )
 //	DoAnimationEvent( PLAYERANIMEVENT_DIE, LastHitGroup() );
 
 	// Look ahead, set this early so gameplays can use it right away
+    UpdateGameplaySpawnStatus();
+}
+
+void CGEMPPlayer::UpdateGameplaySpawnStatus()
+{
 	if ( !GERules()->FPlayerCanRespawn(this) )
 	{
 		SetSpawnState( SS_BLOCKED_GAMEPLAY );
 		// Arbitrary wait time, if they try to spawn earlier it will still catch them
 		m_flNextSpawnTry = gpGlobals->curtime + 10.0f;
 	}
+    else
+    {
+        // We're not blocked, try to spawn again as soon as possible.
+        m_flNextSpawnTry = gpGlobals->curtime;
+    }
 }
 
 void CGEMPPlayer::NotifyOnDeath()
