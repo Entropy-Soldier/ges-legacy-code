@@ -585,7 +585,7 @@ void CGERadar::WorldToRadar( CGERadarContact *contact )
 // Set the radar to either display in the spawn invuln state or not.
 void CGERadar::SetInvisState(bool greyScale)
 {
-	if ( greyScale == m_bGreyScale ) // We're already in this state.
+	if ( greyScale == m_bGreyScale && greyScale == true ) // We're already in this state and don't need to referesh team colors.
 		return;
 
 	CGEMPPlayer *pLocalGEPlayer = ToGEMPPlayer(C_BasePlayer::GetLocalPlayer());

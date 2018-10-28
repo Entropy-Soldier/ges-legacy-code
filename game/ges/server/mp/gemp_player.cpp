@@ -294,7 +294,7 @@ void CGEMPPlayer::PickDefaultSpawnTeam()
 			if ( GetModelPtr() == NULL )
 			{
 				BaseClass::SetPlayerModel();
-				ChangeTeam( TEAM_UNASSIGNED );
+				ChangeTeam( TEAM_UNASSIGNED, true );
 			}
 		}
 		else
@@ -310,15 +310,15 @@ void CGEMPPlayer::PickDefaultSpawnTeam()
 			{
 				if ( pJanus->GetNumPlayers() > pMI6->GetNumPlayers() )
 				{
-					ChangeTeam( TEAM_MI6 );
+					ChangeTeam( TEAM_MI6, true );
 				}
 				else if ( pJanus->GetNumPlayers() < pMI6->GetNumPlayers() )
 				{
-					ChangeTeam( TEAM_JANUS );
+					ChangeTeam( TEAM_JANUS, true );
 				}
 				else
 				{
-					ChangeTeam( random->RandomInt( TEAM_MI6, TEAM_JANUS ) );
+					ChangeTeam( random->RandomInt( TEAM_MI6, TEAM_JANUS ), true );
 				}
 			}
 		}
@@ -936,8 +936,8 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 		}
 
 		// Give us a chance to select our character
-		if ( !IsBot() )
-			SetPreSpawn();
+		//if ( !IsBot() )
+		//	SetPreSpawn();  Allows players to spawn instantly after switching teams.
 
 		// Kill us if we were told to by above criteria (respawn will occur later)
 		// otherwise, force a respawn which won't make us go through the death sequence

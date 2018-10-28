@@ -147,7 +147,6 @@ void CGECharSelect::SendCharacterSwitchCommand( const char *character, int skin,
 	Q_snprintf(strargs, 36, "%s %i", pChar->szIdentifier, skin );
 	Q_snprintf(strcmd, 100, "joinclass %s", strargs );
 
-    Warning( "Sending command %s\n", strcmd );
 	engine->ClientCmd( strcmd );
 
     if ( recordFavorite )
@@ -312,7 +311,7 @@ bool CGECharSelect::GetFavCharacter( char *ident, int &skin, int teamOverride /*
     skin = 0;
     Q_strncpy( ident, CHAR_RANDOM_IDENT, MAX_CHAR_IDENT );
 
-    if ( !GEMPRules() || !CBasePlayer::GetLocalPlayer() )
+    if ( !CBasePlayer::GetLocalPlayer() )
         return false;
 
     int teamNum = teamOverride < 0 ? CBasePlayer::GetLocalPlayer()->GetTeamNumber() :teamOverride;
@@ -320,17 +319,12 @@ bool CGECharSelect::GetFavCharacter( char *ident, int &skin, int teamOverride /*
     bool hasFavorite = true;
 
 	const char *favchar = NULL;
-	if ( GEMPRules()->IsTeamplay() )
-	{
-		if ( teamNum == TEAM_MI6 )
-			favchar = ge_favcharMI6.GetString();
-		else
-			favchar = ge_favcharJanus.GetString();
-	}
+	if ( teamNum == TEAM_MI6 )
+		favchar = ge_favcharMI6.GetString();
+    else if ( teamNum == TEAM_JANUS )
+		favchar = ge_favcharJanus.GetString();
 	else
-	{
 		favchar = ge_favchar.GetString();
-	}
 
 	CUtlVector<char*> args;
 	Q_SplitString( favchar, " ", args );
@@ -471,7 +465,7 @@ void CGECharSelect::FireGameEvent( IGameEvent *event )
 		int team = event->GetInt( "team", 0 );
         char ident[MAX_CHAR_IDENT];  int skin;
         bool hasfavorite = GetFavCharacter( ident, skin, team );
-
+        
 		if ( team == TEAM_SPECTATOR )
 			ShowPanel( false );
         else if ( hasfavorite )
