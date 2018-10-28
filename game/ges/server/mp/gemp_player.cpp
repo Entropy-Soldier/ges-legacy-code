@@ -337,6 +337,7 @@ void CGEMPPlayer::InitialSpawn()
 
 	// Place the player on the spectator team until they choose a character to play with
 	ChangeTeam(TEAM_SPECTATOR);
+    m_flNextTeamChangeTime = 0.0f; // Make sure we can join a team as soon as possible.
 	// If there are any spectator spots or no-one is playing, use a spawn point as the intro camera posistion.
 	ObserverTransistion();
 
@@ -357,7 +358,7 @@ void CGEMPPlayer::Spawn()
 	Precache();
 
 	m_flNextModelChangeTime = 0.0f;
-	m_flNextTeamChangeTime = 0.0f;
+	m_flNextTeamChangeTime = min( m_flNextTeamChangeTime, gpGlobals->curtime + TEAM_CHANGE_INTERVAL );
 
 	RemoveAllItems(true);
 	KnockOffHat(true);
@@ -942,7 +943,7 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 		// otherwise, force a respawn which won't make us go through the death sequence
 		// and cost a score point
 		if ( bKill )
-			CommitSuicide();
+			CommitSuicide( false, true );
 		else
 			ForceRespawn();
 	}

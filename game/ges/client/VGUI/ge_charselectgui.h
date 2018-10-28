@@ -68,8 +68,16 @@ protected:
 	virtual void OnKeyCodePressed( KeyCode code );
 
 	// Update our known list of characters, triggered on show and team change
+    void UpdateCharacterVector( int teamOverride = -1 );
 	void UpdateCharacterList();
 	void SelectDefaultCharacter();
+
+    void SendCharacterSwitchCommand( const char *character, int skin, bool recordFavorite );
+
+    // Puts the player's last selected character for their current team into the ident variable, 
+    // and their skin into the skin variable.  
+    // Returns false and places the random character into ident if they had no last used character.
+    bool GetFavCharacter( char *ident, int &skin, int teamOverride = -1 );
 
 	void SetSelectedCharacter( const char *ident, int skin=0 );
 

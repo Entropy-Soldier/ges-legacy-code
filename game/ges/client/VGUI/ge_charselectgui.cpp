@@ -126,37 +126,46 @@ void CGECharSelect::OnCommand( const char *command )
 {
 	if ( !Q_stricmp( command, "ok" ) )
 	{
-		int idx = FindCharacter( m_szCurrChar );
-		if ( idx == -1 )
-			idx = 0;
-
-		const CGECharData *pChar = m_vCharacters[idx];
-
-		char strargs[36];
-		char strcmd[100];
-		Q_snprintf(strargs, 36, "%s %i", pChar->szIdentifier, m_iCurrSkin );
-		Q_snprintf(strcmd, 100, "joinclass %s", strargs );
-
-		engine->ClientCmd( strcmd );
-
-		// Save the players last character so they don't have to search for it again
-		// Figure out the proper team CVar to choose from for favorite character
-		if ( GEMPRules()->IsTeamplay() )
-		{
-			if ( CBasePlayer::GetLocalPlayer()->GetTeamNumber() == TEAM_MI6 )
-				ge_favcharMI6.SetValue( strargs );
-			else
-				ge_favcharJanus.SetValue( strargs );
-		}
-		else
-		{
-			ge_favchar.SetValue( strargs );
-		}
+        SendCharacterSwitchCommand( m_szCurrChar, m_iCurrSkin, true );
 	}
 	
 	SetVisible( false );
 	gViewPortInterface->ShowBackGround( false );
 	BaseClass::OnCommand(command);
+}
+
+void CGECharSelect::SendCharacterSwitchCommand( const char *character, int skin, bool recordFavorite )
+{
+	int idx = FindCharacter( character );
+	if ( idx == -1 )
+		idx = 0;
+
+	const CGECharData *pChar = m_vCharacters[idx];
+
+	char strargs[36];
+	char strcmd[100];
+	Q_snprintf(strargs, 36, "%s %i", pChar->szIdentifier, skin );
+	Q_snprintf(strcmd, 100, "joinclass %s", strargs );
+
+    Warning( "Sending command %s\n", strcmd );
+	engine->ClientCmd( strcmd );
+
+    if ( recordFavorite )
+    {
+        // Save the players last character so they don't have to search for it again
+        // Figure out the proper team CVar to choose from for favorite character
+        if ( GEMPRules()->IsTeamplay() )
+        {
+            if ( CBasePlayer::GetLocalPlayer()->GetTeamNumber() == TEAM_MI6 )
+                ge_favcharMI6.SetValue(strargs);
+            else
+                ge_favcharJanus.SetValue(strargs);
+        }
+        else
+        {
+            ge_favchar.SetValue(strargs);
+        }
+    }
 }
 
 void CGECharSelect::OnKeyCodePressed(KeyCode code)
@@ -171,10 +180,12 @@ void CGECharSelect::OnKeyCodePressed(KeyCode code)
 	}
 }
 
-void CGECharSelect::UpdateCharacterList( void )
+void CGECharSelect::UpdateCharacterVector( int teamOverride /*== -1*/)
 {
+    int teamNum = teamOverride < 0 ? C_BasePlayer::GetLocalPlayer()->GetTeamNumber() : teamOverride;
+
 	// Get the list of characters
-	GECharacters()->GetTeamMembers( C_BasePlayer::GetLocalPlayer()->GetTeamNumber(), m_vCharacters );
+	GECharacters()->GetTeamMembers( teamNum, m_vCharacters );
 
 	// Remove exclusions
 	CUtlVector<char *> exclusions;
@@ -193,6 +204,12 @@ void CGECharSelect::UpdateCharacterList( void )
 
 	// Add random char to the front
 	m_vCharacters.AddToHead( GECharacters()->GetRandomChar() );
+}
+
+void CGECharSelect::UpdateCharacterList( void )
+{
+    // Update the vector containing our valid characters.
+    UpdateCharacterVector();
 
 	// Populate the first page of characters
 	PopulateCharacterGrid();
@@ -290,6 +307,48 @@ void CGECharSelect::SetSelectedCharacter( const char *ident, int skin /*=0*/ )
 	}
 }
 
+bool CGECharSelect::GetFavCharacter( char *ident, int &skin, int teamOverride /* == -1 */ )
+{
+    skin = 0;
+    Q_strncpy( ident, CHAR_RANDOM_IDENT, MAX_CHAR_IDENT );
+
+    if ( !GEMPRules() || !CBasePlayer::GetLocalPlayer() )
+        return false;
+
+    int teamNum = teamOverride < 0 ? CBasePlayer::GetLocalPlayer()->GetTeamNumber() :teamOverride;
+
+    bool hasFavorite = true;
+
+	const char *favchar = NULL;
+	if ( GEMPRules()->IsTeamplay() )
+	{
+		if ( teamNum == TEAM_MI6 )
+			favchar = ge_favcharMI6.GetString();
+		else
+			favchar = ge_favcharJanus.GetString();
+	}
+	else
+	{
+		favchar = ge_favchar.GetString();
+	}
+
+	CUtlVector<char*> args;
+	Q_SplitString( favchar, " ", args );
+
+	if ( args.Count() && args[0][0] != '\0' )
+	{
+		if ( args.Count() > 1 )
+			skin = atoi( args[1] );
+		
+        Q_strncpy( ident, args[0], MAX_CHAR_IDENT );
+	}
+    else
+        hasFavorite = false;
+
+	args.PurgeAndDeleteElements();
+    return hasFavorite;
+}
+
 void CGECharSelect::SelectDefaultCharacter( void )
 {
 	if ( m_szCurrChar[0] )
@@ -299,34 +358,11 @@ void CGECharSelect::SelectDefaultCharacter( void )
 	}
 	else
 	{
-		const char *favchar = NULL;
-		if ( GEMPRules()->IsTeamplay() )
-		{
-			if ( CBasePlayer::GetLocalPlayer()->GetTeamNumber() == TEAM_MI6 )
-				favchar = ge_favcharMI6.GetString();
-			else
-				favchar = ge_favcharJanus.GetString();
-		}
-		else
-		{
-			favchar = ge_favchar.GetString();
-		}
+        // If we don't have a current character, get the last one we used and set that as default.
+        char ident[MAX_CHAR_IDENT];  int skin;
+        GetFavCharacter( ident, skin );
 
-		CUtlVector<char *> args;
-		Q_SplitString( favchar, " ", args );
-
-		if ( args.Count() && args[0][0] != '\0' )
-		{
-			int skin = 0;
-			if ( args.Count() > 1 )
-				skin = atoi( args[1] );
-			
-			SetSelectedCharacter( args[0], skin );
-		}
-		else
-			SetSelectedCharacter( CHAR_RANDOM_IDENT );
-
-		args.PurgeAndDeleteElements();
+		SetSelectedCharacter( ident, skin );
 	}
 }
 
@@ -432,10 +468,20 @@ void CGECharSelect::FireGameEvent( IGameEvent *event )
 		// Reset our chosen character
 		m_szCurrChar[0] = '\0';
 		
-		// Hide the panel if we joined spectators
 		int team = event->GetInt( "team", 0 );
+        char ident[MAX_CHAR_IDENT];  int skin;
+        bool hasfavorite = GetFavCharacter( ident, skin, team );
+
 		if ( team == TEAM_SPECTATOR )
 			ShowPanel( false );
+        else if ( hasfavorite )
+        {
+            // Already have a character selected for this team, no need to bother the player
+            // with the dialog every single team change.
+            UpdateCharacterVector( team ); // Make sure we have a list of valid characters from our new team to attempt to pick.
+            SendCharacterSwitchCommand( ident, skin, false );
+            ShowPanel( false );
+        }
 		else
 			GetClientModeGENormal()->QueuePanel( PANEL_CHARSELECT, NULL );
 	}
