@@ -536,13 +536,6 @@ void CGEMPPlayer::Spawn()
 		m_flLastMoveTime = gpGlobals->curtime;
 		m_flNextCampCheck = gpGlobals->curtime;
 
-		// Give us the invuln time defined by the gameplay, but only if it's not our first spawn since we don't want everyone invisible on the radar at the start of the round.
-
-		if (GetRoundDeaths() > 0)
-			StartInvul(GEMPRules()->GetSpawnInvulnInterval());
-		else
-			StopInvul();
-
 		SetMaxSpeed( GE_NORM_SPEED * GEMPRules()->GetSpeedMultiplier(this) );
 		m_Local.m_bDucked = false;
 		SetPlayerUnderwater(false);
@@ -566,6 +559,13 @@ void CGEMPPlayer::Spawn()
 
 		// Touch any triggers we may spawn into
 		PhysicsTouchTriggers();
+
+		// Give us the invuln time defined by the gameplay, but only if it's not our first spawn since we don't want everyone invisible on the radar at the start of the round.
+        // Do this after the gameplay has a chance to give us weapons so it doesn't instantly cancel our spawn invulnerability.
+		if ( GetRoundDeaths() > 0 )
+			StartInvul(GEMPRules()->GetSpawnInvulnInterval());
+		else
+			StopInvul();
 
 		if ( m_bPreSpawn )
 		{
@@ -632,6 +632,22 @@ void CGEMPPlayer::Spawn()
 	{		
 		SetCollisionGroup( COLLISION_GROUP_PLAYER );			
 	}
+
+    if ( !IsBotPlayer() )
+    {
+        trace_t trace;
+
+	    UTIL_TraceEntity( this, GetAbsOrigin() + Vector(0, 0, 1), GetAbsOrigin() + Vector(0, 0, 1), MASK_PLAYERSOLID, this, GetCollisionGroup(), &trace );
+
+        if ( trace.allsolid || trace.startsolid )
+        {
+            CRecipientFilter *filter = new CReliableBroadcastRecipientFilter;
+            UTIL_ClientPrintFilter(*filter, 3, "[Map Warning] Attempted to spawn player at invalid spawn!  Check console for details.");
+            Warning("[Map Warning] Attempted to spawn player at spawn located at %f, %f, %f but aborted due to it intersecting geometry!\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z);
+
+            ForceRespawn();
+        }
+    }
 }
 
 void CGEMPPlayer::SetSpawnState( SpawnState state )
