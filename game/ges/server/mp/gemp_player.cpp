@@ -36,6 +36,9 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+ConVar ge_notify_spawn_abort( "ge_notify_spawn_abort", "1", FCVAR_GAMEDLL, "Prints to game chat when a bad spawn is aborted." );
+
+
 extern ConVar ge_allowradar;
 extern ConVar ge_radar_range;
 
@@ -644,8 +647,12 @@ void CGEMPPlayer::Spawn()
 
         if ( trace.allsolid || trace.startsolid )
         {
-            CRecipientFilter *filter = new CReliableBroadcastRecipientFilter;
-            UTIL_ClientPrintFilter(*filter, 3, "[Map Warning] Attempted to spawn player at invalid spawn!  Check console for details.");
+            if ( ge_notify_spawn_abort.GetBool() )
+            {
+                CRecipientFilter *filter = new CReliableBroadcastRecipientFilter;
+                UTIL_ClientPrintFilter(*filter, 3, "[Map Warning] Attempted to spawn player at invalid spawn!  Check console for details.");
+            }
+
             Warning("[Map Warning] Attempted to spawn player at spawn located at %f, %f, %f but aborted due to it intersecting geometry!\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z);
 
             // If the spawn system were to ever significantly change this would carry a remote risk of an infinite loop.
