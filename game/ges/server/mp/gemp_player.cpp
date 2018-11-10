@@ -633,7 +633,10 @@ void CGEMPPlayer::Spawn()
 		SetCollisionGroup( COLLISION_GROUP_PLAYER );			
 	}
 
-    if ( !IsBotPlayer() )
+    // Check to see if we just spawned inside of the map geometry.  This is mostly a failsafe for very rare situations
+    // in which the mapper accidently leaves a spawn inside of a wall.
+    // Bots and observers don't care if they spawn in a wall.
+    if ( !IsBotPlayer() && !IsObserver() )
     {
         trace_t trace;
 
@@ -645,6 +648,10 @@ void CGEMPPlayer::Spawn()
             UTIL_ClientPrintFilter(*filter, 3, "[Map Warning] Attempted to spawn player at invalid spawn!  Check console for details.");
             Warning("[Map Warning] Attempted to spawn player at spawn located at %f, %f, %f but aborted due to it intersecting geometry!\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z);
 
+            // If the spawn system were to ever significantly change this would carry a remote risk of an infinite loop.
+            // However, the way things are currently set up it should be impossible, as using a spawn will disable it
+            // for a short while and thus even if every spawn is somehow invalid we'll eventually stop chaining force respawns
+            // once we completely run out.
             ForceRespawn();
         }
     }

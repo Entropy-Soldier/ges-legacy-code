@@ -268,6 +268,8 @@ bool CGEPlayerSpawn::IsOccupied( void )
 		return false;
 
 	// Quick check if we have been used very recently
+    // This provides protection against infinite spawn loops, as well as preventing one spawn
+    // from spawning two players nearly on top of eachother, so it's best to always have it in some form.
 	if ( gpGlobals->curtime < (m_fLastUseTime + 0.5f) )
 		return true;
 
