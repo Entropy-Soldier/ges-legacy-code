@@ -173,8 +173,9 @@ void CGEMPPlayer::AddThrownObject( CBaseEntity *pObj )
 	{
 		CBaseEntity *pEnt = (CBaseEntity*)m_hThrownObjects[0].Get();
 		// If we are at our limit, remove the first object thrown
-		if ( pEnt )
-			UTIL_Remove( pEnt );
+        if ( pEnt )
+            GEUTIL_DelayRemove(pEnt, 0.1); // Remove on a slight delay to allow any physics calculations this frame to complete.
+
 		m_hThrownObjects.Remove(0);
 	}
 

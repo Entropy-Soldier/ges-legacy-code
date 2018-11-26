@@ -835,6 +835,64 @@ void ExtractXMLTagSubstring( char *dest, int destLength, const char *XMLData, co
 	Q_strncpy(dest, startingPos + tagSize, dataLength < destLength ? dataLength : destLength);
 }
 
+char DecodeXMLCharSubstitution( const char *string, int &identlen )
+{
+    // Identifiers that might appear in the string and the characters to replace them with.
+    char *specialCharIdents[] = { "quot", "apos", "lt", "gt", "amp" };
+    char specialChars[] = { '\"', '\'', '<', '>', '&' };
+    unsigned int charArrayLen = sizeof(specialChars) / sizeof(char);
+
+    // These two arrays must be the same length for the replacement to make sense.
+    assert(charArrayLen == specialCharIdents / sizeof(char*));
+
+    // If we don't start with an ampersand or don't exist we're not a special string.
+    if ( !string || string[0] != '&' )
+    {
+        Warning("Tried to call DecodeXMLCharSubstitution on %s string!\n", string ? "non-XML encoded" : "nonexistant");
+
+        identlen = string ? 1 : 0;
+        return string[0];
+    }
+
+    string++; // Skip & character since we've already gotten all the useful info out of it.
+
+    // Find character to replace ident with.
+    char desiredChar = ' ';
+    unsigned int identTextLen = 0; // Don't count the & until the end.
+
+    for (int g = 0; g < charArrayLen; g++)
+    {
+        identTextLen = Q_strlen(specialCharIdents[g]);
+
+        if (!Q_strncmp(specialCharIdents[g], string, identTextLen))
+        {
+            desiredChar = specialChars[g];
+            break;
+        }
+    }
+
+    if (desiredChar == ' ')
+    {
+        char failedToken[8];
+
+        int j = 0;
+        for (j = 0; j < 7; j++)
+        {
+            if (string[j] == '\0' || string[j] == ' ')
+                break;
+
+            failedToken[j] = string[j];
+        }
+
+        failedToken[j] = '\0';
+
+        Warning("Failed to find replacement char for %s\n", failedToken);
+    }
+
+    identlen = identTextLen + 1; // Count the & we skipped while comparing idents.
+    return desiredChar;
+}
+
 #ifdef GAME_DLL
 bool IsOnList( int listnum, const unsigned int hash )
 {

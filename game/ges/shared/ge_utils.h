@@ -88,6 +88,10 @@ void GEUTIL_StripWhitespace( char *str );
 // Given a block of text in XML format, extract the substring between the first tag set with the given ID
 void ExtractXMLTagSubstring(char *dest, int destLength, const char *XMLData, const char *tagString);
 
+// Given an XML encoded character, return the proper decoded character.  Ex: &amp = &
+// The length of the ident string will be stored in identlen to easily skip past the decoded ident while parsing a string.
+char DecodeXMLCharSubstitution( const char *string, int &identlen );
+
 // Delays removal of the given entity by the given time in seconds
 // it hides the entity from everyone until removal time
 void GEUTIL_DelayRemove( CBaseEntity *pEnt, float delay );

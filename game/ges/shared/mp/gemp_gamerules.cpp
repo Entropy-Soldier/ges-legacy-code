@@ -362,7 +362,7 @@ CON_COMMAND( ge_bot_remove, "Removes the number of specified bots, if no number 
 
 GEPlayerWebInfo g_PlayerWebInfo[PLAYERWEBINFO_CACHESIZE];
 
-void ApplyPlayerWebData( int steamHash, int devStatus = GE_UNKNOWNPLAYER, uint64 skinCode = GE_SKINCODENULL )
+void ApplyPlayerWebData( int steamHash, int devStatus = GE_UNKNOWNPLAYER, uint64 skinCode = GE_SKINCODENULL, bool isBanned = false )
 {
 	static int webInfoTailIndex = 0;
 
@@ -423,7 +423,7 @@ void ApplyPlayerWebData( int steamHash, int devStatus = GE_UNKNOWNPLAYER, uint64
 
 void CheckCurrentPromoCode(const char *result, const char *error, const char *internalData)
 {
-	static unsigned int lastHeldPromoCode = RSHash( "None" ); // Init to the message when no promo codes.
+	static long lastHeldExpirationTime = 0; // Init to time 0, which means no promo is happening.
 	static float nextWarningTime = 0;
 
 	if (!error || error[0] == '\0')
@@ -438,9 +438,9 @@ void CheckCurrentPromoCode(const char *result, const char *error, const char *in
 
 		if (responseBuffer[0] != '\0') // We got a response!
 		{
-			ExtractXMLTagSubstring(resultBuffer, sizeof(resultBuffer), responseBuffer, "getCurrentPromoCode");
+			ExtractXMLTagSubstring(resultBuffer, sizeof(resultBuffer), responseBuffer, "promoexpiry");
 
-			Warning("Result buffer = %s\n", resultBuffer);
+			Warning("promoexpiry buffer = %s\n", resultBuffer);
 
 			if (resultBuffer[0] == '\0')
 			{
@@ -455,14 +455,18 @@ void CheckCurrentPromoCode(const char *result, const char *error, const char *in
 			return; // Don't write anything so we keep trying.
 		}
 
+        long expiration = atol(resultBuffer);
 
-		if ( RSHash(resultBuffer) != lastHeldPromoCode ) // A skin offer has started sometime between the last time we checked and now!
+        long unixtime;
+		VCRHook_Time( &unixtime ); 
+
+		if ( unixtime < expiration && expiration != lastHeldExpirationTime ) // A skin offer has started sometime between the last time we checked and now!
 		{
 			Msg("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~\n");
-			Msg("Promotion has started for skin %s!\n", resultBuffer);
+			Msg("Promotion has started that expires on %d!\n", resultBuffer);
 			Msg("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~\n");
 
-			lastHeldPromoCode = RSHash(resultBuffer);
+			lastHeldExpirationTime = expiration;
 
 			// Clean out entire cache and add everyone in the server back into it.
 			// If we don't do this, anyone who stays on the server will never get their new weapon skin!
@@ -476,107 +480,11 @@ void CheckCurrentPromoCode(const char *result, const char *error, const char *in
 			END_OF_PLAYER_LOOP()
 		}
 
-		if ( RSHash(resultBuffer) != RSHash( "None" ) )
+		if ( unixtime < expiration )
 			GEMPRules()->NotifyOfPromoSkinOffer();
 	}
 	else
 		Warning("Got error of %s when fetching promo code info!\n", error);
-}
-
-void OnPlayerWebDataDevRequestReturned( const char *result, const char *error, const char *internalData )
-{
-	if ( !error || error[0] == '\0' )
-	{
-		int steamHash = RSHash( internalData+8 );
-
-		Warning("Got result of %s for dev status request message!\n", result);
-
-		char responseBuffer[1024];
-		char errorBuffer[512];
-		char resultBuffer[32];
-
-		ExtractXMLTagSubstring(responseBuffer, sizeof(responseBuffer), result, "response");
-
-		Warning("Response Buffer = %s\n", responseBuffer);
-
-		if (responseBuffer[0] != '\0') // We got a response!
-		{
-			ExtractXMLTagSubstring(resultBuffer, sizeof(resultBuffer), responseBuffer, "getPlayerRole");
-
-			Warning("Result buffer = %s\n", resultBuffer);
-
-			if (resultBuffer[0] == '\0')
-			{
-				ExtractXMLTagSubstring(errorBuffer, sizeof(errorBuffer), responseBuffer, "error");
-				Warning("Failed to get player role with error %s\n", errorBuffer);
-				return;
-			}
-		}
-		else
-		{
-			Warning("Response did not have valid format!\n");
-			return; // Don't write anything so we keep trying.
-		}
-
-		if (!Q_strcmp(resultBuffer, "dev"))
-			ApplyPlayerWebData(steamHash, GE_DEVELOPER);
-		else if (!Q_strcmp(resultBuffer, "bt"))
-			ApplyPlayerWebData(steamHash, GE_BETATESTER);
-		else if (!Q_strcmp(resultBuffer, "cc"))
-			ApplyPlayerWebData(steamHash, GE_CONTRIBUTOR);
-		else if (!Q_strcmp(resultBuffer, "banned"))
-		{
-			FOR_EACH_MPPLAYER(pGEMPPlayer)
-				if (pGEMPPlayer->GetSteamHash() == steamHash)
-				{
-					Warning("Want to ban %d\n", pGEMPPlayer->GetPlayerName());
-				}
-			END_OF_PLAYER_LOOP()
-		}
-		else
-			ApplyPlayerWebData(steamHash, GE_STANDARDPLAYER);
-	}
-	else
-		Warning("Got error of %s when fetching player data for %s.\n", error, internalData);
-}
-
-void OnPlayerWebDataSkinRequestReturned( const char *result, const char *error, const char *internalData )
-{
-	if ( !error || error[0] == '\0' )
-	{
-		Warning("Got result of %s for skin status request message!\n", result);
-
-		char responseBuffer[1024];
-		char errorBuffer[512];
-		char resultBuffer[128];
-
-		ExtractXMLTagSubstring(responseBuffer, sizeof(responseBuffer), result, "response");
-
-		Warning("Response Buffer = %s\n", responseBuffer);
-
-		if (responseBuffer[0] != '\0') // We got a response!
-		{
-			ExtractXMLTagSubstring(resultBuffer, sizeof(resultBuffer), responseBuffer, "getPlayerWeaponSkins");
-
-			Warning("Result buffer = %s\n", resultBuffer);
-
-			if (resultBuffer[0] == '\0')
-			{
-				ExtractXMLTagSubstring(errorBuffer, sizeof(errorBuffer), responseBuffer, "error");
-				Warning("Failed to get player role with error %s\n", errorBuffer);
-				return;
-			}
-		}
-		else
-		{
-			Warning("Response did not have valid format!\n");
-			return; // Don't write anything so we keep trying.
-		}
-
-		ApplyPlayerWebData(RSHash(internalData + 8), GE_UNKNOWNPLAYER, atoll(resultBuffer));
-	}
-	else
-		Warning("Got error of %s when fetching player data for %s.\n", error, internalData);
 }
 
 void OnPlayerWebDataRequestReturned( const char *result, const char *error, const char *internalData )
@@ -587,7 +495,8 @@ void OnPlayerWebDataRequestReturned( const char *result, const char *error, cons
 
 		int steamHash = RSHash( internalData+8 );
 		int devStatus = GE_STANDARDPLAYER; // Just a normal player by default.
-		int skinCode = 0; // 0 means this player doesn't own any skins.
+		uint64 skinCode = 0; // 0 means this player doesn't own any skins.
+        bool isBanned = false;
 
 		char responseBuffer[1024];
 		char errorBuffer[512];
@@ -600,8 +509,8 @@ void OnPlayerWebDataRequestReturned( const char *result, const char *error, cons
 
 		if (responseBuffer[0] != '\0') // We got a response!
 		{
-			ExtractXMLTagSubstring(skinCodeBuffer, sizeof(skinCodeBuffer), responseBuffer, "getPlayerWeaponSkins");
-			ExtractXMLTagSubstring(devStatusBuffer, sizeof(devStatusBuffer), responseBuffer, "getPlayerRole");
+			ExtractXMLTagSubstring(skinCodeBuffer, sizeof(skinCodeBuffer), responseBuffer, "weaponskins");
+			ExtractXMLTagSubstring(devStatusBuffer, sizeof(devStatusBuffer), responseBuffer, "role");
 
 			Warning("Skin code buffer = %s\n", skinCodeBuffer);
 			Warning("Role buffer = %s\n", devStatusBuffer);
@@ -619,52 +528,32 @@ void OnPlayerWebDataRequestReturned( const char *result, const char *error, cons
 			return; // Don't write anything so we keep trying.
 		}
 
-		if (!Q_strcmp(devStatusBuffer, "dev"))
-			devStatus = GE_DEVELOPER;
-		else if (!Q_strcmp(devStatusBuffer, "bt"))
-			devStatus = GE_BETATESTER;
-		else if (!Q_strcmp(devStatusBuffer, "cc"))
-			devStatus = GE_CONTRIBUTOR;
-		else if (!Q_strcmp(devStatusBuffer, "banned"))
-		{
-			FOR_EACH_MPPLAYER(pGEMPPlayer)
-				if ( pGEMPPlayer->GetSteamHash() == steamHash )
-				{
-					Warning("Want to ban %d\n", pGEMPPlayer->GetPlayerName());
-				}
-			END_OF_PLAYER_LOOP()
-		}
+        int statusCodes[] = { GE_DEVELOPER, GE_BETATESTER, GE_CONTRIBUTOR };
+        char *statusStrings[] = { "dev", "bt", "cc" };
+
+        for ( int i = 0; i < sizeof(statusCodes) / sizeof(int); i++ )
+        {
+            if (!Q_strcmp(devStatusBuffer, statusStrings[i]))
+                devStatus = statusCodes[i];
+        }
+
+        if (!Q_strcmp(devStatusBuffer, "banned"))
+            isBanned = true;
 
 		Warning("Set dev status to %d\n", devStatus);
 
-		skinCode = atoll(skinCodeBuffer);
+		skinCode = strtoull(skinCodeBuffer, NULL, 10);
 
 		Warning("Set skin code to %llu\n", skinCode);
 
-		ApplyPlayerWebData(steamHash, devStatus, skinCode);
+        if ( isBanned )
+            Warning("Is banned\n");
+
+		ApplyPlayerWebData( steamHash, devStatus, skinCode, isBanned );
 	}
 	else
 	{
 		Warning("Got error of %s when fetching player data for %s.\n", error, internalData);
-
-		if ( Q_strstr(error, "403 Forbidden") ) // Check to see if we hit a 403 error, meaning the server is there but our auth failed.
-		{
-			// If so just go huge and shoot off a bunch of info requests instead, since we can't auth ourselves to give out
-			// promo items.
-
-			char webRequestURL[512];
-			Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?getPlayerRole&steamid=", GetWebDomain() );
-			new CGETempWebRequest( webRequestURL, OnPlayerWebDataDevRequestReturned, internalData, internalData );
-			Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?getPlayerWeaponSkins&format=int64&steamid=", GetWebDomain() );
-			new CGETempWebRequest( webRequestURL, OnPlayerWebDataSkinRequestReturned, internalData, internalData );
-
-			int steamHash = RSHash( internalData + 8 );
-
-			FOR_EACH_MPPLAYER(pGEMPPlayer)
-				if (pGEMPPlayer->GetSteamHash() == steamHash)
-					pGEMPPlayer->OnFailedSkinPromoAuth();
-			END_OF_PLAYER_LOOP()
-		}
 	}
 }
 
@@ -1009,7 +898,7 @@ void CGEMPRules::OnMatchStart()
 	if (g_iLastPlayerCount)
 	{
 		char webRequestURL[512];
-		Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?getCurrentPromoCode", GetWebDomain() );
+		Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?promoexpiry", GetWebDomain() );
 		new CGETempWebRequest( webRequestURL, CheckCurrentPromoCode );
 	}
 	// Reset this value since we already checked it in ge_gameplay.cpp
@@ -1419,15 +1308,8 @@ void CGEMPRules::GetPlayerWebData( CGEMPPlayer *pPlayer )
 		// Looks like we don't have it so we're going to have to ask the webserver.
 		const char *steamID = pPlayer->GetNetworkIDString();
 
-		// This should get unix time but I honestly am not certain it always will.
-		long unixtime;
-		VCRHook_Time( &unixtime ); 
-
-
-		//Warning("Got Unix Time of %ld\n", unixtime );
-
 		char webRequestURL[512];
-		Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?doMulti&1=putCurrentPromoItems&2=getPlayerRole&3=getPlayerWeaponSkins&format=int64&management_api_key=%s&timestamp=%ld&steamid=", GetWebDomain(), GetAPIKey(), unixtime );
+		Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?playerinfo&steamid=", GetWebDomain() );
 		//Warning("Making request of %s\n", webRequestURL);
 
 		Warning("Asking for player status with steamID = %s\n", steamID);

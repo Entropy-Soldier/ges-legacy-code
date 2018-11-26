@@ -76,6 +76,7 @@ void DisplayBlacklistPopup()
 		((CGEPopupBox*)GetGEPopupBox()->GetPanel())->displayPopup("#GEUI_ServerBlacklisted", lastVisitedServerBlacklistReason);
 }
 
+// Internal Data stores the address of the server we attempted to visit.
 void OnServerInvestigated( const char *result, const char *error, const char *internalData )
 {
 	if (!error || error[0] == '\0')
@@ -87,71 +88,35 @@ void OnServerInvestigated( const char *result, const char *error, const char *in
 		Warning("got investigation result of %s\n", result);
 		ExtractXMLTagSubstring(responseBuffer, sizeof(responseBuffer), result, "response");
 
-		if (responseBuffer[0] != '\0') // We got a response!
-		{
-			ExtractXMLTagSubstring(statusBuffer, sizeof(statusBuffer), responseBuffer, "getServerStatus");
-
-			Warning("statusBuffer = %s\n", statusBuffer);
-
-			if (statusBuffer[0] == '\0')
-			{
-				ExtractXMLTagSubstring(errorBuffer, sizeof(errorBuffer), responseBuffer, "error");
-				Warning("Failed to get server status with error %s\n", errorBuffer);
-				return;
-			}
-		}
-		else
+		if (responseBuffer[0] == '\0') // We didn't get a valid response!
 		{
 			Warning("Response did not have valid format!\n");
 			return; // Don't write anything so we keep trying.
 		}
 
+        ExtractXMLTagSubstring(statusBuffer, sizeof(statusBuffer), responseBuffer, "serverstatus");
+		Warning("statusBuffer = %s\n", statusBuffer);
+
+		if (statusBuffer[0] == '\0')
+		{
+			ExtractXMLTagSubstring(errorBuffer, sizeof(errorBuffer), responseBuffer, "error");
+			Warning("Failed to get server status with error %s\n", errorBuffer);
+			return;
+		}
+
+        // Update our last visited server address since we were able to get status for this one.
 		Q_strcpy(lastVisitedServerAddress, internalData);
 
-		char statusString[64];
-		
-		// serverStatus=blacklisted&amp;statusReason=asdf
+        // We've already got responseBuffer allocated on the stack
+        // might as well use it for "reason" which is the majority of the string.
+        ExtractXMLTagSubstring(responseBuffer, sizeof(responseBuffer), result, "reason");
 
-		const char *statusStart = Q_strstr(statusBuffer, "serverStatus=") + Q_strlen("serverStatus=");
-		const char *statusEnd = Q_strstr(statusBuffer, "&amp;");
-		const char *reasonStart = Q_strstr(statusBuffer, "statusReason=");
+        char blacklistStatus[16];
+        ExtractXMLTagSubstring(blacklistStatus, sizeof(blacklistStatus), result, "is_blacklisted");
 
-		// Make sure we actually found the reason tag before directing the pointer to a potentially out of bounds address.
-		if (reasonStart)
-			reasonStart += Q_strlen("statusReason=");
-
-		if (!statusStart)
+		if (!Q_strcmp(blacklistStatus, "yes"))
 		{
-			Warning("Failed to extract server status!\n");
-			return;
-		}
-
-		if (!statusEnd && reasonStart)
-		{
-			Warning("Failed to identify end of status string!\n");
-			return;
-		}
-
-		int statusLength;
-
-		// If there's no ending marker, and no reason marker, the entire string is the status reason.
-		if ( !statusEnd && !reasonStart )
-		{
-			statusLength = Q_strlen(statusStart) + 1;
-		}
-		else
-			statusLength = (statusEnd + 1) - statusStart; // Otherwise be sure to extract only the part relevant to the status message.
-
-
-		Q_strncpy(statusString, statusStart, min(statusLength, sizeof(statusString)));
-
-		Warning("Status string = %s\n", statusString);
-		Warning("Reason string = %s!\n", reasonStart);
-
-		if (!Q_strcmp(statusString, "blacklisted"))
-		{
-			const char *reason = reasonStart;
-			char firstDigit = '\0';
+			const char *reason = responseBuffer;
 
 			int i;
 			for (i = 0; i < MAX_BLACKLIST_REASON_SIZE - 1; i++)
@@ -159,26 +124,22 @@ void OnServerInvestigated( const char *result, const char *error, const char *in
 				if (*reason == '\0')
 					break;
 
-				if (*reason != '%')
+				if (*reason != '&')
 				{
 					lastVisitedServerBlacklistReason[i] = *reason;
+                    reason++;
 				}
 				else
 				{
-					reason++; // Skip % character since we've already gotten all the useful info out of it.
-					firstDigit = *reason;
-					reason++; // Move on to second character now that we've recorded the first one.
+                    // Convert the ident string into a new, single character and record it to our reason buffer.
+                    int skipLen;
+                    char desiredChar = DecodeXMLCharSubstitution(reason, skipLen);
 
-					// Combine both characters into one hex value, represented as a string.
-					char buffer[8];
-					Q_snprintf(buffer, sizeof(buffer), "%c%c", firstDigit, *reason);
-					
-					// Convert that string into a new, single character and record it to our reason buffer.
-					lastVisitedServerBlacklistReason[i] = (char)strtol(buffer, NULL, 16);
+					lastVisitedServerBlacklistReason[i] = desiredChar;
+                    reason += skipLen; // Advance past the entire ident string.
 				}
-
-				reason++;
 			}
+
 			lastVisitedServerBlacklistReason[i] = '\0';
 
 
@@ -193,7 +154,7 @@ void OnServerInvestigated( const char *result, const char *error, const char *in
 		else
 		{
 			lastVisitedServerGood = true;
-			Warning("All clear!  Got result of %s when investigating %s\n", result, internalData);
+			Warning("All clear!  Got blacklist status of %s when investigating %s\n", blacklistStatus, internalData);
 		}
 	}
 	else
@@ -250,9 +211,9 @@ bool InvestigateGEServer(const char *address, bool abortOnInvalidIP)
 				return false; // Don't even bother trying to connect now.
 			}
 		}
-
+        
 		char webRequestURL[512];
-		Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?getServerStatus&ip=", GetWebDomain() );
+		Q_snprintf( webRequestURL, sizeof(webRequestURL), "%s?serverstatus&ip=", GetWebDomain() );
 
 		new CGETempWebRequest( webRequestURL, OnServerInvestigated, address, address );
 	}
