@@ -54,6 +54,10 @@ public:
 
 	virtual GEWeaponID GetWeaponID( void ) const { return WEAPON_SLAPPERS; }
 
+	virtual Activity	GetPrimaryAttackActivity( void )	{	return	ACT_VM_PRIMARYATTACK;	}
+	virtual Activity	GetSecondaryAttackActivity( void )	{	return	ACT_VM_SECONDARYATTACK;	}
+    virtual int		    GetStaticHitActivity()				{   return  ACT_VM_PRIMARYATTACK;   }
+
 	float		GetRange( void )		{	return	m_bIsRifleButt ? STOCK_RANGE : SLAPPER_RANGE;	}
 	bool		DamageWorld()			{	return	false;			}
 
