@@ -492,7 +492,7 @@ protected:
 DECLARE_GE_ACHIEVEMENT(CAchProximaCentauri, ACHIEVEMENT_GES_PROXIMA_CENTAURI, "GES_PROXIMA_CENTAURI", 100, GE_ACH_UNLOCKED);
 
 
-// Time To Target:  Get 2 grenade launcher direct hits within a tenth of a second
+// Time To Target:  Get 2 grenade launcher direct hits within a single second
 class CAchTimeToTarget : public CGEAchievement
 {
 protected:
@@ -525,7 +525,7 @@ protected:
 		// If we're using the grenade launcher, and the game registered a headshot, we can consider this a kill.
 		if (event->GetInt("weaponid") == WEAPON_GRENADE_LAUNCHER && event->GetBool("headshot"))
 		{
-			if (gpGlobals->curtime - m_flLastKillTime < 0.1 && CalcPlayerCount() >= 4)
+			if (gpGlobals->curtime - m_flLastKillTime < 1.0 && CalcPlayerCount() >= 4)
 				IncrementCount();
 			else
 				m_flLastKillTime = gpGlobals->curtime;
