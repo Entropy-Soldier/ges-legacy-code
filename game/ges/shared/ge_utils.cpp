@@ -860,7 +860,7 @@ char DecodeXMLCharSubstitution( const char *string, int &identlen )
     char desiredChar = ' ';
     unsigned int identTextLen = 0; // Don't count the & until the end.
 
-    for (int g = 0; g < charArrayLen; g++)
+    for (unsigned int g = 0; g < charArrayLen; g++)
     {
         identTextLen = Q_strlen(specialCharIdents[g]);
 
