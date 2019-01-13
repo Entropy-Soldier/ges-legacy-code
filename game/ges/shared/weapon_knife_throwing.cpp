@@ -220,7 +220,7 @@ CGETKnife *CWeaponKnifeThrowing::CreateKnife( const Vector &vecOrigin, const QAn
 {
 	CGETKnife *pKnife = (CGETKnife *)CBaseEntity::Create( "npc_tknife", vecOrigin, angAngles, NULL );
 
-	pKnife->SetDamage( GetGEWpnData().m_iDamage );
+	pKnife->SetDamage( GetWeaponDamage() );
 	pKnife->SetOwnerEntity( pOwner );
 	pKnife->SetSourceWeapon(this);
 

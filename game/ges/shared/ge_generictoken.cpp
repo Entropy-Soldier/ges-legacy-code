@@ -211,7 +211,7 @@ bool CGenericToken::CanHolster( void )
 
 float CGenericToken::GetDamageForActivity( Activity hitActivity )
 {
-	return GetGEWpnData().m_iDamage * m_flDmgMod;
+	return GetWeaponDamage() * m_flDmgMod;
 }
 
 const char *CGenericToken::GetName( void ) const
@@ -304,7 +304,7 @@ void CGenericToken::HandleAnimEventMeleeHit( animevent_t *pEvent, CBaseCombatCha
 
 	Vector vecEnd;
 	VectorMA( pOperator->Weapon_ShootPosition(), 50, vecDirection, vecEnd );
-	CBaseEntity *pHurt = pOperator->CheckTraceHullAttack( pOperator->Weapon_ShootPosition(), vecEnd, Vector(-16,-16,-16), Vector(36,36,36), GetGEWpnData().m_iDamage, DMG_CLUB );
+	CBaseEntity *pHurt = pOperator->CheckTraceHullAttack( pOperator->Weapon_ShootPosition(), vecEnd, Vector(-16,-16,-16), Vector(36,36,36), GetWeaponDamage(), DMG_CLUB );
 	
 	// did I hit someone?
 	if ( pHurt )

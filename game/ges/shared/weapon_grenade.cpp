@@ -407,8 +407,8 @@ void CGEWeaponGrenade::ThrowGrenade( float throwforce, bool deathThrow /* == fal
 		pGrenade->SetOwnerEntity( pOwner );
 		pGrenade->SetVelocity( vecThrow, AngularImpulse(600,random->RandomInt(-1000,1000),0) );
 
-		pGrenade->SetDamage( GetGEWpnData().m_iDamage );
-		pGrenade->SetDamageRadius( GetGEWpnData().m_flDamageRadius );
+		pGrenade->SetDamage( GetWeaponDamage() );
+		pGrenade->SetDamageRadius( GetWeaponDamageRadius() );
 		pGrenade->SetSourceWeapon(this);
 		
 		if (deathThrow) // For acheivement tracking.
@@ -455,8 +455,8 @@ void CGEWeaponGrenade::ExplodeInHand( void )
 		pGrenade->SetVelocity( 0, NULL );
 		pGrenade->m_bHitSomething = true; //I'm not gonna just give it to you!
 
-		pGrenade->SetDamage( GetGEWpnData().m_iDamage );
-		pGrenade->SetDamageRadius( GetGEWpnData().m_flDamageRadius );
+		pGrenade->SetDamage( GetWeaponDamage() );
+		pGrenade->SetDamageRadius( GetWeaponDamageRadius() );
 
 		pGrenade->SetTimer( 0 );
 	}

@@ -339,6 +339,23 @@ const char *CBaseCombatWeapon::GetPrintName( void ) const
 	return GetWpnData().szPrintName;
 }
 
+#ifdef GE_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CBaseCombatWeapon::GetMaxClip1( bool modded /*= true*/ )
+{
+	return GetWpnData().iMaxClip1;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CBaseCombatWeapon::GetMaxClip2( bool modded /*= true*/ )
+{
+	return GetWpnData().iMaxClip2;
+}
+#else
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -354,6 +371,7 @@ int CBaseCombatWeapon::GetMaxClip2( void ) const
 {
 	return GetWpnData().iMaxClip2;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -376,7 +394,11 @@ int CBaseCombatWeapon::GetDefaultClip2( void ) const
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::UsesClipsForAmmo1( void ) const
 {
+#ifdef GE_DLL
+    return ( GetWpnData().iMaxClip1 != WEAPON_NOCLIP ); // Needs to be const qualified so just fall back on the base values.  We never overrode this before now.
+#else
 	return ( GetMaxClip1() != WEAPON_NOCLIP );
+#endif
 }
 
 bool CBaseCombatWeapon::IsMeleeWeapon() const
@@ -389,7 +411,11 @@ bool CBaseCombatWeapon::IsMeleeWeapon() const
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::UsesClipsForAmmo2( void ) const
 {
+#ifdef GE_DLL
+    return ( GetWpnData().iMaxClip2 != WEAPON_NOCLIP ); // Needs to be const qualified so just fall back on the base values.  We never overrode this before now.
+#else
 	return ( GetMaxClip2() != WEAPON_NOCLIP );
+#endif
 }
 
 //-----------------------------------------------------------------------------

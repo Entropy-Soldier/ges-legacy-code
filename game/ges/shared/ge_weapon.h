@@ -100,20 +100,28 @@ public:
 	// Get a pointer to the player that owns this weapon
 	CGEWeaponInfo const	&GetGEWpnData() const;
 
-	virtual float			GetFireRate( void );
-	virtual float			GetClickFireRate(void);
+	virtual float			GetFireRate( bool modded = true );
+	virtual float			GetClickFireRate( bool modded = true );
+    virtual int				GetMaxClip1( bool modded = true );
+	virtual int				GetMaxClip2( bool modded = true );
 	virtual const Vector&	GetBulletSpread( void );
 	virtual int				GetGaussFactor( void );
 	virtual float			GetFireDelay( void );
 	virtual int				GetTracerFreq( void ) { return GetGEWpnData().m_iTracerFreq; };
 	virtual const char*		GetSpecAttString(void) { return GetGEWpnData().m_szSpecialAttributes; };
 
-	virtual int		GetDamageCap(void) { return GetGEWpnData().m_iDamageCap; };
+	virtual int		GetDamageCap( bool modded = true ) { return GetGEWpnData().m_iDamageCap * (modded ? m_flDamageCapMultiplier : 1.0f); };
 
-	virtual float	GetMaxPenetrationDepth( void ) { return GetGEWpnData().m_flMaxPenetration; };
+	virtual float	GetMaxPenetrationDepth( bool modded = true ) { return GetGEWpnData().m_flMaxPenetration + (modded ? m_flPenetrationOffset : 0); };
 	virtual void	AddAccPenalty(float numshots);
 	virtual void	UpdateAccPenalty( void );
 	virtual float	GetAccPenalty(void) { return m_flAccuracyPenalty; };
+
+    virtual Vector GetMinSpreadVec(bool modded = true) { return GetGEWpnData().m_vecSpread + (modded ? m_vMinSpreadOffset : Vector(0, 0, 0));  }
+    virtual Vector GetMaxSpreadVec(bool modded = true) { return GetGEWpnData().m_vecMaxSpread + (modded ? m_vMaxSpreadOffset : Vector(0, 0, 0));  }
+
+    virtual float GetAimBonus(bool modded = true) { return GetGEWpnData().m_flAimBonus + (modded ? m_flAimBonusOffset : 0);  }
+    virtual float GetJumpPenalty(bool modded = true) { return GetGEWpnData().m_flJumpPenalty + (modded ? m_flJumpPenaltyOffset : 0);  }
 
 	// Fixes for NPC's
 	virtual bool	HasAmmo( void );
@@ -142,7 +150,7 @@ public:
 	virtual void	SetPickupTouch( void );
 	virtual void	MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int iTracerType );
 
-	virtual float	GetWeaponDamage()				{ return GetGEWpnData().m_iDamage;					}
+	virtual float	GetWeaponDamage( bool modded = true )    { return GetGEWpnData().m_iDamage * (modded ? m_flDamageMultiplier : 1.0f); }
 	virtual float	GetHitBoxDataModifierHead()		{ return GetGEWpnData().HitBoxDamage.fDamageHead;	}
 	virtual float	GetHitBoxDataModifierChest()	{ return GetGEWpnData().HitBoxDamage.fDamageChest;	}
 	virtual float	GetHitBoxDataModifierStomach()	{ return GetGEWpnData().HitBoxDamage.fDamageStomach;}
@@ -151,13 +159,15 @@ public:
 	virtual float	GetHitBoxDataModifierLeftLeg()	{ return GetGEWpnData().HitBoxDamage.fLefLeg;		}
 	virtual float	GetHitBoxDataModifierRightLeg() { return GetGEWpnData().HitBoxDamage.fRightLeg;		}
 
+    virtual float	GetWeaponDamageRadius( bool modded = true )	{ return GetGEWpnData().m_flDamageRadius + (modded ? m_flBlastRadiusOffset : 0); }
+
 	virtual bool	CanBeSilenced( void ) { return false; };
 	virtual bool	IsSilenced() { return m_bSilenced; };
 	virtual bool	IsShotgun() { return false; };
 	virtual void	ToggleSilencer( bool doanim = true );
 	virtual void	SetAlwaysSilenced( bool set ) { m_bIsAlwaysSilent = set; };
 	virtual bool	IsAlwaysSilenced() { return m_bIsAlwaysSilent; };
-	virtual float	GetAccFireRate(){ return GetGEWpnData().m_flAccurateRateOfFire; }
+	virtual float	GetAccFireRate( bool modded = true ) { return GetGEWpnData().m_flAccurateRateOfFire / (modded ? m_flFireRateMultiplier : 1.0f); }
 	virtual int		GetAccShots(){ return GetGEWpnData().m_flAccurateShots; }
 
 	virtual int		GetTracerAttachment( void );
@@ -184,6 +194,31 @@ public:
 	// Variable that stores our accuracy penalty time limit
 	CNetworkVar( float,	m_flAccuracyPenalty );
 	CNetworkVar( float, m_flCoolDownTime );
+
+    // Stat modifiers.
+    // Adding a new variable to here naturally requires updating the network tables and
+    // ge_weapon constructor with the new value.
+#define GEWeaponStatModVar( type, prefix, name ) \
+    type Get ## name ## ( void ) { return prefix ## name; } \
+    void Set ## name ## ( type newVal ) { prefix ## name = newVal; } \
+    CNetworkVar( type, prefix ## name )
+
+    GEWeaponStatModVar( float, m_fl, DamageMultiplier );
+    GEWeaponStatModVar( float, m_fl, DamageCapMultiplier );
+    GEWeaponStatModVar( float, m_fl, FireRateMultiplier );
+
+    GEWeaponStatModVar( Vector, m_v, MinSpreadOffset );
+    GEWeaponStatModVar( Vector, m_v, MaxSpreadOffset );
+    GEWeaponStatModVar( float, m_fl, JumpPenaltyOffset );
+    GEWeaponStatModVar( float, m_fl, AimBonusOffset );
+
+    GEWeaponStatModVar( int, m_i, MaxClip1Offset );
+    GEWeaponStatModVar( int, m_i, MaxClip2Offset );
+
+    GEWeaponStatModVar( float, m_fl, BlastRadiusOffset );
+    GEWeaponStatModVar( float, m_fl, RangeOffset );
+
+    GEWeaponStatModVar( float, m_fl, PenetrationOffset );
 
 protected:
 	bool			m_bLowered;			// Whether the viewmodel is raised or lowered

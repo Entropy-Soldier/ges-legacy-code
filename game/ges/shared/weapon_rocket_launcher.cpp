@@ -304,8 +304,8 @@ void CGEWeaponRocketLauncher::LaunchRocket( void )
 		pRocket->SetOwnerEntity( pOwner );
 		pRocket->SetSourceWeapon(this);
 
-		pRocket->SetDamage( GetGEWpnData().m_iDamage );
-		pRocket->SetDamageRadius( GetGEWpnData().m_flDamageRadius );
+		pRocket->SetDamage( GetWeaponDamage() );
+		pRocket->SetDamageRadius( GetWeaponDamageRadius() );
 
 		if (pOwner->GetTeamNumber() == TEAM_JANUS)
 			pRocket->SetCollisionGroup( COLLISION_GROUP_GRENADE_JANUS );

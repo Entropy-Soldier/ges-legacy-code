@@ -203,7 +203,7 @@ void CGEWeaponMelee::Swing( int bIsSecondary )
 
 #ifndef CLIENT_DLL
 	// Like bullets, bludgeon traces have to trace against triggers.
-	CTakeDamageInfo triggerInfo( pOwner, pOwner, GetGEWpnData().m_iDamage, DMG_CLUB );
+	CTakeDamageInfo triggerInfo( pOwner, pOwner, GetWeaponDamage(), DMG_CLUB );
 	TraceAttackToTriggers( triggerInfo, traceHit.startpos, traceHit.endpos, vec3_origin );
 #endif
 

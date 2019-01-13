@@ -462,8 +462,8 @@ void CGEWeaponGrenadeLauncher::LaunchGrenade( void )
 		else if (pOwner->GetTeamNumber() == TEAM_MI6)
 			pShell->SetCollisionGroup(COLLISION_GROUP_GRENADE_MI6);
 
-		pShell->SetDamage( GetGEWpnData().m_iDamage );
-		pShell->SetDamageRadius( GetGEWpnData().m_flDamageRadius );
+		pShell->SetDamage( GetWeaponDamage() );
+		pShell->SetDamageRadius( GetWeaponDamageRadius() );
 
 		// Tell the owner what we threw to implement anti-spamming
 		if ( pOwner->IsPlayer() )

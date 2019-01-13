@@ -14,6 +14,7 @@
 
 #include "ge_ai.h"
 #include "ge_weapon.h"
+#include "ge_weaponmelee.h"
 #include "ge_weapon_parse.h"
 #include "ge_loadoutmanager.h"
 #include "gemp_gamerules.h"
@@ -78,6 +79,14 @@ int pyGetMaxAmmoCount( CGEWeapon *pWeap )
 		return GetAmmoDef()->MaxCarry( pWeap->GetPrimaryAmmoType() );
 	else
 		return 999;
+}
+
+float pyGetMeleeWeaponRange( CGEWeapon *pWeap, bool modded = true )
+{
+    if (!pWeap->IsMeleeWeapon())
+        return -1.0f;
+
+    return static_cast<CGEWeaponMelee*>(pWeap)->GetRange(modded);
 }
 
 int pyGetWeaponSlot( CGEWeapon *pWeap )
@@ -242,6 +251,19 @@ bp::dict pyWeaponInfo( bp::object weap, CBaseCombatCharacter *pOwner = NULL )
 	return info;
 }
 
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetWeaponDamage_overloads, CGEWeapon::GetWeaponDamage, 0, 1);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetDamageCap_overloads, CGEWeapon::GetDamageCap, 0, 1);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMaxClip1_overloads, CGEWeapon::GetMaxClip1, 0, 1);
+
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMaxPenetrationDepth_overloads, CGEWeapon::GetMaxPenetrationDepth, 0, 1);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetWeaponDamageRadius_overloads, CGEWeapon::GetWeaponDamageRadius, 0, 1);
+BOOST_PYTHON_FUNCTION_OVERLOADS(GetMeleeWeaponRange_overloads, pyGetMeleeWeaponRange, 1, 2);
+
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMinSpreadVec_overloads, CGEWeapon::GetMinSpreadVec, 0, 1);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMaxSpreadVec_overloads, CGEWeapon::GetMaxSpreadVec, 0, 1);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetAimBonus_overloads, CGEWeapon::GetAimBonus, 0, 1);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetJumpPenalty_overloads, CGEWeapon::GetJumpPenalty, 0, 1);
+
 BOOST_PYTHON_FUNCTION_OVERLOADS(WeaponInfo_overloads, pyWeaponInfo, 1, 2);
 BOOST_PYTHON_MODULE(GEWeapon)
 {
@@ -275,15 +297,51 @@ BOOST_PYTHON_MODULE(GEWeapon)
 		.def("SetAmmoCount", pySetAmmoCount)
 		.def("GetMaxAmmoCount", pyGetMaxAmmoCount)
 		.def("GetClip", &CGEWeapon::Clip1)
-		.def("GetMaxClip", &CGEWeapon::GetMaxClip1)
+		.def("GetMaxClip", &CGEWeapon::GetMaxClip1, GetMaxClip1_overloads())
 		.def("GetDefaultClip", &CGEWeapon::GetDefaultClip1)
-		.def("GetDamage", &CGEWeapon::GetWeaponDamage)
+		.def("GetDamage", &CGEWeapon::GetWeaponDamage, GetWeaponDamage_overloads())
+        .def("GetDamageCap", &CGEWeapon::GetDamageCap, GetDamageCap_overloads())
+        .def("GetMaxPenetrationDepth", &CGEWeapon::GetMaxPenetrationDepth, GetMaxPenetrationDepth_overloads())
 		.def("GetWeaponId", &CGEWeapon::GetWeaponID)
 		.def("GetSecondsUntilPickupAllowed", &CGEWeapon::GetSecondsUntilPickup)
 		.def("SetSecondsUntilPickupAllowed", &CGEWeapon::SetSecondsUntilPickup)
 		.def("SetRoundSecondsUntilPickupAllowed", &CGEWeapon::SetRoundSecondsUntilPickup)
 		.def("GetWeaponSlot", pyGetWeaponSlot)
 		.def("SetSkin", pyWeaponSetSkin)
+
+        .def("GetWeaponDamageRadius", &CGEWeapon::GetWeaponDamageRadius, GetWeaponDamageRadius_overloads())
+        .def("GetWeaponMeleeRange", pyGetMeleeWeaponRange, GetMeleeWeaponRange_overloads())
+
+        .def("GetMinSpreadVec", &CGEWeapon::GetMinSpreadVec, GetMinSpreadVec_overloads())
+        .def("GetMaxSpreadVec", &CGEWeapon::GetMaxSpreadVec, GetMaxSpreadVec_overloads())
+        .def("GetAimBonus", &CGEWeapon::GetAimBonus, GetAimBonus_overloads())
+        .def("GetJumpPenalty", &CGEWeapon::GetJumpPenalty, GetJumpPenalty_overloads())
+
+        .def("GetDamageMultiplier", &CGEWeapon::GetDamageMultiplier)
+		.def("SetDamageMultiplier", &CGEWeapon::SetDamageMultiplier)
+        .def("GetDamageCapMultiplier", &CGEWeapon::GetDamageCapMultiplier)
+		.def("SetDamageCapMultiplier", &CGEWeapon::SetDamageCapMultiplier)
+		.def("GetFireRateMultiplier", &CGEWeapon::GetFireRateMultiplier)
+		.def("SetFireRateMultiplier", &CGEWeapon::SetFireRateMultiplier)
+        .def("GetMinSpreadOffset", &CGEWeapon::GetMinSpreadOffset)
+		.def("SetMinSpreadOffset", &CGEWeapon::SetMinSpreadOffset)
+		.def("GetMaxSpreadOffset", &CGEWeapon::GetMaxSpreadOffset)
+		.def("SetMaxSpreadOffset", &CGEWeapon::SetMaxSpreadOffset)
+        .def("GetJumpPenaltyOffset", &CGEWeapon::GetJumpPenaltyOffset)
+		.def("SetJumpPenaltyOffset", &CGEWeapon::SetJumpPenaltyOffset)
+        .def("GetAimBonusOffset", &CGEWeapon::GetAimBonusOffset)
+		.def("SetAimBonusOffset", &CGEWeapon::SetAimBonusOffset)
+        .def("GetMaxClip1Offset", &CGEWeapon::GetMaxClip1Offset)
+		.def("SetMaxClip1Offset", &CGEWeapon::SetMaxClip1Offset)
+        .def("GetMaxClip2Offset", &CGEWeapon::GetMaxClip2Offset)
+		.def("SetMaxClip2Offset", &CGEWeapon::SetMaxClip2Offset)
+        .def("GetBlastRadiusOffset", &CGEWeapon::GetBlastRadiusOffset)
+		.def("SetBlastRadiusOffset", &CGEWeapon::SetBlastRadiusOffset)
+        .def("GetRangeOffset", &CGEWeapon::GetRangeOffset)
+		.def("SetRangeOffset", &CGEWeapon::SetRangeOffset)
+        .def("GetPenetrationOffset", &CGEWeapon::GetPenetrationOffset)
+		.def("SetPenetrationOffset", &CGEWeapon::SetPenetrationOffset)
+
 		// The following override CBaseEntity to prevent movement when held
 		.def("SetAbsOrigin", pyWeaponSetAbsOrigin)
 		.def("SetAbsAngles", pyWeaponSetAbsAngles);

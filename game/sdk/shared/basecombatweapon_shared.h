@@ -297,8 +297,13 @@ public:
 	virtual const char		*GetViewModel( int viewmodelindex = 0 ) const;
 	virtual const char		*GetWorldModel( void ) const;
 	virtual const char		*GetAnimPrefix( void ) const;
+#ifdef GE_DLL
+	virtual int				GetMaxClip1( bool modded = true );
+	virtual int				GetMaxClip2( bool modded = true );
+#else
 	virtual int				GetMaxClip1( void ) const;
 	virtual int				GetMaxClip2( void ) const;
+#endif
 	virtual int				GetDefaultClip1( void ) const;
 	virtual int				GetDefaultClip2( void ) const;
 #ifdef GE_DLL

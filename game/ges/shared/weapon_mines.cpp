@@ -254,7 +254,7 @@ void CGEWeaponMine::ThrowMine( void )
 	pMine->ApplyAbsVelocityImpulse( vecThrow * timescale );
 	pMine->SetLocalAngularVelocity( QAngle(rot1, rot2, 0) * timescale );
 	pMine->SetMineType( GetWeaponID() );
-	pMine->SetDamage( GetGEWpnData().m_iDamage );
+	pMine->SetDamage( GetWeaponDamage() );
 	pMine->SetDamageRadius( GetGEWpnData().m_flDamageRadius );
 
 	if ( timescale != 1 )

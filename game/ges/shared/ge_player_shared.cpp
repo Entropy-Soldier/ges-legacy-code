@@ -276,7 +276,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 		{
 			if ( !(modinfo.m_nFlags & FIRE_BULLETS_PENETRATED_SHOT) )
 				// Only take the weapon's damage if this is the first shot
-				modinfo.m_iDamage = pWeapon->GetGEWpnData().m_iDamage;
+				modinfo.m_iDamage = pWeapon->GetWeaponDamage();
 
 			isWepShotgun = pWeapon->IsShotgun(); // We can't use the amount of shots fired for this because automatics can fire multiple bullets per frame.
 		}

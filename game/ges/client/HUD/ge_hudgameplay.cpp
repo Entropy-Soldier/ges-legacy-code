@@ -280,7 +280,7 @@ void CHudGameplay::ResolveWeaponHelp(void)
 		else
 		{
 			InsertTokenWithValue("#GE_WH_Damage", basedamage * 0.05);
-			InsertTokenWithValue("#GE_WH_Radius", pGEWeapon->GetGEWpnData().m_flDamageRadius / 12);
+			InsertTokenWithValue("#GE_WH_Radius", pGEWeapon->GetWeaponDamageRadius() / 12);
 		}
 	}
 	else
@@ -297,7 +297,7 @@ void CHudGameplay::ResolveWeaponHelp(void)
 		else
 		{
 			InsertTokenWithBar("#GE_WH_DamageGraph", round(basedamage * HUDWP_BARLENGTH / 528));
-			InsertTokenWithBar("#GE_WH_RadiusGraph", round(pGEWeapon->GetGEWpnData().m_flDamageRadius * HUDWP_BARLENGTH/140));
+			InsertTokenWithBar("#GE_WH_RadiusGraph", round(pGEWeapon->GetWeaponDamageRadius() * HUDWP_BARLENGTH/140));
 		}
 	}
 
@@ -313,7 +313,7 @@ void CHudGameplay::ResolveWeaponHelp(void)
 
 		const char *qArray[8] = { "#GE_Q_None", "#GE_Q_VeryLow", "#GE_Q_Low", "#GE_Q_Average", "#GE_Q_High", "#GE_Q_VeryHigh", "#GE_Q_VVHigh", "#GE_Q_VVVHigh" };
 
-		float basespread = min(pGEWeapon->GetGEWpnData().m_vecSpread.x + 1, 7);
+		float basespread = clamp(pGEWeapon->GetMinSpreadVec().x + 1, 1, 7);
 
 		// If we read exactly 1 basespread it means we really had no spread at all.  This gets a special catagory.
 		if (basespread == 1)
@@ -326,7 +326,7 @@ void CHudGameplay::ResolveWeaponHelp(void)
 		m_pWeaponHelp->InsertString(szBuf);
 		m_pWeaponHelp->InsertString("\n");
 
-		float maxspread = min(pGEWeapon->GetGEWpnData().m_vecMaxSpread.x + 1, 7);
+		float maxspread = clamp(pGEWeapon->GetMaxSpreadVec().x + 1, 1, 7);
 
 		// If we read exactly 1 maxspread it means we really had no spread at all.  This gets a special catagory.
 		if (maxspread == 1)
@@ -349,7 +349,7 @@ void CHudGameplay::ResolveWeaponHelp(void)
 		InsertTokenWithValue("#GE_Att_Penetrate", floor(pGEWeapon->GetMaxPenetrationDepth()), false);
 	}
 
-	if (pGEWeapon->GetGEWpnData().m_flAimBonus > 0)
+	if (pGEWeapon->GetAimBonus() > 0)
 	{
 		m_pWeaponHelp->InsertString(g_pVGuiLocalize->Find("#GE_Att_AimBoost"));
 		m_pWeaponHelp->InsertString("\n");

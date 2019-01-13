@@ -58,7 +58,7 @@ public:
 
 	CGEWeaponWatchLaser();
 
-	float		GetRange(void);
+	float		GetBaseRange(void);
 
 	void		AddViewKick(void);
 	virtual		void Precache(void);
@@ -234,7 +234,7 @@ void CGEWeaponWatchLaser::ItemPostFrame(void)
 	}
 }
 
-float CGEWeaponWatchLaser::GetRange(void)
+float CGEWeaponWatchLaser::GetBaseRange(void)
 {
 	CBaseCombatCharacter *pOwner = GetOwner();
 	if (!pOwner)
@@ -284,7 +284,7 @@ void CGEWeaponWatchLaser::HandleAnimEventMeleeHit(animevent_t *pEvent, CBaseComb
 	//		Vector(-16,-16,-16), Vector(36,36,36), GetDamageForActivity( GetActivity() ), DMG_CLUB, 0.75 );
 
 	VectorMA(pOperator->Weapon_ShootPosition(), GetRange(), vecDirection, vecEnd);
-	CBaseEntity *pHurt = pOperator->CheckTraceHullAttack(pOperator->Weapon_ShootPosition(), vecEnd, Vector(-16, -16, -16), Vector(36, 36, 36), GetGEWpnData().m_iDamage, DMG_CLUB);
+	CBaseEntity *pHurt = pOperator->CheckTraceHullAttack(pOperator->Weapon_ShootPosition(), vecEnd, Vector(-16, -16, -16), Vector(36, 36, 36), GetWeaponDamage(), DMG_CLUB);
 
 	// did I hit someone?
 	if (pHurt)

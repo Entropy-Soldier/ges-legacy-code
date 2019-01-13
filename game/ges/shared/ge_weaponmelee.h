@@ -46,8 +46,9 @@ public:
 	virtual Activity	GetPrimaryAttackActivity( void )	{	return	ACT_VM_HITCENTER;	}
 	virtual Activity	GetSecondaryAttackActivity( void )	{	return	ACT_VM_HITCENTER2;	}
 
-	virtual float	GetRange( void )								{ return 32.0f; }
-	virtual	float	GetDamageForActivity( Activity hitActivity )	{ return GetGEWpnData().m_iDamage; }
+	virtual float	GetRange( bool modded = true )					{ return GetBaseRange() + (modded ? GetRangeOffset() : 0); }
+    virtual float	GetBaseRange( void )							{ return 32.0f; }
+	virtual	float	GetDamageForActivity( Activity hitActivity )	{ return GetWeaponDamage(); }
 	virtual bool	DamageWorld()									{ return true; }
 	virtual bool	SwingsInArc()									{ return true; }
 	virtual int		GetStaticHitActivity()							{ return ACT_VM_MISSCENTER; }

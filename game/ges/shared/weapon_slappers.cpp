@@ -58,7 +58,7 @@ public:
 	virtual Activity	GetSecondaryAttackActivity( void )	{	return	ACT_VM_SECONDARYATTACK;	}
     virtual int		    GetStaticHitActivity()				{   return  ACT_VM_PRIMARYATTACK;   }
 
-	float		GetRange( void )		{	return	m_bIsRifleButt ? STOCK_RANGE : SLAPPER_RANGE;	}
+	float		GetBaseRange( void )		{	return	m_bIsRifleButt ? STOCK_RANGE : SLAPPER_RANGE;	}
 	bool		DamageWorld()			{	return	false;			}
 
 	virtual void	Precache(void);
@@ -190,7 +190,7 @@ void CWeaponSlappers::HandleAnimEventMeleeHit( animevent_t *pEvent, CBaseCombatC
 
 	Vector vecEnd;
 	VectorMA( pOperator->Weapon_ShootPosition(), GetRange(), vecDirection, vecEnd );
-	CBaseEntity *pHurt = pOperator->CheckTraceHullAttack( pOperator->Weapon_ShootPosition(), vecEnd, Vector(-16,-16,-16), Vector(36,36,36), GetGEWpnData().m_iDamage, DMG_CLUB );
+	CBaseEntity *pHurt = pOperator->CheckTraceHullAttack( pOperator->Weapon_ShootPosition(), vecEnd, Vector(-16,-16,-16), Vector(36,36,36), GetWeaponDamage(), DMG_CLUB );
 	
 	// did I hit someone?
 	if ( pHurt )
