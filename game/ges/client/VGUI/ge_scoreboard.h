@@ -60,6 +60,8 @@ private:
 	virtual void UpdateTeamScores( void );
 	virtual void UpdateMapTimer( void );
 
+    virtual int GetDesiredGamemodeColor( void );
+
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 
 	enum 
@@ -77,6 +79,16 @@ private:
 	vgui::ImagePanel	*m_pBackground;
 	bool				m_bTeamPlay;
 	bool				m_bVisibleOnToggle;
+
+    enum 
+	{ 
+		GES_SB_GAMEMODECOLOR_NORMAL = 0,
+		GES_SB_GAMEMODECOLOR_RED = 1,
+        GES_SB_GAMEMODECOLOR_BLUE = 2,
+        GES_SB_GAMEMODECOLOR_MAX = 3
+	};
+
+    int                 m_bCurrentGamemodeColor;
 };
 
 }

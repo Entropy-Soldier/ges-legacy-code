@@ -67,6 +67,7 @@ CGEScoreBoard::CGEScoreBoard(IViewPort *pViewPort):CClientScoreBoardDialog(pView
 
 	m_pImageList = NULL;
 	m_bVisibleOnToggle = false;
+    m_bCurrentGamemodeColor = GES_SB_GAMEMODECOLOR_NORMAL;
 }
 
 CGEScoreBoard::~CGEScoreBoard()
@@ -129,8 +130,35 @@ void CGEScoreBoard::Update( void )
 
 	UpdateMapTimer();
 
+    int desiredGamemodeColor = GetDesiredGamemodeColor();
+
+    // Check to see if the gamemode has a condition with which need to recolor the title.
+    if ( m_bCurrentGamemodeColor != desiredGamemodeColor )
+    {
+        Panel *gameplayTitle = FindChildByName("GamePlayName");
+        if (gameplayTitle)
+        {
+            switch (desiredGamemodeColor)
+            {
+                case 0: gameplayTitle->SetFgColor(Color(153, 255, 140, 255)); break; // Normal, normal color.
+                case 1: gameplayTitle->SetFgColor(Color(255, 70, 40, 255)); break; // Weapon Mods, red
+                default: gameplayTitle->SetFgColor(Color(153, 255, 140, 255)); break; // Normal, normal color.
+            }
+
+            m_bCurrentGamemodeColor = desiredGamemodeColor; // We actually changed the color if we got here.
+        }
+    }
 	// update every second
 	m_fNextUpdateTime = gpGlobals->curtime + 1.0f; 
+}
+
+int CGEScoreBoard::GetDesiredGamemodeColor(void)
+{
+    if ( GEMPRules() && GEMPRules()->WeaponModsEnabled() )
+        return 1;
+    // Potentially add more values here if other colors are desired.  Order them by priority.
+
+    return 0;
 }
 
 void CGEScoreBoard::OnTick( void )

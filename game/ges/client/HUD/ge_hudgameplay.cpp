@@ -214,6 +214,18 @@ void CHudGameplay::ResolveGameplayHelp(void)
 	m_pGameplayHelp->InsertFontChange(m_hHelpFont);
 	m_pGameplayHelp->InsertString("\n\n");
 
+    // Notify players about weapon mods being enabled.
+    if (GEMPRules() && GEMPRules()->WeaponModsEnabled())
+    {
+        wchar_t *szParsedWepmods = g_pVGuiLocalize->Find("#GES_GP_WEAPONMODS");
+		if (szParsedWepmods)
+			m_pGameplayHelp->InsertString(szParsedWepmods);
+		else
+			m_pGameplayHelp->InsertString("Weapon Mods are enabled.");
+
+        m_pGameplayHelp->InsertString("\n\n");
+    }
+
 	const char *pHelpString = g_pStringTableGameplay->GetString(GEGameplayRes()->GetGameplayHelp());
 	if (pHelpString)
 	{

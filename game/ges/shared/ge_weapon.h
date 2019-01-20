@@ -187,6 +187,8 @@ public:
 
 	virtual float GetZoomOffset();
 
+    virtual bool CanUseWeaponMods();
+
 	// NPC Functions
 	virtual float GetMinRestTime() { return GetClickFireRate(); }
 	virtual float GetMaxRestTime() { return GetFireRate(); }
@@ -200,7 +202,7 @@ public:
     // ge_weapon constructor with the new value.
 #define GEWeaponStatModVar( type, prefix, name ) \
     type Get ## name ## ( void ) { return prefix ## name; } \
-    void Set ## name ## ( type newVal ) { prefix ## name = newVal; } \
+    void Set ## name ## ( type newVal ) { if (CanUseWeaponMods()) prefix ## name = newVal; else Warning("Gamemode tried to use weapon mods without enabling them!\n"); } \
     CNetworkVar( type, prefix ## name )
 
     GEWeaponStatModVar( float, m_fl, DamageMultiplier );

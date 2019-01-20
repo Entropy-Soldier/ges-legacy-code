@@ -201,6 +201,14 @@ public:
 
 	int   GetTeamplayMode() { return m_iTeamplayMode; }
 
+    // Weaponmods allow individual weapon stats to be changed because it's fun okay.
+    // However, they obviously break a lot of assumptions made by acheivements and general player expectations and
+    // as such need to be clearly advertised.  When enabled they modify the gamemode title's displayed color and turn off
+    // acheivements.  Do not allow weaponmods to be disabled by anything other than a gamemode reload as this would allow circumvention
+    // of some of these protective measures.  It's like cheats.
+    void  EnableWeaponMods()  { m_bWeaponModsEnabled = true; } 
+	bool  WeaponModsEnabled()  { return m_bWeaponModsEnabled; };
+
 	void  SetGlobalInfAmmoState( bool newstate )  { m_bGlobalInfAmmo = newstate; };
 	void  SetGamemodeInfAmmoState( bool newstate )  { m_bGamemodeInfAmmo = newstate; };
 	bool  InfAmmoEnabled()  { return m_bGlobalInfAmmo || m_bGamemodeInfAmmo; };
@@ -338,6 +346,8 @@ private:
 	CNetworkVar( int, m_iTeamScoreboardMode );
 	CNetworkVar( int, m_iScoreboardScorePerLevel );
 	CNetworkVar( int, m_iAwardEventCode );
+
+    CNetworkVar( bool,  m_bWeaponModsEnabled );
 
 	CNetworkVar( float, m_flRoundStartTime );
 	CNetworkVar( float, m_flMatchStartTime );

@@ -170,6 +170,10 @@ CGETokenManager *pyGetTokenMgr()
 	return GEMPRules()->GetTokenManager();
 }
 
+void pyEnableWeaponMods()
+{
+    GEMPRules()->EnableWeaponMods();
+}
 
 void pyDisableWeaponSpawns()
 {
@@ -586,6 +590,8 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
     def("GetPostWarmupModeExternalPrintName", pyGetPostWarmupModeExternalPrintName);
 
 	def("SetSpawnInvulnTime", pySetSpawnInvulnTime);
+
+    def("EnableWeaponMods", pyEnableWeaponMods);
 
 	def("DisableWeaponSpawns", pyDisableWeaponSpawns);
 	def("DisableAmmoSpawns", pyDisableAmmoSpawns);

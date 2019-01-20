@@ -34,6 +34,7 @@
 #include "ge_utils.h"
 #include "ge_achievement.h"
 #include "ge_achievement_defs.h"
+#include "gemp_gamerules.h"
 #endif
 #ifndef _X360
 #include "steam/isteamuserstats.h"
@@ -1001,6 +1002,12 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 				return false;
 			}
 		}
+
+        if ( GEMPRules()->WeaponModsEnabled() )
+        {
+            Msg( "Achievements disabled: weapon mods are currently active!\n" );
+			return false;
+        }
 	}
 
 	return true;

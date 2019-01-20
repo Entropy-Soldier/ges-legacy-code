@@ -570,6 +570,7 @@ IMPLEMENT_NETWORKCLASS_ALIASED( GEMPGameRulesProxy, DT_GEMPGameRulesProxy )
 BEGIN_NETWORK_TABLE_NOBASE( CGEMPRules, DT_GEMPRules )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_iRandomSeedOffset ) ),
+    RecvPropBool( RECVINFO( m_bWeaponModsEnabled )),
 	RecvPropBool( RECVINFO( m_bTeamPlayDesired ) ),
 	RecvPropBool( RECVINFO( m_bGlobalInfAmmo )),
 	RecvPropBool( RECVINFO( m_bGamemodeInfAmmo )),
@@ -591,6 +592,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CGEMPRules, DT_GEMPRules )
 	RecvPropFloat(RECVINFO( m_flMatchStartTime )),
 #else
 	SendPropInt( SENDINFO( m_iRandomSeedOffset )),
+    SendPropBool( SENDINFO( m_bWeaponModsEnabled ) ),
 	SendPropBool( SENDINFO( m_bTeamPlayDesired ) ),
 	SendPropBool( SENDINFO( m_bGlobalInfAmmo ) ),
 	SendPropBool( SENDINFO( m_bGamemodeInfAmmo ) ),
@@ -692,6 +694,7 @@ CGEMPRules::CGEMPRules()
 
 	m_bGlobalInfAmmo = false;
 	m_bGamemodeInfAmmo = false;
+    m_bWeaponModsEnabled = false;
 
 	m_bAllowSuperfluousAreas = true;
 
@@ -854,6 +857,9 @@ void CGEMPRules::OnScenarioInit()
 	SetWeaponSpawnState( true );
 	SetArmorSpawnState( true );
 	SetTeamSpawn( false ); // Only CTF uses teamspawns nowadays.
+
+    m_bWeaponModsEnabled = false;
+    m_bAllowSuperfluousAreas = true;
 
 	SetGlobalInfAmmoState( ge_infiniteammo.GetBool() );
 	SetGamemodeInfAmmoState( false );

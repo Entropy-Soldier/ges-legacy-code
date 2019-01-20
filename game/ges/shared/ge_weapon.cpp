@@ -1109,6 +1109,11 @@ void CGEWeapon::MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int i
 	}
 }
 
+bool CGEWeapon::CanUseWeaponMods()
+{
+    return GEMPRules() && GEMPRules()->WeaponModsEnabled();
+}
+
 float CGEWeapon::GetZoomOffset()
 {
 	return GetGEWpnData().m_iZoomOffset;
