@@ -642,11 +642,7 @@ void CGEMPPlayer::Spawn()
     // Bots and observers don't care if they spawn in a wall.
     if ( !IsBotPlayer() && !IsObserver() )
     {
-        trace_t trace;
-
-	    UTIL_TraceEntity( this, GetAbsOrigin() + Vector(0, 0, 1), GetAbsOrigin() + Vector(0, 0, 1), MASK_PLAYERSOLID, this, GetCollisionGroup(), &trace );
-
-        if ( trace.allsolid || trace.startsolid )
+        if ( WillGetStuckAtPosition(GetAbsOrigin()) )
         {
             if ( ge_notify_spawn_abort.GetBool() )
             {
@@ -663,6 +659,15 @@ void CGEMPPlayer::Spawn()
             ForceRespawn();
         }
     }
+}
+
+bool CGEMPPlayer::WillGetStuckAtPosition( Vector pos )
+{
+    trace_t trace;
+
+    UTIL_TraceEntity( this, pos + Vector(0, 0, 1), pos + Vector(0, 0, 1), MASK_PLAYERSOLID, this, GetCollisionGroup(), &trace );
+
+    return trace.allsolid || trace.startsolid;
 }
 
 void CGEMPPlayer::SetSpawnState( SpawnState state )

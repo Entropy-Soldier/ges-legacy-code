@@ -163,6 +163,8 @@ public:
     virtual Vector GetLastWalkPosition()        { return m_vLastWalkPos; }
     virtual void SetLastWalkPosition( Vector pos )          { m_vLastWalkPos = pos; }
 
+    bool WillGetStuckAtPosition( Vector pos );
+
 	virtual CBaseEntity	*GiveNamedItem( const char *szName, int iSubType = 0, bool giveDefaultClip = true );
 	virtual void  GiveDefaultItems();
 	virtual bool  ClientCommand( const CCommand &args );
