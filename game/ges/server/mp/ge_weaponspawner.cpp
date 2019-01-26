@@ -30,6 +30,8 @@ public:
 
 	virtual bool OnEntSpawned( bool isOverrideEnt ) { return true; } // We don't need to do anything for weapons.
 
+    virtual void SetSlot( int newSlot );
+
 protected:
 	virtual void OnInit( void );
 
@@ -50,6 +52,15 @@ END_DATADESC();
 CGEWeaponSpawner::CGEWeaponSpawner( void )
 {
 	m_bAllowSpecial = false;
+}
+
+void CGEWeaponSpawner::SetSlot( int newSlot )		
+{ 
+    BaseClass::SetSlot(newSlot);
+
+    // Match our slotskin to the new slot as it can determine our slot assignment if set pre-initalization.
+    if ( newSlot < MAX_WEAPON_SPAWN_SLOTS && newSlot >= 0 )
+        m_iSlotSkin = newSlot - 1 >= 0 ? newSlot - 1 : 7;
 }
 
 void CGEWeaponSpawner::OnInit( void )

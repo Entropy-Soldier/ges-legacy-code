@@ -44,7 +44,7 @@ public:
 	virtual bool IsSpecial()	{ return m_iSlot == (MAX_WEAPON_SPAWN_SLOTS-1); }
 	virtual bool IsVerySpecial()	{ return false; }
 	const int	 GetSlot()		{ return m_iSlot; }
-	void		 SetSlot( int newSlot )		{ if ( newSlot < MAX_WEAPON_SPAWN_SLOTS && newSlot >= 0 ) m_iSlot = newSlot; }
+	virtual void		 SetSlot( int newSlot )		{ if ( newSlot < MAX_WEAPON_SPAWN_SLOTS && newSlot >= 0 ) m_iSlot = newSlot; }
 
 	void SetEnabled( bool state );
 	// Input handlers
