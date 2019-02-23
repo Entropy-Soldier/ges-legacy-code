@@ -465,6 +465,9 @@ void CGEWeaponGrenadeLauncher::LaunchGrenade( void )
 		pShell->SetDamage( GetWeaponDamage() );
 		pShell->SetDamageRadius( GetWeaponDamageRadius() );
 
+        // Copy custom print name string directly instead of possibly copying the normal print name.
+        pShell->SetCustomPrintName(m_sPrintNameCustom);
+
 		// Tell the owner what we threw to implement anti-spamming
 		if ( pOwner->IsPlayer() )
 			ToGEMPPlayer( pOwner )->AddThrownObject( pShell );

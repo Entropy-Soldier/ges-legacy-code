@@ -1874,6 +1874,14 @@ bool CGEMPPlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 	{
 		SetUsedWeaponSkin(pGEWeapon->GetWeaponID(), pWeapon->m_nSkin);
 		forcepickup = true;  //If we got a new skin, pick up the weapon no matter what.
+
+        // If we already own this weapon, but we're "switching it" for one with a better skin, we need to update the original owner.
+        // Since naturally we traded our current one for the one with the new skin...even though we totally didn't.
+        CGEWeapon *currentCopy = ToGEWeapon(Weapon_OwnsThisType( pWeapon->GetClassname(), pWeapon->GetSubType()));
+        CGEWeapon *newCopy = ToGEWeapon(pWeapon);
+
+        if ( currentCopy )
+            currentCopy->SetOriginalOwnerID( newCopy->GetOriginalOwnerID() );
 	}
 
 	bool ret = BaseClass::BumpWeapon(pWeapon);

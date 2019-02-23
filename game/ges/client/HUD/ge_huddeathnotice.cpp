@@ -222,9 +222,11 @@ void CGEHudDeathNotice::FireGameEvent( IGameEvent * event )
 	// Localize the weapon name!
 	char killedwithskin[32];
 
+    // Only do this if we can be localized in the first place.
+    bool canBeLocalized = g_pVGuiLocalize->FindIndex(killedwith) != INVALID_STRING_INDEX;
 
 	// If our weapon has a skin try and find a unique name for it if we want one.
-	if (killedwithskinID && cl_ge_killfeed_readskins.GetBool())
+	if (canBeLocalized && killedwithskinID && cl_ge_killfeed_readskins.GetBool())
 		Q_snprintf(killedwithskin, sizeof(killedwithskin), "%s%d", killedwith, killedwithskinID);
 	else
 		Q_strncpy(killedwithskin, killedwith, MAX_PLAYER_NAME_LENGTH);

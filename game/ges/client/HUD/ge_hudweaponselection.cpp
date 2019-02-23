@@ -554,13 +554,19 @@ void CHudWeaponSelection::Paint()
 
 			// Draw the weapon's print name on the bucket
 			
+            const char *printName = pWeapon->GetPrintName();
+
+            CGEWeapon *pGEWeapon = ToGEWeapon(pWeapon);
+            if (pGEWeapon)
+                printName = pGEWeapon->GetCustomPrintName();
+
 			wchar_t wszName[MAX_WEAPON_STRING];
-			wchar_t *tempString = g_pVGuiLocalize->Find(pWeapon->GetPrintName());
+			wchar_t *tempString = g_pVGuiLocalize->Find(printName);
 
 			if ( tempString )
 				_snwprintf(wszName, MAX_WEAPON_STRING, L"%s", tempString);
 			else
-				g_pVGuiLocalize->ConvertANSIToUnicode(pWeapon->GetPrintName(), wszName, MAX_WEAPON_STRING);
+				g_pVGuiLocalize->ConvertANSIToUnicode(printName, wszName, MAX_WEAPON_STRING);
 
 			if ( !pWeapon->CanBeSelected() )
 			{
@@ -609,14 +615,20 @@ void CHudWeaponSelection::PaintFastWeaponSwitch( void )
 
 	DrawBox( b[0], b[1], m_iBoxWide, m_iBoxTall, col );
 
+    const char *selectedPrintName = pSelectedWeapon->GetPrintName();
+
+    CGEWeapon *pGESelectedWeapon = ToGEWeapon(pSelectedWeapon);
+    if (pGESelectedWeapon)
+        selectedPrintName = pGESelectedWeapon->GetCustomPrintName();
+
 	// Draw the weapon's print name on the bucket
 	wchar_t wszName[MAX_WEAPON_STRING];
-	wchar_t *tempString = g_pVGuiLocalize->Find(pSelectedWeapon->GetPrintName());
+	wchar_t *tempString = g_pVGuiLocalize->Find(selectedPrintName);
 
 	if ( tempString )
 		_snwprintf(wszName, MAX_WEAPON_STRING, L"%s", tempString);
 	else
-		g_pVGuiLocalize->ConvertANSIToUnicode(pSelectedWeapon->GetPrintName(), wszName, MAX_WEAPON_STRING);
+		g_pVGuiLocalize->ConvertANSIToUnicode(selectedPrintName, wszName, MAX_WEAPON_STRING);
 
 	col = m_TextColor;
 	col[3] = m_flSelectionAlphaOverride;

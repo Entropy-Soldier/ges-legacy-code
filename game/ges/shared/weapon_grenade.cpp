@@ -410,6 +410,9 @@ void CGEWeaponGrenade::ThrowGrenade( float throwforce, bool deathThrow /* == fal
 		pGrenade->SetDamage( GetWeaponDamage() );
 		pGrenade->SetDamageRadius( GetWeaponDamageRadius() );
 		pGrenade->SetSourceWeapon(this);
+
+        // Copy custom print name string directly instead of possibly copying the normal print name.
+        pGrenade->SetCustomPrintName(m_sPrintNameCustom);
 		
 		if (deathThrow) // For acheivement tracking.
 			pGrenade->m_bDroppedOnDeath = true;
@@ -457,6 +460,9 @@ void CGEWeaponGrenade::ExplodeInHand( void )
 
 		pGrenade->SetDamage( GetWeaponDamage() );
 		pGrenade->SetDamageRadius( GetWeaponDamageRadius() );
+
+        // Copy custom print name string directly instead of possibly copying the normal print name.
+        pGrenade->SetCustomPrintName(m_sPrintNameCustom);
 
 		pGrenade->SetTimer( 0 );
 	}

@@ -160,6 +160,14 @@ void pyWeaponSetAbsAngles( CGEWeapon *weap, QAngle angles )
 	weap->SetAbsAngles( angles );
 }
 
+CBasePlayer *pyWeaponGetOriginalOwner( CGEWeapon *weap )
+{
+	if ( !weap )
+		return NULL;
+
+    return ToGEMPPlayer(weap->GetOriginalOwner());
+}
+
 // Intended for setting the skins of tokens, was used in 5.0 to temporarily give weapon skin rewards out.
 
 // But hey, giving strawberry rocket launchers to janus and blueberry to MI6 was a novel idea.
@@ -317,6 +325,8 @@ BOOST_PYTHON_MODULE(GEWeapon)
         .def("GetAimBonus", &CGEWeapon::GetAimBonus, GetAimBonus_overloads())
         .def("GetJumpPenalty", &CGEWeapon::GetJumpPenalty, GetJumpPenalty_overloads())
 
+        .def("GetOriginalOwner", &CGEWeapon::GetOriginalOwner, return_value_policy<reference_existing_object>())
+
         .def("GetDamageMultiplier", &CGEWeapon::GetDamageMultiplier)
 		.def("SetDamageMultiplier", &CGEWeapon::SetDamageMultiplier)
         .def("GetDamageCapMultiplier", &CGEWeapon::GetDamageCapMultiplier)
@@ -341,6 +351,8 @@ BOOST_PYTHON_MODULE(GEWeapon)
 		.def("SetRangeOffset", &CGEWeapon::SetRangeOffset)
         .def("GetPenetrationOffset", &CGEWeapon::GetPenetrationOffset)
 		.def("SetPenetrationOffset", &CGEWeapon::SetPenetrationOffset)
+        .def("GetCustomPrintName", &CGEWeapon::GetCustomPrintName)
+		.def("SetCustomPrintName", &CGEWeapon::SetCustomPrintName)
 
 		// The following override CBaseEntity to prevent movement when held
 		.def("SetAbsOrigin", pyWeaponSetAbsOrigin)

@@ -233,6 +233,9 @@ CGETKnife *CWeaponKnifeThrowing::CreateKnife( const Vector &vecOrigin, const QAn
 	if ( pOwner->IsPlayer() )
 		ToGEMPPlayer( pOwner )->AddThrownObject( pKnife );
 
+    // Copy custom print name string directly instead of possibly copying the normal print name.
+    pKnife->SetCustomPrintName(m_sPrintNameCustom);
+
 	return pKnife;
 }
 #endif

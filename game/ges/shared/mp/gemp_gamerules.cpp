@@ -2533,7 +2533,7 @@ void CGEMPRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &info 
 		if ( pWeapon )
 		{
 			CGEWeapon *pGEWeapon = ToGEWeapon( (CBaseCombatWeapon*)pWeapon );
-			killer_weapon_name = pGEWeapon->GetPrintName();
+			killer_weapon_name = pGEWeapon->GetCustomPrintName();
 			weaponid = pGEWeapon->GetWeaponID();
 			if (weaponid < WEAPON_RANDOM)
 				wepSkin = pGEWeapon->GetSkin();
@@ -2571,7 +2571,7 @@ void CGEMPRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &info 
 		else if ( Q_stristr( killer_weapon_name, "npc_" ) && !pInflictor->IsNPC() )
 		{
 			CGEBaseGrenade *pNPC = ToGEGrenade( pInflictor );
-			killer_weapon_name = pNPC->GetPrintName();
+			killer_weapon_name = pNPC->GetCustomPrintName();
 			weaponid = pNPC->GetWeaponID();
 			custom = pNPC->GetCustomData();
 		}

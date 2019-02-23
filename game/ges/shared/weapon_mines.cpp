@@ -255,7 +255,10 @@ void CGEWeaponMine::ThrowMine( void )
 	pMine->SetLocalAngularVelocity( QAngle(rot1, rot2, 0) * timescale );
 	pMine->SetMineType( GetWeaponID() );
 	pMine->SetDamage( GetWeaponDamage() );
-	pMine->SetDamageRadius( GetGEWpnData().m_flDamageRadius );
+	pMine->SetDamageRadius( GetWeaponDamageRadius() );
+
+    // Copy custom print name string directly instead of possibly copying the normal print name.
+    pMine->SetCustomPrintName(m_sPrintNameCustom);
 
 	if ( timescale != 1 )
 		pMine->SetGravity( timescale*timescale );

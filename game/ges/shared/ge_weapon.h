@@ -94,6 +94,8 @@ public:
 
 	Vector	GetOriginalSpawnOrigin( void ) { return m_vOriginalSpawnOrigin;	}
 	QAngle	GetOriginalSpawnAngles( void ) { return m_vOriginalSpawnAngles;	}
+
+    CGEPlayer *GetOriginalOwner( void );
 #endif
 
 	// Get GE weapon specific weapon data.
@@ -193,10 +195,15 @@ public:
 	virtual float GetMinRestTime() { return GetClickFireRate(); }
 	virtual float GetMaxRestTime() { return GetFireRate(); }
 
+    virtual void SetOriginalOwnerID(int val) { m_iOriginalOwnerID = val; }
+    virtual int  GetOriginalOwnerID() { return m_iOriginalOwnerID; }
+
 	// Variable that stores our accuracy penalty time limit
 	CNetworkVar( float,	m_flAccuracyPenalty );
 	CNetworkVar( float, m_flCoolDownTime );
 
+    CNetworkVar( int, m_iOriginalOwnerID );
+    
     // Stat modifiers.
     // Adding a new variable to here naturally requires updating the network tables and
     // ge_weapon constructor with the new value.
@@ -221,6 +228,11 @@ public:
     GEWeaponStatModVar( float, m_fl, RangeOffset );
 
     GEWeaponStatModVar( float, m_fl, PenetrationOffset );
+
+    // Returns the custom print name if set, otherwise returns the standard one.
+    const char *GetCustomPrintName(void);
+    void SetCustomPrintName( char *newVal ) { if (CanUseWeaponMods()) Q_strncpy(m_sPrintNameCustom.GetForModify(), newVal, 32); else Warning("Gamemode tried to use weapon mods without enabling them!\n"); }
+    CNetworkString( m_sPrintNameCustom, 32 );
 
 protected:
 	bool			m_bLowered;			// Whether the viewmodel is raised or lowered

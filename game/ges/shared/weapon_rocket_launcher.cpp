@@ -307,6 +307,9 @@ void CGEWeaponRocketLauncher::LaunchRocket( void )
 		pRocket->SetDamage( GetWeaponDamage() );
 		pRocket->SetDamageRadius( GetWeaponDamageRadius() );
 
+        // Copy custom print name string directly instead of possibly copying the normal print name.
+        pRocket->SetCustomPrintName(m_sPrintNameCustom);
+
 		if (pOwner->GetTeamNumber() == TEAM_JANUS)
 			pRocket->SetCollisionGroup( COLLISION_GROUP_GRENADE_JANUS );
 		else if (pOwner->GetTeamNumber() == TEAM_MI6)

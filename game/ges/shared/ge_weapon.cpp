@@ -58,6 +58,7 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
 	RecvPropBool( RECVINFO( m_bSilenced ) ),
 	RecvPropFloat( RECVINFO( m_flAccuracyPenalty ) ),
 	RecvPropFloat( RECVINFO( m_flCoolDownTime) ),
+    RecvPropInt( RECVINFO( m_iOriginalOwnerID ) ),
 
     RecvPropFloat( RECVINFO( m_flDamageMultiplier ) ),
     RecvPropFloat( RECVINFO( m_flDamageCapMultiplier ) ),
@@ -75,6 +76,8 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
     RecvPropFloat( RECVINFO( m_flRangeOffset ) ),
     RecvPropFloat( RECVINFO( m_flPenetrationOffset ) ),
 
+    RecvPropString( RECVINFO( m_sPrintNameCustom ) ),
+
 	RecvPropBool( RECVINFO(m_bEnableGlow) ),
 	RecvPropInt( RECVINFO(m_GlowColor), 0, RecvProxy_IntToColor32 ),
 	RecvPropFloat( RECVINFO(m_GlowDist) ),
@@ -83,6 +86,7 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
 	SendPropBool( SENDINFO( m_bSilenced ) ),
 	SendPropFloat( SENDINFO( m_flAccuracyPenalty ) ),
 	SendPropFloat( SENDINFO( m_flCoolDownTime) ),
+    SendPropInt( SENDINFO( m_iOriginalOwnerID ) ),
 
     SendPropFloat( SENDINFO( m_flDamageMultiplier ) ),
     SendPropFloat( SENDINFO( m_flDamageCapMultiplier ) ),
@@ -99,6 +103,8 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
 	SendPropFloat( SENDINFO( m_flBlastRadiusOffset ) ),
 	SendPropFloat( SENDINFO( m_flRangeOffset ) ),
     SendPropFloat( SENDINFO( m_flPenetrationOffset ) ),
+
+    SendPropString( SENDINFO( m_sPrintNameCustom ) ),
 
 	SendPropBool( SENDINFO(m_bEnableGlow) ),
 	SendPropInt( SENDINFO(m_GlowColor), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt ),
@@ -172,6 +178,8 @@ CGEWeapon::CGEWeapon()
 
 	m_flShootTime = 0;
 
+    m_iOriginalOwnerID = -1;
+
     m_flDamageMultiplier = 1.0f;
     m_flDamageCapMultiplier = 1.0f;
     m_flFireRateMultiplier = 1.0f;
@@ -187,6 +195,8 @@ CGEWeapon::CGEWeapon()
     m_flBlastRadiusOffset = 0.0f;
     m_flRangeOffset = 0.0f;
     m_flPenetrationOffset = 0.0f;
+
+    m_sPrintNameCustom.GetForModify()[0] = '\0';
 
 #ifdef GAME_DLL
 	m_flDeployTime = 0.0f;
@@ -256,6 +266,10 @@ void CGEWeapon::Precache( void )
 void CGEWeapon::Equip( CBaseCombatCharacter *pOwner )
 {
 	BaseClass::Equip( pOwner );
+    CGEPlayer *pGEOwner = ToGEPlayer(pOwner);
+
+    if ( pGEOwner && m_iOriginalOwnerID == -1 ) // We don't have an original owner yet.
+        m_iOriginalOwnerID = pGEOwner->GetUserID();
 
 #ifdef GAME_DLL
 	GEMPRules()->GetTokenManager()->OnTokenPicked( this, ToGEPlayer( pOwner ) );
@@ -279,6 +293,15 @@ void CGEWeapon::Equip( CBaseCombatCharacter *pOwner )
 #endif
 	}
 }
+
+extern CBasePlayer* UTIL_PlayerByUserId(int userID);
+
+#ifdef GAME_DLL
+CGEPlayer *CGEWeapon::GetOriginalOwner()
+{
+    return ToGEPlayer(UTIL_PlayerByUserId(m_iOriginalOwnerID));
+}
+#endif
 
 void CGEWeapon::Drop( const Vector &vecVelocity )
 {
@@ -1112,6 +1135,14 @@ void CGEWeapon::MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int i
 bool CGEWeapon::CanUseWeaponMods()
 {
     return GEMPRules() && GEMPRules()->WeaponModsEnabled();
+}
+
+const char *CGEWeapon::GetCustomPrintName()
+{
+    if ( m_sPrintNameCustom.Get()[0] == '\0' ) // No custom name, just use the normal one.
+        return GetPrintName();
+    else
+        return m_sPrintNameCustom.Get();
 }
 
 float CGEWeapon::GetZoomOffset()

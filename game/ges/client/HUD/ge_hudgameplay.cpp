@@ -259,7 +259,7 @@ void CHudGameplay::ResolveWeaponHelp(void)
 	m_pWeaponHelp->InsertCenterText(true);
 	m_pWeaponHelp->InsertFontChange(m_hHeaderFont);
 
-	m_pWeaponHelp->InsertString(pGEWeapon->GetPrintName());
+	m_pWeaponHelp->InsertString(pGEWeapon->GetCustomPrintName());
 
 	m_pWeaponHelp->InsertCenterText(false);
 	m_pWeaponHelp->InsertFontChange(m_hWeaponFont);
