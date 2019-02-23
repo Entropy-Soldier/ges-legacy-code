@@ -114,10 +114,12 @@ void CGEMine::InputExplode( inputdata_t &inputdata )
 	//if ( angles.y != 180.0f )
 	//	forward.z *= -1; // invert our z only if we aren't on the ceiling
 
-	// Create the explosion 4 units AWAY from the surface we are attached to
-	ExplosionCreate( GetAbsOrigin() + forward*4, GetAbsAngles(), inputdata.pActivator, GetDamage(), GetDamageRadius(), 
-		SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, this);
-
+    if ( GetDamageRadius() > 0 ) // Can't explode if we don't have a radius.
+    {
+        // Create the explosion 4 units AWAY from the surface we are attached to
+        ExplosionCreate(GetAbsOrigin() + forward * 4, GetAbsAngles(), inputdata.pActivator, GetDamage(), GetDamageRadius(),
+            SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, this);
+    }
 	StopSound(GetAttachSound());
 	// Effectively hide us from everyone until the explosion is done with
 	GEUTIL_DelayRemove( this, GE_EXP_MAX_DURATION );
