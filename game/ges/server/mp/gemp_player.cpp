@@ -19,6 +19,7 @@
 #include "networkstringtable_gamedll.h"
 
 #include "ge_utils.h"
+#include "ge_weaponutils.h"
 #include "ge_playerspawn.h"
 #include "ge_gameplay.h"
 #include "ge_radarresource.h"
@@ -1870,7 +1871,8 @@ bool CGEMPPlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 	bool forcepickup = GERules()->ShouldForcePickup(this, pWeapon);
 
 	// We have to do this before we actually fire the weapon pickup code so the skin data is overwritten before it starts getting read.
-	if (GetUsedWeaponSkin(pGEWeapon->GetWeaponID()) < pWeapon->m_nSkin && pGEWeapon->GetWeaponID() < WEAPON_RANDOM)
+    // Ammo-based pickup weapons like mines use their skins to affect their dropped ammo box and thus shouldn't transfer skins like this.
+	if (GetUsedWeaponSkin(pGEWeapon->GetWeaponID()) < pWeapon->m_nSkin && pGEWeapon->GetWeaponID() < WEAPON_RANDOM && !IsAmmoBasedWeapon(pGEWeapon->GetWeaponID()))
 	{
 		SetUsedWeaponSkin(pGEWeapon->GetWeaponID(), pWeapon->m_nSkin);
 		forcepickup = true;  //If we got a new skin, pick up the weapon no matter what.
