@@ -23,6 +23,7 @@
 	#include "soundent.h"
 	#include "func_break.h"
 	#include "ge_playerresource.h"
+    #include "explode.h"
 #endif
 
 #include "decals.h"
@@ -266,6 +267,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 	FireBulletsInfo_t modinfo = info;
 	CGEWeapon *pWeapon = NULL;
 	bool isWepShotgun = false;
+    int damageCap = INT_MAX;
 
 	// Player and NPC specific actions
 	if ( IsNPC() || IsPlayer() )
@@ -279,6 +281,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 				modinfo.m_iDamage = pWeapon->GetWeaponDamage();
 
 			isWepShotgun = pWeapon->IsShotgun(); // We can't use the amount of shots fired for this because automatics can fire multiple bullets per frame.
+            damageCap = pWeapon->GetDamageCap();
 		}
 	}
 
@@ -303,6 +306,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 	ClearMultiDamage();
 	g_MultiDamage.SetDamageType( nDamageType | DMG_NEVERGIB );
 	g_MultiDamage.SetDamageStats( modinfo.m_nFlags );
+    g_MultiDamage.SetDamageCap( damageCap );
 
 	Vector vecDir;
 	Vector vecEnd;
@@ -461,7 +465,13 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 			// For shots that don't need persistance
 			int soundEntChannel = ( modinfo.m_nFlags&FIRE_BULLETS_TEMPORARY_DANGER_SOUND ) ? SOUNDENT_CHANNEL_BULLET_IMPACT : SOUNDENT_CHANNEL_UNSPECIFIED;
 			CSoundEnt::InsertSound( SOUND_BULLET_IMPACT, tr.endpos, 200, 0.5, this, soundEntChannel );
-		#endif
+		
+            if ( !(modinfo.m_nFlags & FIRE_BULLETS_PENETRATED_SHOT) && modinfo.m_flBlastRadius > 0.0f )
+            {
+                ExplosionCreate(tr.endpos, GetAbsAngles(), this, modinfo.m_iDamage * clamp(modinfo.m_flBlastRadius/60, 0.5, 2), modinfo.m_flBlastRadius,
+			    SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, (CBaseEntity *)NULL);
+            }
+        #endif
 
 			// See if the bullet ended up underwater + started out of the water
 			if ( !bHitWater && ( enginetrace->GetPointContents( tr.endpos ) & (CONTENTS_WATER|CONTENTS_SLIME) ) )
@@ -497,6 +507,10 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 				dmgInfo.ScaleDamageForce( modinfo.m_flDamageForceScale );
 				dmgInfo.SetAmmoType( modinfo.m_iAmmoType );
 				dmgInfo.SetWeapon( pWeapon );
+                if (pWeapon)
+                {
+                    dmgInfo.SetDamageCap( pWeapon->GetDamageCap() );
+                }
 				dmgInfo.SetDamageStats( modinfo.m_nFlags );
 				tr.m_pEnt->DispatchTraceAttack( dmgInfo, vecDir, &tr );
 			
@@ -578,6 +592,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 			{
 				CTakeDamageInfo dmgInfo( this, pAttacker, flCumulativeDamage, nDamageType );
 				dmgInfo.SetWeapon( pWeapon );
+                dmgInfo.SetDamageCap( pWeapon->GetDamageCap() );
 				gamestats->Event_WeaponHit( pPlayer, true, pWeapon->GetClassname(), dmgInfo );
 			}
 

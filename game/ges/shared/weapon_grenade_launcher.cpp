@@ -463,6 +463,7 @@ void CGEWeaponGrenadeLauncher::LaunchGrenade( void )
 			pShell->SetCollisionGroup(COLLISION_GROUP_GRENADE_MI6);
 
 		pShell->SetDamage( GetWeaponDamage() );
+        pShell->SetDamageCap( GetDamageCap() );
 		pShell->SetDamageRadius( GetWeaponDamageRadius() );
 
         // Copy custom print name string directly instead of possibly copying the normal print name.

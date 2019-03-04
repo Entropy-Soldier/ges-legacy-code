@@ -47,6 +47,7 @@ public:
 private:
 	bool m_bInAir;
 	float m_flDamage;
+    float m_flDamageCap;
 	float m_flStopFlyingTime;
 };
 

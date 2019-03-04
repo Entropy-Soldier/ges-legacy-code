@@ -92,13 +92,18 @@ public:
 		return BaseClass::KeyInput(down, keynum, pszCurrentBinding);
 	}
 
-	virtual float GetZoomOffset()
+	virtual float GetZoomOffset( bool modded = true )
 	{
 		return m_iLastZoomOffset;
 	}
 
 private:
 	int m_iLastZoomOffset;
+#else
+    virtual float GetZoomOffset( bool modded = true )
+    {
+	    return BaseClass::GetZoomOffset( false ); // Can't modify the sniper's zoom due to the client being able to adjust it.
+    }
 #endif
 
 private:

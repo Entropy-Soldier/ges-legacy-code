@@ -84,6 +84,7 @@ void CGETKnife::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
 		ClearMultiDamage();
 
 		CTakeDamageInfo	dmgInfo( this, GetOwnerEntity(), GetDamage(), DMG_SLASH | DMG_NEVERGIB );
+        dmgInfo.SetDamageCap( GetDamageCap() );
 		CalculateMeleeDamageForce( &dmgInfo, vecAiming, tr.endpos, TKNIFE_FORCE_SCALE );
 		dmgInfo.SetDamagePosition( tr.endpos );
 
@@ -190,6 +191,7 @@ void CGETKnife::DamageTouch( CBaseEntity *pOther )
 		ClearMultiDamage();
 
 		CTakeDamageInfo	dmgInfo( this, GetOwnerEntity(), GetDamage(), DMG_SLASH | DMG_NEVERGIB );
+        dmgInfo.SetDamageCap( GetDamageCap() );
 		CalculateMeleeDamageForce( &dmgInfo, vecAiming, tr.endpos, TKNIFE_FORCE_SCALE );
 		dmgInfo.SetDamagePosition( tr.endpos );
 

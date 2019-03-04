@@ -17,8 +17,8 @@
 
 #ifdef GE_USE_ROLLINGEXP
 
-CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, const Vector pos, float dmg, float dmgRadius );
-CBaseEntity* Create_GEExplosion( CBaseEntity* activator, const Vector pos, float dmg, float dmgRadius );
+CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, const Vector pos, float dmg, float dmgRadius, int dmgCap );
+CBaseEntity* Create_GEExplosion( CBaseEntity* activator, const Vector pos, float dmg, float dmgRadius, int dmgCap );
 
 class CEnvExplosion : public CPointEntity
 {
@@ -41,6 +41,7 @@ public:
 	DECLARE_DATADESC();
 
 	int m_iMagnitude;		// how large is the fireball? how much damage?
+    int m_iDamageCap;
 	int m_iRadiusOverride;	// For use when m_iMagnitude results in larger radius than designer desires.
 	float m_flDamageForce;	// How much damage force should we use?
 

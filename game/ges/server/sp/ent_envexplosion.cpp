@@ -24,6 +24,7 @@ LINK_ENTITY_TO_CLASS( env_explosion, CEnvExplosion );
 BEGIN_DATADESC( CEnvExplosion )
 
 	DEFINE_KEYFIELD( m_iMagnitude, FIELD_INTEGER, "iMagnitude" ),
+    DEFINE_KEYFIELD( m_iDamageCap, FIELD_FLOAT, "flDamageCap" ),
 	DEFINE_KEYFIELD( m_iRadiusOverride, FIELD_INTEGER, "iRadiusOverride" ),
 	DEFINE_KEYFIELD( m_flDamageForce, FIELD_FLOAT, "DamageForce" ),
 	DEFINE_FIELD( m_hInflictor, FIELD_EHANDLE ),
@@ -95,7 +96,7 @@ void CEnvExplosion::InputExplode( inputdata_t &inputdata )
 	// Get the radius override if specified
 	float fRadius = ( m_iRadiusOverride > 0 ) ? m_iRadiusOverride : ( m_iMagnitude * 1.25f );
 
-	Create_GEExplosion( pAttacker,  m_hInflictor ? m_hInflictor : this, vecExplodeOrigin, m_iMagnitude, fRadius );
+	Create_GEExplosion( pAttacker,  m_hInflictor ? m_hInflictor : this, vecExplodeOrigin, m_iMagnitude, fRadius, m_iDamageCap );
 
 	if ( !(m_spawnflags & SF_ENVEXPLOSION_REPEATABLE) )
 	{

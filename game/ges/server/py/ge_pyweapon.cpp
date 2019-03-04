@@ -263,9 +263,15 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetWeaponDamage_overloads, CGEWeapon::Get
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetDamageCap_overloads, CGEWeapon::GetDamageCap, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMaxClip1_overloads, CGEWeapon::GetMaxClip1, 0, 1);
 
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetWeaponFireRate_overloads, CGEWeapon::GetFireRate, 0, 1);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetWeaponClickFireRate_overloads, CGEWeapon::GetClickFireRate, 0, 1);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetWeaponAccFireRate_overloads, CGEWeapon::GetAccFireRate, 0, 1);
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMaxPenetrationDepth_overloads, CGEWeapon::GetMaxPenetrationDepth, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetWeaponDamageRadius_overloads, CGEWeapon::GetWeaponDamageRadius, 0, 1);
 BOOST_PYTHON_FUNCTION_OVERLOADS(GetMeleeWeaponRange_overloads, pyGetMeleeWeaponRange, 1, 2);
+
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetZoomOffset_overloads, CGEWeapon::GetZoomOffset, 0, 1);
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMinSpreadVec_overloads, CGEWeapon::GetMinSpreadVec, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMaxSpreadVec_overloads, CGEWeapon::GetMaxSpreadVec, 0, 1);
@@ -309,6 +315,10 @@ BOOST_PYTHON_MODULE(GEWeapon)
 		.def("GetDefaultClip", &CGEWeapon::GetDefaultClip1)
 		.def("GetDamage", &CGEWeapon::GetWeaponDamage, GetWeaponDamage_overloads())
         .def("GetDamageCap", &CGEWeapon::GetDamageCap, GetDamageCap_overloads())
+        .def("GetFireRate", &CGEWeapon::GetFireRate, GetWeaponFireRate_overloads())
+        .def("GetClickFireRate", &CGEWeapon::GetClickFireRate, GetWeaponClickFireRate_overloads())
+        .def("GetAccFireRate", &CGEWeapon::GetAccFireRate, GetWeaponAccFireRate_overloads())
+        
         .def("GetMaxPenetrationDepth", &CGEWeapon::GetMaxPenetrationDepth, GetMaxPenetrationDepth_overloads())
 		.def("GetWeaponId", &CGEWeapon::GetWeaponID)
 		.def("GetSecondsUntilPickupAllowed", &CGEWeapon::GetSecondsUntilPickup)
@@ -325,14 +335,20 @@ BOOST_PYTHON_MODULE(GEWeapon)
         .def("GetAimBonus", &CGEWeapon::GetAimBonus, GetAimBonus_overloads())
         .def("GetJumpPenalty", &CGEWeapon::GetJumpPenalty, GetJumpPenalty_overloads())
 
+        .def("GetZoomOffset", &CGEWeapon::GetZoomOffset, GetZoomOffset_overloads())
+
         .def("GetOriginalOwner", &CGEWeapon::GetOriginalOwner, return_value_policy<reference_existing_object>())
 
-        .def("GetDamageMultiplier", &CGEWeapon::GetDamageMultiplier)
-		.def("SetDamageMultiplier", &CGEWeapon::SetDamageMultiplier)
-        .def("GetDamageCapMultiplier", &CGEWeapon::GetDamageCapMultiplier)
-		.def("SetDamageCapMultiplier", &CGEWeapon::SetDamageCapMultiplier)
-		.def("GetFireRateMultiplier", &CGEWeapon::GetFireRateMultiplier)
-		.def("SetFireRateMultiplier", &CGEWeapon::SetFireRateMultiplier)
+        .def("GetDamageOffset", &CGEWeapon::GetDamageOffset)
+		.def("SetDamageOffset", &CGEWeapon::SetDamageOffset)
+        .def("GetDamageCapOffset", &CGEWeapon::GetDamageCapOffset)
+		.def("SetDamageCapOffset", &CGEWeapon::SetDamageCapOffset)
+		.def("GetFireRateOffset", &CGEWeapon::GetFireRateOffset)
+		.def("SetFireRateOffset", &CGEWeapon::SetFireRateOffset)
+        .def("GetClickFireRateOffset", &CGEWeapon::GetClickFireRateOffset)
+		.def("SetClickFireRateOffset", &CGEWeapon::SetClickFireRateOffset)
+        .def("GetAccFireRateOffset", &CGEWeapon::GetAccFireRateOffset)
+		.def("SetAccFireRateOffset", &CGEWeapon::SetAccFireRateOffset)
         .def("GetMinSpreadOffset", &CGEWeapon::GetMinSpreadOffset)
 		.def("SetMinSpreadOffset", &CGEWeapon::SetMinSpreadOffset)
 		.def("GetMaxSpreadOffset", &CGEWeapon::GetMaxSpreadOffset)
@@ -345,6 +361,8 @@ BOOST_PYTHON_MODULE(GEWeapon)
 		.def("SetMaxClip1Offset", &CGEWeapon::SetMaxClip1Offset)
         .def("GetMaxClip2Offset", &CGEWeapon::GetMaxClip2Offset)
 		.def("SetMaxClip2Offset", &CGEWeapon::SetMaxClip2Offset)
+        .def("GetZoomOffsetOffset", &CGEWeapon::GetZoomOffsetOffset)
+		.def("SetZoomOffsetOffset", &CGEWeapon::SetZoomOffsetOffset)
         .def("GetBlastRadiusOffset", &CGEWeapon::GetBlastRadiusOffset)
 		.def("SetBlastRadiusOffset", &CGEWeapon::SetBlastRadiusOffset)
         .def("GetRangeOffset", &CGEWeapon::GetRangeOffset)

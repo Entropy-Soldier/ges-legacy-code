@@ -34,6 +34,12 @@ extern short	g_sModelIndexSmoke;
 void ExplosionCreate( const Vector &center, const QAngle &angles, 
 	CBaseEntity *pOwner, int magnitude, int radius, bool doDamage, float flExplosionForce = 0.0f, bool bSurfaceOnly = false, bool bSilent = false, int iCustomDamageType = -1 );
 
+#ifdef GE_DLL
+void ExplosionCreate( const Vector &center, const QAngle &angles, 
+					 CBaseEntity *pOwner, int magnitude, int damageCap, int radius, int nSpawnFlags, 
+					 float flExplosionForce = 0.0f, CBaseEntity *pInflictor = NULL, int iCustomDamageType = -1,  const EHANDLE *ignoredEntity = NULL, Class_T ignoredClass = CLASS_NONE);
+#endif
+
 void ExplosionCreate( const Vector &center, const QAngle &angles, 
 					 CBaseEntity *pOwner, int magnitude, int radius, int nSpawnFlags, 
 					 float flExplosionForce = 0.0f, CBaseEntity *pInflictor = NULL, int iCustomDamageType = -1,  const EHANDLE *ignoredEntity = NULL, Class_T ignoredClass = CLASS_NONE);

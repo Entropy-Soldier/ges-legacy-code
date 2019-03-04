@@ -24,6 +24,9 @@ BEGIN_SIMPLE_DATADESC( CTakeDamageInfo )
 	DEFINE_FIELD( m_flDamage, FIELD_FLOAT),
 	DEFINE_FIELD( m_flMaxDamage, FIELD_FLOAT),
 	DEFINE_FIELD( m_flBaseDamage, FIELD_FLOAT ),
+#ifdef GE_DLL
+    DEFINE_FIELD( m_iDamageCap, FIELD_INTEGER ),
+#endif
 	DEFINE_FIELD( m_bitsDamageType, FIELD_INTEGER),
 	DEFINE_FIELD( m_iDamageCustom, FIELD_INTEGER),
 	DEFINE_FIELD( m_iDamageStats, FIELD_INTEGER),
@@ -52,6 +55,8 @@ void CTakeDamageInfo::Init( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBa
 	m_iDamageCustom = iCustomDamage;
 
 #ifdef GE_DLL
+    m_iDamageCap = INT_MAX; // Can do unlimited damage by default.
+
 	m_iDamageStats = 0;
 #endif
 
@@ -245,6 +250,7 @@ void AddMultiDamage( const CTakeDamageInfo &info, CBaseEntity *pEntity )
 	g_MultiDamage.SetAmmoType( info.GetAmmoType() );
 #ifdef GE_DLL
 	g_MultiDamage.SetDamageStats( info.GetDamageStats() );
+    g_MultiDamage.SetDamageCap( info.GetDamageCap() );
 #endif
 
 	bool bHasPhysicsForceDamage = !g_pGameRules->Damage_NoPhysicsForce( info.GetDamageType() );

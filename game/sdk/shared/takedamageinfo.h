@@ -58,6 +58,11 @@ public:
 	float			GetBaseDamage() const;
 	bool			BaseDamageIsValid() const;
 
+#ifdef GE_DLL
+    int			    GetDamageCap() const;
+    void			SetDamageCap( int iDamageCap );
+#endif
+
 	Vector			GetDamageForce() const;
 	void			SetDamageForce( const Vector &damageForce );
 	void			ScaleDamageForce( float flScaleAmount );
@@ -109,6 +114,7 @@ protected:
 	float			m_flMaxDamage;
 #ifdef GE_DLL
 	float			m_flBaseDamage;			// The damage before gamemode multipliers and invulnerability.  Used for uniform damage forces and so gamemodes can know the original attack damage.
+    int			    m_iDamageCap;          // Maximum damage per half-second interval.
 #else
 	float			m_flBaseDamage;			// The damage amount before skill leve adjustments are made. Used to get uniform damage forces.
 #endif
@@ -245,6 +251,18 @@ inline bool CTakeDamageInfo::BaseDamageIsValid() const
 {
 	return (m_flBaseDamage != BASEDAMAGE_NOT_SPECIFIED);
 }
+
+#ifdef GE_DLL
+inline int CTakeDamageInfo::GetDamageCap() const
+{
+    return m_iDamageCap;
+}
+
+inline void CTakeDamageInfo::SetDamageCap( int iDamageCap )
+{
+	m_iDamageCap = iDamageCap;
+}
+#endif
 
 inline Vector CTakeDamageInfo::GetDamageForce() const
 {

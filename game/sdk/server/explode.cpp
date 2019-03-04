@@ -384,6 +384,44 @@ void CEnvExplosion::Smoke( void )
 #include "ent_envexplosion.h"
 
 #endif // GE_USE_ROLLINGEXP
+
+#ifdef GE_DLL
+// HACKHACK -- create one of these and fake a keyvalue to get the right explosion setup
+void ExplosionCreate( const Vector &center, const QAngle &angles, 
+	CBaseEntity *pOwner, int magnitude, int damagecap, int radius, int nSpawnFlags, float flExplosionForce, CBaseEntity *pInflictor, int iCustomDamageType,
+	const EHANDLE *ignoredEntity , Class_T ignoredClass )
+{
+	CEnvExplosion *pExplosion = (CEnvExplosion*)CBaseEntity::Create( "env_explosion", center, angles, pOwner );
+
+	pExplosion->AddSpawnFlags( nSpawnFlags );
+	pExplosion->SetCustomDamageType( iCustomDamageType );
+	pExplosion->SetOwnerEntity( pOwner );
+	pExplosion->m_hInflictor = pInflictor;
+
+	pExplosion->m_iMagnitude = magnitude;
+    pExplosion->m_iDamageCap = damagecap;
+	pExplosion->m_iRadiusOverride = radius;
+	pExplosion->m_flDamageForce = flExplosionForce;
+	pExplosion->m_nRenderMode = kRenderTransAdd;
+
+	if ( ignoredEntity )
+		pExplosion->m_hEntityIgnore = *ignoredEntity;
+
+	pExplosion->m_iClassIgnore = ignoredClass;
+
+	pExplosion->Spawn();
+
+	variant_t emptyVariant;
+	pExplosion->AcceptInput( "Explode", NULL, NULL, emptyVariant, 0 );
+}
+
+void ExplosionCreate(const Vector &center, const QAngle &angles,
+    CBaseEntity *pOwner, int magnitude, int radius, int nSpawnFlags, float flExplosionForce, CBaseEntity *pInflictor, int iCustomDamageType,
+    const EHANDLE *ignoredEntity, Class_T ignoredClass)
+{
+    ExplosionCreate( center, angles, pOwner, magnitude, INT_MAX, radius, nSpawnFlags, flExplosionForce, pInflictor, iCustomDamageType, ignoredEntity, ignoredClass );
+}
+#else
 // HACKHACK -- create one of these and fake a keyvalue to get the right explosion setup
 void ExplosionCreate( const Vector &center, const QAngle &angles, 
 	CBaseEntity *pOwner, int magnitude, int radius, int nSpawnFlags, float flExplosionForce, CBaseEntity *pInflictor, int iCustomDamageType,
@@ -411,8 +449,7 @@ void ExplosionCreate( const Vector &center, const QAngle &angles,
 	variant_t emptyVariant;
 	pExplosion->AcceptInput( "Explode", NULL, NULL, emptyVariant, 0 );
 }
-
-
+#endif
 void ExplosionCreate( const Vector &center, const QAngle &angles, 
 	CBaseEntity *pOwner, int magnitude, int radius, bool doDamage, float flExplosionForce, bool bSurfaceOnly, bool bSilent, int iCustomDamageType )
 {

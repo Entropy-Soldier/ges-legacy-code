@@ -113,6 +113,20 @@ const char* WeaponPickupSoundFromID(int id)
 	return NULL;
 }
 
+bool IsAmmoBasedWeapon(int id)
+{
+    int ammoPickupWeaponIDs[] = { WEAPON_TIMEDMINE, WEAPON_REMOTEMINE, WEAPON_PROXIMITYMINE, WEAPON_KNIFE_THROWING, WEAPON_GRENADE };
+    unsigned int ammoPickupWeaponIDsLen = sizeof(ammoPickupWeaponIDs) / sizeof(int);
+
+    for (unsigned int i = 0; i < ammoPickupWeaponIDsLen; i++)
+    {
+        if (ammoPickupWeaponIDs[i] == id)
+            return true; // Found a match!
+    }
+
+	return false;
+}
+
 // End weapon helper functions
 
 #ifdef GAME_DLL

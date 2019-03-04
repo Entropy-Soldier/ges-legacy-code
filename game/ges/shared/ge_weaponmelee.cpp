@@ -204,6 +204,7 @@ void CGEWeaponMelee::Swing( int bIsSecondary )
 #ifndef CLIENT_DLL
 	// Like bullets, bludgeon traces have to trace against triggers.
 	CTakeDamageInfo triggerInfo( pOwner, pOwner, GetWeaponDamage(), DMG_CLUB );
+    triggerInfo.SetDamageCap( GetDamageCap() );
 	TraceAttackToTriggers( triggerInfo, traceHit.startpos, traceHit.endpos, vec3_origin );
 #endif
 
@@ -455,6 +456,7 @@ void CGEWeaponMelee::Hit( trace_t &traceHit )
 
 		CTakeDamageInfo info( pOwner, pOwner, GetDamageForActivity( GetActivity() ), DMG_CLUB );
 		info.SetWeapon(this);
+        info.SetDamageCap( GetDamageCap() );
 		CalculateMeleeDamageForce( &info, hitDirection, traceHit.endpos, 0.02 );
 
 		pHitEntity->DispatchTraceAttack( info, hitDirection, &traceHit );

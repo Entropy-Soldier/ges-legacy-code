@@ -51,6 +51,7 @@ public:
 	
 	void SetDamage( float dmg );
 	void SetDamageRadius( float dmgR );
+    void SetDamageCap( int dmgC );
 	void SetOwner( CBaseEntity *owner );
 	void SetActivator( CBaseEntity *activator);
 
@@ -62,6 +63,7 @@ protected:
 
 private:
 	float m_flDamage;
+    int m_iDamageCap;
 	float m_flDamageRadius;
 
 	float m_flDieTime;
@@ -93,6 +95,11 @@ void CGE_Explosion::SetDamage( float dmg )
 void CGE_Explosion::SetDamageRadius( float dmgR )
 {
 	m_flDamageRadius = dmgR;
+}
+
+void CGE_Explosion::SetDamageCap( int dmgC )
+{
+	m_iDamageCap = dmgC;
 }
 
 void CGE_Explosion::SetActivator( CBaseEntity *activator)
@@ -261,6 +268,7 @@ void CGE_Explosion::Think()
 		if ( m_hActivator.Get() && m_hOwner.Get() && m_flDamageRadius > 0 && m_flDamage > 0 )
 		{
 			CTakeDamageInfo info( m_hActivator.Get(), m_hOwner.Get(), vec3_origin, GetAbsOrigin(), m_flDamage, DMG_BLAST );
+            info.SetDamageCap( m_iDamageCap );
 			g_pGameRules->RadiusDamage( info, GetAbsOrigin(), m_flDamageRadius, CLASS_NONE, NULL );
 		}
 
@@ -324,7 +332,7 @@ void CGE_Explosion::DestroyHeatWave( void )
 	}
 }
 
-CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, const Vector pos, float dmg, float dmgRadius )
+CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, const Vector pos, float dmg, float dmgRadius, int dmgCap )
 {
 	// We must have an owner
 	if ( !owner )
@@ -337,6 +345,7 @@ CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, con
 		pExp->SetOwner( owner );
 		pExp->SetActivator( activator == NULL ? owner : activator );
 		pExp->SetDamage( dmg );
+        pExp->SetDamageCap( dmgCap );
 		pExp->SetDamageRadius( dmgRadius );
 		pExp->SetAbsOrigin( pos );
 
@@ -347,7 +356,7 @@ CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, con
 	return pExp;
 }
 
-CBaseEntity* Create_GEExplosion( CBaseEntity* owner, const Vector pos, float dmg, float dmgRadius )
+CBaseEntity* Create_GEExplosion( CBaseEntity* owner, const Vector pos, float dmg, float dmgRadius, int dmgCap )
 {
-	return Create_GEExplosion( owner, NULL, pos, dmg, dmgRadius );
+	return Create_GEExplosion( owner, NULL, pos, dmg, dmgRadius, dmgCap );
 }

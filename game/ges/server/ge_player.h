@@ -205,8 +205,8 @@ protected:
 	int			m_iViewPunchScale;
 	int			m_iDmgTakenThisFrame;
 	Vector		m_vDmgForceThisFrame;
-	int			m_iAttackList [16];
-	float		m_iAttackListTimes [16];
+	int			m_iAttackList [32];
+	float		m_iAttackListTimes [32];
 
 	// Explosion invulnerability variables
 	float		m_flEndExpDmgTime;

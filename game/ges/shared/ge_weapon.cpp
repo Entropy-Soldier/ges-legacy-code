@@ -60,9 +60,11 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
 	RecvPropFloat( RECVINFO( m_flCoolDownTime) ),
     RecvPropInt( RECVINFO( m_iOriginalOwnerID ) ),
 
-    RecvPropFloat( RECVINFO( m_flDamageMultiplier ) ),
-    RecvPropFloat( RECVINFO( m_flDamageCapMultiplier ) ),
-	RecvPropFloat( RECVINFO( m_flFireRateMultiplier ) ),
+    RecvPropInt( RECVINFO( m_iDamageOffset ) ),
+    RecvPropInt( RECVINFO( m_iDamageCapOffset ) ),
+	RecvPropFloat( RECVINFO( m_flFireRateOffset ) ),
+    RecvPropFloat( RECVINFO( m_flClickFireRateOffset ) ),
+    RecvPropFloat( RECVINFO( m_flAccFireRateOffset ) ),
 
 	RecvPropVector( RECVINFO( m_vMinSpreadOffset ) ),
     RecvPropVector( RECVINFO( m_vMaxSpreadOffset ) ),
@@ -72,6 +74,8 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
     RecvPropInt( RECVINFO( m_iMaxClip1Offset ) ),
     RecvPropInt( RECVINFO( m_iMaxClip2Offset ) ),
 
+    RecvPropInt( RECVINFO( m_iZoomOffsetOffset ) ),
+    
     RecvPropFloat( RECVINFO( m_flBlastRadiusOffset ) ),
     RecvPropFloat( RECVINFO( m_flRangeOffset ) ),
     RecvPropFloat( RECVINFO( m_flPenetrationOffset ) ),
@@ -88,12 +92,16 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
 	SendPropFloat( SENDINFO( m_flCoolDownTime) ),
     SendPropInt( SENDINFO( m_iOriginalOwnerID ) ),
 
-    SendPropFloat( SENDINFO( m_flDamageMultiplier ) ),
-    SendPropFloat( SENDINFO( m_flDamageCapMultiplier ) ),
-	SendPropFloat( SENDINFO( m_flFireRateMultiplier ) ),
+    SendPropInt( SENDINFO( m_iDamageOffset ) ),
+    SendPropInt( SENDINFO( m_iDamageCapOffset ) ),
+	SendPropFloat( SENDINFO( m_flFireRateOffset ) ),
+    SendPropFloat( SENDINFO( m_flClickFireRateOffset ) ),
+    SendPropFloat( SENDINFO( m_flAccFireRateOffset ) ),
 
     SendPropInt( SENDINFO( m_iMaxClip1Offset ) ),
 	SendPropInt( SENDINFO( m_iMaxClip2Offset ) ),
+
+    SendPropInt( SENDINFO( m_iZoomOffsetOffset ) ),
 
 	SendPropVector( SENDINFO( m_vMinSpreadOffset ) ),
     SendPropVector( SENDINFO( m_vMaxSpreadOffset ) ),
@@ -129,12 +137,16 @@ BEGIN_DATADESC( CGEWeapon )
 	DEFINE_FIELD( m_flCoolDownTime,		FIELD_TIME ),
 	DEFINE_FIELD( m_flShootTime,		FIELD_TIME ),
 
-    DEFINE_FIELD( m_flDamageMultiplier,	    FIELD_FLOAT ),
-    DEFINE_FIELD( m_flDamageCapMultiplier,	FIELD_FLOAT ),
-	DEFINE_FIELD( m_flFireRateMultiplier,	FIELD_FLOAT ),
+    DEFINE_FIELD( m_iDamageOffset,	    FIELD_INTEGER ),
+    DEFINE_FIELD( m_iDamageCapOffset,	FIELD_INTEGER ),
+	DEFINE_FIELD( m_flFireRateOffset,	FIELD_FLOAT ),
+    DEFINE_FIELD( m_flClickFireRateOffset,	FIELD_FLOAT ),
+    DEFINE_FIELD( m_flAccFireRateOffset,	FIELD_FLOAT ),
 
     DEFINE_FIELD( m_iMaxClip1Offset,	FIELD_INTEGER ),
     DEFINE_FIELD( m_iMaxClip2Offset,	FIELD_INTEGER ),
+
+    DEFINE_FIELD( m_iZoomOffsetOffset,	FIELD_INTEGER ),
 
 	DEFINE_FIELD( m_vMinSpreadOffset,		FIELD_VECTOR ),
     DEFINE_FIELD( m_vMaxSpreadOffset,		FIELD_VECTOR ),
@@ -180,12 +192,16 @@ CGEWeapon::CGEWeapon()
 
     m_iOriginalOwnerID = -1;
 
-    m_flDamageMultiplier = 1.0f;
-    m_flDamageCapMultiplier = 1.0f;
-    m_flFireRateMultiplier = 1.0f;
+    m_iDamageOffset = 0;
+    m_iDamageCapOffset = 0;
+    m_flFireRateOffset = 0.0f;
+    m_flClickFireRateOffset = 0.0f;
+    m_flAccFireRateOffset = 0.0f;
 
     m_iMaxClip1Offset = 0;
     m_iMaxClip2Offset = 0;
+
+    m_iZoomOffsetOffset = 0;
 
     m_vMinSpreadOffset = Vector(0, 0, 0);
     m_vMaxSpreadOffset = Vector(0, 0, 0);
@@ -753,6 +769,8 @@ void CGEWeapon::PrepareFireBullets(int number, CBaseCombatCharacter *pOperator, 
 	
 	info.m_iTracerFreq = tracerfreq; //Otherwise use the weapon's tracerfreq
 
+    // Fun little feature for custom gamemodes.  We have no blast radius by default so our offset is our radius.
+    info.m_flBlastRadius = max(GetBlastRadiusOffset(), 0);
 
 	if (haveplayer)
 		info.m_pAttacker = pOperator;
@@ -1145,9 +1163,9 @@ const char *CGEWeapon::GetCustomPrintName()
         return m_sPrintNameCustom.Get();
 }
 
-float CGEWeapon::GetZoomOffset()
+float CGEWeapon::GetZoomOffset( bool modded /*== true*/ )
 {
-	return GetGEWpnData().m_iZoomOffset;
+	return GetGEWpnData().m_iZoomOffset + (modded ? m_iZoomOffsetOffset : 0.0f);
 }
 
 // GE Weapon Data accessor functions
@@ -1168,11 +1186,11 @@ const CGEWeaponInfo &CGEWeapon::GetGEWpnData() const
 
 float CGEWeapon::GetFireRate( bool modded /*== true*/ )
 {
-	return GetGEWpnData().m_flRateOfFire / (modded ? m_flFireRateMultiplier : 1.0f);
+	return GetGEWpnData().m_flRateOfFire + (modded ? m_flFireRateOffset : 0.0f);
 }
 float CGEWeapon::GetClickFireRate( bool modded /*== true*/ )
 {
-	return GetGEWpnData().m_flClickRateOfFire / (modded ? m_flFireRateMultiplier : 1.0f);
+	return GetGEWpnData().m_flClickRateOfFire + (modded ? m_flClickFireRateOffset : 0.0f);
 }
 float CGEWeapon::GetFireDelay( void )
 {

@@ -255,6 +255,7 @@ void CGEWeaponMine::ThrowMine( void )
 	pMine->SetLocalAngularVelocity( QAngle(rot1, rot2, 0) * timescale );
 	pMine->SetMineType( GetWeaponID() );
 	pMine->SetDamage( GetWeaponDamage() );
+    pMine->SetDamageCap( GetDamageCap() );
 	pMine->SetDamageRadius( GetWeaponDamageRadius() );
 
     // Copy custom print name string directly instead of possibly copying the normal print name.

@@ -112,7 +112,7 @@ public:
 	virtual int				GetTracerFreq( void ) { return GetGEWpnData().m_iTracerFreq; };
 	virtual const char*		GetSpecAttString(void) { return GetGEWpnData().m_szSpecialAttributes; };
 
-	virtual int		GetDamageCap( bool modded = true ) { return GetGEWpnData().m_iDamageCap * (modded ? m_flDamageCapMultiplier : 1.0f); };
+	virtual int		GetDamageCap( bool modded = true ) { return GetGEWpnData().m_iDamageCap + (modded ? m_iDamageCapOffset : 0); };
 
 	virtual float	GetMaxPenetrationDepth( bool modded = true ) { return GetGEWpnData().m_flMaxPenetration + (modded ? m_flPenetrationOffset : 0); };
 	virtual void	AddAccPenalty(float numshots);
@@ -152,7 +152,7 @@ public:
 	virtual void	SetPickupTouch( void );
 	virtual void	MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int iTracerType );
 
-	virtual float	GetWeaponDamage( bool modded = true )    { return GetGEWpnData().m_iDamage * (modded ? m_flDamageMultiplier : 1.0f); }
+	virtual float	GetWeaponDamage( bool modded = true )    { return GetGEWpnData().m_iDamage + (modded ? m_iDamageOffset : 0); }
 	virtual float	GetHitBoxDataModifierHead()		{ return GetGEWpnData().HitBoxDamage.fDamageHead;	}
 	virtual float	GetHitBoxDataModifierChest()	{ return GetGEWpnData().HitBoxDamage.fDamageChest;	}
 	virtual float	GetHitBoxDataModifierStomach()	{ return GetGEWpnData().HitBoxDamage.fDamageStomach;}
@@ -169,7 +169,7 @@ public:
 	virtual void	ToggleSilencer( bool doanim = true );
 	virtual void	SetAlwaysSilenced( bool set ) { m_bIsAlwaysSilent = set; };
 	virtual bool	IsAlwaysSilenced() { return m_bIsAlwaysSilent; };
-	virtual float	GetAccFireRate( bool modded = true ) { return GetGEWpnData().m_flAccurateRateOfFire / (modded ? m_flFireRateMultiplier : 1.0f); }
+	virtual float	GetAccFireRate( bool modded = true ) { return GetGEWpnData().m_flAccurateRateOfFire + (modded ? m_flAccFireRateOffset : 0.0f); }
 	virtual int		GetAccShots(){ return GetGEWpnData().m_flAccurateShots; }
 
 	virtual int		GetTracerAttachment( void );
@@ -187,7 +187,7 @@ public:
 	virtual Activity GetDrawActivity( void );
 	virtual void	 WeaponIdle( void );
 
-	virtual float GetZoomOffset();
+	virtual float GetZoomOffset( bool modded = true );
 
     virtual bool CanUseWeaponMods();
 
@@ -212,9 +212,11 @@ public:
     void Set ## name ## ( type newVal ) { if (CanUseWeaponMods()) prefix ## name = newVal; else Warning("Gamemode tried to use weapon mods without enabling them!\n"); } \
     CNetworkVar( type, prefix ## name )
 
-    GEWeaponStatModVar( float, m_fl, DamageMultiplier );
-    GEWeaponStatModVar( float, m_fl, DamageCapMultiplier );
-    GEWeaponStatModVar( float, m_fl, FireRateMultiplier );
+    GEWeaponStatModVar( int, m_i, DamageOffset );
+    GEWeaponStatModVar( int, m_i, DamageCapOffset );
+    GEWeaponStatModVar( float, m_fl, FireRateOffset );
+    GEWeaponStatModVar( float, m_fl, ClickFireRateOffset );
+    GEWeaponStatModVar( float, m_fl, AccFireRateOffset );
 
     GEWeaponStatModVar( Vector, m_v, MinSpreadOffset );
     GEWeaponStatModVar( Vector, m_v, MaxSpreadOffset );
@@ -223,6 +225,8 @@ public:
 
     GEWeaponStatModVar( int, m_i, MaxClip1Offset );
     GEWeaponStatModVar( int, m_i, MaxClip2Offset );
+
+    GEWeaponStatModVar( int, m_i, ZoomOffsetOffset );
 
     GEWeaponStatModVar( float, m_fl, BlastRadiusOffset );
     GEWeaponStatModVar( float, m_fl, RangeOffset );

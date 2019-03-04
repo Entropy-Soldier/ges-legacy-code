@@ -34,6 +34,8 @@ public:
     virtual const char* GetCustomPrintName( void ) { return m_sPrintNameCustom[0] == '\0' ? GetPrintName() : m_sPrintNameCustom; };
     virtual void        SetCustomPrintName( const char *newName ) { Q_strncpy( m_sPrintNameCustom, newName, 32); };
 	virtual int			GetCustomData( void ) { return 0; };
+    virtual int	        GetDamageCap() { return m_iDamageCap; }
+	virtual void	    SetDamageCap( int iDamageCap ) { m_iDamageCap = iDamageCap; }
 
 	virtual void SetSourceWeapon(CGEWeapon *ent)
 	{
@@ -63,12 +65,13 @@ protected:
 
 	CGEWeapon *m_pWeaponOwner;
 	
+    int m_iDamageCap;
+
 	virtual void Explode() {
         if ( GetDamageRadius() > 0 ) // Can't explode if we don't have a radius.
         {
-
-            ExplosionCreate(GetAbsOrigin(), GetAbsAngles(), GetThrower(), GetDamage(), GetDamageRadius(),
-                SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, this);
+            ExplosionCreate( GetAbsOrigin(), GetAbsAngles(), GetThrower(), GetDamage(), GetDamageCap(), GetDamageRadius(), 
+                SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, this );
         }
 		// Effectively hide us from everyone until the explosion is done with
 		GEUTIL_DelayRemove( this, GE_EXP_MAX_DURATION );

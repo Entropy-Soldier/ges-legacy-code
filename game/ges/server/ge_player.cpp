@@ -530,7 +530,7 @@ int CGEPlayer::OnTakeDamage( const CTakeDamageInfo &inputinfo )
 	}
     else // If we're not an explosion, just use normal invulnerability.
     {
-        adjdmg = CalcInvul(info.GetDamage(), pGEAttacker, weapid);
+        adjdmg = CalcInvul(info.GetDamage(), pGEAttacker, info.GetDamageCap());
     }
 
 	// Now set the damage in our custom damage info and give it to the base function to deal with.
@@ -1148,7 +1148,7 @@ void CGEPlayer::Spawn()
 	m_iExpDmgTakenThisInterval = 0;
 	m_vExpDmgForceThisFrame = vec3_origin;
 
-	for (int i = 0; i < 16; i++)
+	for (int i = 0; i < 32; i++)
 	{
 		m_iAttackListTimes[i] = 0.0;
 		m_iAttackList[i] = 0;
@@ -1235,10 +1235,9 @@ void CGEPlayer::StopInvul(void)
 // Adjusts incoming damage as needed to conform with invuln.  Was coded with arrays, as I was still learning the ropes when I made it
 // If you ever want to do something more fancy with it I reccomend recoding it to use util vectors, which are more versitle.
 
-int CGEPlayer::CalcInvul(int damage, CGEPlayer *pAttacker, int wepID)
+int CGEPlayer::CalcInvul(int damage, CGEPlayer *pAttacker, int damagecap)
 {
 	DevMsg("%s took %d damage...", GetPlayerName(), damage);
-
 	// Spawn invuln negates incoming damage regardless of previous damage taken
 	if (m_bInSpawnInvul || m_takedamage == DAMAGE_NO)
 		return 0;
@@ -1247,7 +1246,7 @@ int CGEPlayer::CalcInvul(int damage, CGEPlayer *pAttacker, int wepID)
 	int emptyid = -1;
 
 	// Scans for empty and expired damage slots.
-	for (int i = 0; i < 16; i++)
+	for (int i = 0; i < 32; i++)
 	{
 		if (m_iAttackListTimes[i] < lowtime)
 		{
@@ -1270,16 +1269,16 @@ int CGEPlayer::CalcInvul(int damage, CGEPlayer *pAttacker, int wepID)
 		return damage;
 
 	// Default damage cap is set to golden gun damage.  It's much higher than the max health, which is 320.
-	int damagecap = 5000;
+	// int damagecap = 5000;
 
 	// But if there's a GE weapon involved then the damage cap gets overwritten with that weapon's cap.
-	if (wepID != WEAPON_NONE)
-		damagecap = round(pAttacker->GetDamageMultiplier() * WeaponMaxDamageFromID(wepID));
+	//if (wepID != WEAPON_NONE)
+	//	damagecap = round(pAttacker->GetDamageMultiplier() * WeaponMaxDamageFromID(wepID));
 
 	// Calculate the damage taken in the last invuln period.
 	int totaldamage = 0;
 
-	for (int i = 0; i < 16; i++)
+	for (int i = 0; i < 32; i++)
 	{
 		totaldamage += m_iAttackList[i];
 	}
