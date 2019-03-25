@@ -42,6 +42,11 @@
 // Add, remove, and search using gamemode list.
 #define ET_LIST_GAMEMODE 11
 
+#define ET_START_ITEMSPAWNED 0
+#define ET_START_ITEMDROPPED 1
+
+#define ET_END_ITEMPICKED 0
+#define ET_END_ITEMDELETED 1
 
 class CGEEntityTracker
 {
@@ -53,11 +58,11 @@ public:
 
 	// Completely removes an entity from the given tracking lists and lets it know it's no longer being tracked.
 	// ET_LIST_ALL will remove it from all lists.
-	bool RemoveItemFromTracker( CBaseEntity *pEntity, char list = ET_LIST_ALL );
+	bool RemoveItemFromTracker( CBaseEntity *pEntity, char reason, char list = ET_LIST_ALL );
 
 	// Adds an entity to the relevant list in the tracker and lets the entity know it's being tracked.
 	// BE SURE TO SPECIFY THE CORRECT LIST IF NOT USING ET_LIST_ALL.
-	bool AddItemToTracker( CBaseEntity *pEntity, char list = ET_LIST_ALL );
+	bool AddItemToTracker( CBaseEntity *pEntity, char reason, char list = ET_LIST_ALL );
 
 	// Passes a pointer to the list of tracked weapons, to avoid potentially copying a gigantic list a bunch of times.
 	// DO NOT MANUALLY ADD ITEMS TO THIS.  Use AddItemToTracker and RemoveItemFromTracker to change it.

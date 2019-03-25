@@ -468,16 +468,16 @@ public:
 		TRYFUNC( this->get_override("OnCaptureAreaExited")(bp::ptr(pCapture), bp::ptr(pPlayer)) );
 	}
 
-	virtual void OnItemTracked( CBaseEntity *pItem, int trackerList )
+	virtual void OnItemTracked( CBaseEntity *pItem, int reason, int trackerList )
 	{
-		PY_CALLHOOKS( FUNC_GP_ITEMTRACKED, bp::make_tuple(bp::ptr(pItem), trackerList) );
-		TRYFUNC( this->get_override("OnItemTracked")(bp::ptr(pItem), trackerList) );
+		PY_CALLHOOKS( FUNC_GP_ITEMTRACKED, bp::make_tuple(bp::ptr(pItem), reason, trackerList) );
+		TRYFUNC( this->get_override("OnItemTracked")(bp::ptr(pItem), reason, trackerList) );
 	}
 
-	virtual void OnItemUntracked( CBaseEntity *pItem, int trackerList )
+	virtual void OnItemUntracked( CBaseEntity *pItem, int reason, int trackerList )
 	{
-		PY_CALLHOOKS( FUNC_GP_ITEMUNTRACKED, bp::make_tuple(bp::ptr(pItem), trackerList) );
-		TRYFUNC( this->get_override("OnItemUntracked")(bp::ptr(pItem), trackerList) );
+		PY_CALLHOOKS( FUNC_GP_ITEMUNTRACKED, bp::make_tuple(bp::ptr(pItem), reason, trackerList) );
+		TRYFUNC( this->get_override("OnItemUntracked")(bp::ptr(pItem), reason, trackerList) );
 	}
 
 	virtual void OnTokenSpawned( CGEWeapon *pToken )

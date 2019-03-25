@@ -1870,7 +1870,7 @@ void CBaseEntity::UpdateOnRemove( void )
 #if GE_DLL
 	// We are about to be deleted so we should no longer be tracked.
 	if (m_bGEItemTracked)
-		GEEntityTracker()->RemoveItemFromTracker(this);
+		GEEntityTracker()->RemoveItemFromTracker(this, ET_END_ITEMDELETED);
 #endif
 
 	if ( edict() )

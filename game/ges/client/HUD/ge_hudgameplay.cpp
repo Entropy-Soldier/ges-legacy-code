@@ -356,12 +356,12 @@ void CHudGameplay::ResolveWeaponHelp(void)
 
 	// Special attributes
 
-	if (pGEWeapon->GetMaxPenetrationDepth() > 0)
+	if (pGEWeapon->GetMaxPenetrationDepth() > 0.0f)
 	{
 		InsertTokenWithValue("#GE_Att_Penetrate", floor(pGEWeapon->GetMaxPenetrationDepth()), false);
 	}
 
-	if (pGEWeapon->GetAimBonus() > 0)
+	if (pGEWeapon->GetAimBonus() > 0.0f)
 	{
 		m_pWeaponHelp->InsertString(g_pVGuiLocalize->Find("#GE_Att_AimBoost"));
 		m_pWeaponHelp->InsertString("\n");

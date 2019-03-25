@@ -114,7 +114,7 @@ public:
 
 	virtual int		GetDamageCap( bool modded = true ) { return GetGEWpnData().m_iDamageCap + (modded ? m_iDamageCapOffset : 0); };
 
-	virtual float	GetMaxPenetrationDepth( bool modded = true ) { return GetGEWpnData().m_flMaxPenetration + (modded ? m_flPenetrationOffset : 0); };
+	virtual float	GetMaxPenetrationDepth( bool modded = true ) { return GetGEWpnData().m_flMaxPenetration + (modded ? m_flPenetrationOffset : 0.0f); };
 	virtual void	AddAccPenalty(float numshots);
 	virtual void	UpdateAccPenalty( void );
 	virtual float	GetAccPenalty(void) { return m_flAccuracyPenalty; };
@@ -122,8 +122,8 @@ public:
     virtual Vector GetMinSpreadVec(bool modded = true) { return GetGEWpnData().m_vecSpread + (modded ? m_vMinSpreadOffset : Vector(0, 0, 0));  }
     virtual Vector GetMaxSpreadVec(bool modded = true) { return GetGEWpnData().m_vecMaxSpread + (modded ? m_vMaxSpreadOffset : Vector(0, 0, 0));  }
 
-    virtual float GetAimBonus(bool modded = true) { return GetGEWpnData().m_flAimBonus + (modded ? m_flAimBonusOffset : 0);  }
-    virtual float GetJumpPenalty(bool modded = true) { return GetGEWpnData().m_flJumpPenalty + (modded ? m_flJumpPenaltyOffset : 0);  }
+    virtual float GetAimBonus(bool modded = true) { return GetGEWpnData().m_flAimBonus + (modded ? m_flAimBonusOffset : 0.0f);  }
+    virtual float GetJumpPenalty(bool modded = true) { return GetGEWpnData().m_flJumpPenalty + (modded ? m_flJumpPenaltyOffset : 0.0f);  }
 
 	// Fixes for NPC's
 	virtual bool	HasAmmo( void );
@@ -161,7 +161,7 @@ public:
 	virtual float	GetHitBoxDataModifierLeftLeg()	{ return GetGEWpnData().HitBoxDamage.fLefLeg;		}
 	virtual float	GetHitBoxDataModifierRightLeg() { return GetGEWpnData().HitBoxDamage.fRightLeg;		}
 
-    virtual float	GetWeaponDamageRadius( bool modded = true )	{ return GetGEWpnData().m_flDamageRadius + (modded ? m_flBlastRadiusOffset : 0); }
+    virtual float	GetWeaponDamageRadius( bool modded = true )	{ return GetGEWpnData().m_flDamageRadius + (modded ? m_flBlastRadiusOffset : 0.0f); }
 
 	virtual bool	CanBeSilenced( void ) { return false; };
 	virtual bool	IsSilenced() { return m_bSilenced; };

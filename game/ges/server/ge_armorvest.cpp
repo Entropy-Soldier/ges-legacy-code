@@ -49,7 +49,7 @@ void CGEArmorVest::Spawn( void )
 	BaseClass::Spawn();
 
 	// Add us to the approperate entity tracker list
-	GEEntityTracker()->AddItemToTracker( this, ET_LIST_ARMOR );
+	GEEntityTracker()->AddItemToTracker( this, ET_START_ITEMSPAWNED, ET_LIST_ARMOR );
 }
 
 void CGEArmorVest::Precache( void )

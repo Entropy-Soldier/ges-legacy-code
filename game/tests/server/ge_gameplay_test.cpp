@@ -72,11 +72,11 @@ public:
 		return false;
 	}
 	
-    virtual void OnItemTracked( CBaseEntity *pItem, int trackerList ){
+    virtual void OnItemTracked( CBaseEntity *pItem, int reason, int trackerList ){
 	    Msg( "[PYGP] Called OnItemTracked()\n" );
 	}
 
-	virtual void OnItemUntracked( CBaseEntity *pItem, int trackerList ){
+	virtual void OnItemUntracked( CBaseEntity *pItem, int reason, int trackerList ){
 	    Msg( "[PYGP] Called OnItemUntracked()\n" );
 	}
 

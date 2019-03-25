@@ -83,7 +83,7 @@ int pyGetMaxAmmoCount( CGEWeapon *pWeap )
 
 float pyGetMeleeWeaponRange( CGEWeapon *pWeap, bool modded = true )
 {
-    if (!pWeap->IsMeleeWeapon())
+    if ( !pWeap || !(pWeap->IsMeleeWeapon() || pWeap->GetWeaponID() == WEAPON_WATCHLASER) )
         return -1.0f;
 
     return static_cast<CGEWeaponMelee*>(pWeap)->GetRange(modded);

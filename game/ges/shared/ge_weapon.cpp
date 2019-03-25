@@ -251,7 +251,7 @@ void CGEWeapon::Spawn()
 
 	// Notify the token manager we are arriving
 	if (GEMPRules()->GetTokenManager()->OnTokenSpawned( this )) // If we're actually allowed to spawn...
-		GEEntityTracker()->AddItemToTracker( this, ET_LIST_WEAPON ); // Add us to the approperate entity tracker list
+		GEEntityTracker()->AddItemToTracker( this, ET_START_ITEMSPAWNED, ET_LIST_WEAPON ); // Add us to the approperate entity tracker list
 }
 
 void CGEWeapon::UpdateOnRemove( void )
@@ -294,7 +294,7 @@ void CGEWeapon::Equip( CBaseCombatCharacter *pOwner )
 	SetEnableGlow( false );
 
 	// Don't track us while someone is carrying us around, since we're no longer a pickup.
-	GEEntityTracker()->RemoveItemFromTracker( this, ET_LIST_WEAPON );
+	GEEntityTracker()->RemoveItemFromTracker( this, ET_END_ITEMPICKED, ET_LIST_WEAPON );
 #endif
 
 	// Fill this bad boy up with ammo if we have any for it to use!
@@ -328,7 +328,7 @@ void CGEWeapon::Drop( const Vector &vecVelocity )
 	SetEnableGlow( m_bServerGlow );
 
 	// We're a pickup again.
-	GEEntityTracker()->AddItemToTracker( this, ET_LIST_WEAPON );
+	GEEntityTracker()->AddItemToTracker( this, ET_START_ITEMDROPPED, ET_LIST_WEAPON );
 #endif
 
 	CGEMPPlayer *pGEMPPlayer = ToGEMPPlayer( GetOwner() );
@@ -771,6 +771,7 @@ void CGEWeapon::PrepareFireBullets(int number, CBaseCombatCharacter *pOperator, 
 
     // Fun little feature for custom gamemodes.  We have no blast radius by default so our offset is our radius.
     info.m_flBlastRadius = max(GetBlastRadiusOffset(), 0);
+    info.m_flBlastRadiusDamage = max(GetRangeOffset(), 0); // Might as well recycle this too since hitscan weapons don't use it.  Yeah this feature is kind of tacked-on.
 
 	if (haveplayer)
 		info.m_pAttacker = pOperator;

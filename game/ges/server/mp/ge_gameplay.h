@@ -90,8 +90,8 @@ public:
 	virtual void OnEnemyTokenTouched(CGEWeapon *pToken, CGEPlayer *pPlayer) = 0;
 	virtual void OnTokenAttack(CGEWeapon *pToken, CGEPlayer *pPlayer, Vector position, Vector forward)=0;
 
-	virtual void OnItemTracked(CBaseEntity *pItem, int trackerList)=0;
-	virtual void OnItemUntracked(CBaseEntity *pItem, int trackerList)=0;
+	virtual void OnItemTracked(CBaseEntity *pItem, int reason, int trackerList)=0;
+	virtual void OnItemUntracked(CBaseEntity *pItem, int reason, int trackerList)=0;
 
 private:
 	bool m_bIsOfficial;

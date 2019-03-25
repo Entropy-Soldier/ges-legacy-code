@@ -56,7 +56,7 @@ void CGEAmmoCrate::Spawn( void )
 	BaseClass::Spawn();
 
 	// Add us to the gameplay item tracker.
-	GEEntityTracker()->AddItemToTracker( this, ET_LIST_AMMO );
+	GEEntityTracker()->AddItemToTracker( this, ET_START_ITEMSPAWNED, ET_LIST_AMMO );
 
 	// Make sure we don't appear until we actually have ammo.
 	BaseClass::Respawn();

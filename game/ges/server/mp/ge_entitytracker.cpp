@@ -48,7 +48,7 @@ void DestroyEntityTracker()
 	g_GEEntityTracker = NULL;
 }
 
-bool CGEEntityTracker::AddItemToTracker( CBaseEntity *pEntity, char list /*== ET_LIST_ALL*/ )
+bool CGEEntityTracker::AddItemToTracker( CBaseEntity *pEntity, char reason, char list /*== ET_LIST_ALL*/ )
 {
 	if (!pEntity)
 	{
@@ -96,13 +96,13 @@ bool CGEEntityTracker::AddItemToTracker( CBaseEntity *pEntity, char list /*== ET
 
 	// Notify python of our newly tracked item.
 	if ( GetScenario() )
-		GetScenario()->OnItemTracked( pEntity,  targetlist );
+		GetScenario()->OnItemTracked( pEntity, reason, targetlist );
 
 	pEntity->NotifyOfTracking();
 	return true;
 }
 
-bool CGEEntityTracker::RemoveItemFromTracker( CBaseEntity *pEntity, char list /* == ET_LIST_ALL */ )
+bool CGEEntityTracker::RemoveItemFromTracker( CBaseEntity *pEntity, char reason, char list /* == ET_LIST_ALL */ )
 {
 	if (!pEntity)
 	{
@@ -159,7 +159,7 @@ bool CGEEntityTracker::RemoveItemFromTracker( CBaseEntity *pEntity, char list /*
 	if ( success > 0 && GetScenario() )
 	{
 		//Warning("Removed %s with pointer %x from list %d in item tracker, tracking count is now %d\n", pEntity->GetClassname(), pEntity, targetlist, m_vGamemodeEntList.Count() + m_vMapEntList.Count() + m_vArmorList.Count() + m_vAmmoList.Count() + m_vWeaponList.Count() );
-		GetScenario()->OnItemUntracked(pEntity, list);
+		GetScenario()->OnItemUntracked(pEntity, reason, list);
 	}
 
 	// Successful if we found the entity to remove, 

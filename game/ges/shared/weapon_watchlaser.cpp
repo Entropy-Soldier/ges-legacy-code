@@ -58,11 +58,11 @@ public:
 
 	CGEWeaponWatchLaser();
 
-	float		GetBaseRange(void);
+	virtual float GetBaseRange(void);
 
-	void		AddViewKick(void);
+	virtual void		AddViewKick(void);
 	virtual		void Precache(void);
-	void		Swing(int bIsSecondary);
+	virtual void Swing(int bIsSecondary);
 
 	virtual void	ItemPostFrame(void);
 
@@ -81,11 +81,11 @@ public:
 	// Animation event
 #ifndef CLIENT_DLL
 	virtual void Operator_HandleAnimEvent(animevent_t *pEvent, CBaseCombatCharacter *pOperator);
-	void HandleAnimEventMeleeHit(animevent_t *pEvent, CBaseCombatCharacter *pOperator);
+	virtual void HandleAnimEventMeleeHit(animevent_t *pEvent, CBaseCombatCharacter *pOperator);
 #endif
 
 protected:
-	void ImpactEffect(trace_t &trace);
+	virtual void ImpactEffect(trace_t &trace);
 
 private:
 	CGEWeaponWatchLaser(const CGEWeaponWatchLaser &);

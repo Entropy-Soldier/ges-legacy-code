@@ -628,6 +628,7 @@ struct FireBulletsInfo_t
 		m_pHitPlayers[0] = NULL;
 		m_iHitPlayersTailIndex = 0;
         m_flBlastRadius = 0.0f;
+        m_flBlastRadiusDamage = 0.0f;
 	#endif
 	}
 
@@ -653,6 +654,7 @@ struct FireBulletsInfo_t
 		m_pHitPlayers[0] = NULL;
 		m_iHitPlayersTailIndex = 0;
         m_flBlastRadius = 0.0f;
+        m_flBlastRadiusDamage = 0.0f;
 	#endif
 	}
 
@@ -676,6 +678,7 @@ struct FireBulletsInfo_t
 	CBaseEntity* m_pHitPlayers[MAX_PLAYERS]; // Yep...I could not get CUtlVector working here even though it works in EmitSound_t.  If you can figure out how switch to that.
 	unsigned int m_iHitPlayersTailIndex;
     float m_flBlastRadius; // This is a very important feature.
+    float m_flBlastRadiusDamage; // Very very important, okay?
 #endif
 };
 

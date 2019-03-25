@@ -468,7 +468,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 		
             if ( !(modinfo.m_nFlags & FIRE_BULLETS_PENETRATED_SHOT) && modinfo.m_flBlastRadius > 0.0f )
             {
-                ExplosionCreate(tr.endpos, GetAbsAngles(), this, modinfo.m_iDamage * clamp(modinfo.m_flBlastRadius/60, 0.5, 2), modinfo.m_flBlastRadius,
+                ExplosionCreate(tr.endpos, GetAbsAngles(), this, modinfo.m_flBlastRadiusDamage, modinfo.m_flBlastRadius,
 			    SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, (CBaseEntity *)NULL);
             }
         #endif
