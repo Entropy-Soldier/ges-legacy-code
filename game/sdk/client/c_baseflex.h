@@ -86,6 +86,9 @@ public:
 
 public:
 	Vector			m_viewtarget;
+#ifdef GE_DLL
+    Vector          m_clientViewTargetDefault;
+#endif
 	CInterpolatedVar< Vector >	m_iv_viewtarget;
 	// indexed by model local flexcontroller
 	float			m_flexWeight[MAXSTUDIOFLEXCTRL];

@@ -12,6 +12,7 @@
 #include "vcollide_parse.h"
 #include "c_ge_player.h"
 #include "c_gemp_player.h"
+#include "c_gebot_player.h"
 #include "ge_utils.h"
 #include "gemp_gamerules.h"
 #include "view.h"
@@ -404,6 +405,31 @@ void C_GEPlayer::ClientThink( void )
 				v_viewmodel_fov.SetValue(54.0f);
 		}
 	}
+
+    // Update the default eye position for this playermodel.
+    C_BasePlayer *pLocalPlayer = GetLocalPlayer();
+
+    if (pLocalPlayer && this != pLocalPlayer)
+    {
+        if (IsNPC() || IsBotPlayer())
+        {
+            C_GEBotPlayer *pBotSelf = ToGEBotPlayer(this);
+
+            if (pBotSelf)
+            {
+                C_AI_BaseNPC *pBotNPC = pBotSelf->GetNPC();
+
+                if (pBotNPC)
+                {
+                    pBotNPC->m_clientViewTargetDefault = pLocalPlayer->EyePosition();
+                }
+            }
+        }
+        else
+        {
+            m_clientViewTargetDefault = pLocalPlayer->EyePosition();
+        }
+    }
 
 	BaseClass::ClientThink();
 }

@@ -138,6 +138,10 @@ C_BaseFlex::C_BaseFlex() :
 
 	m_flFlexDelayedWeight = NULL;
 
+#ifdef GE_DLL
+    m_clientViewTargetDefault = Vector(0, 0, 0);
+#endif
+
 	/// Make sure size is correct
 	Assert( PHONEME_CLASS_STRONG + 1 == NUM_PHONEME_CLASSES );
 
@@ -555,6 +559,13 @@ Vector C_BaseFlex::SetViewTarget( CStudioHdr *pStudioHdr )
 
 	// aim the eyes
 	Vector tmp = m_viewtarget;
+#ifdef GE_DLL
+    // If we don't have a viewtarget set by the server, just use our clientside default behavior of looking at the camera.
+    if (m_viewtarget.IsZero())
+    {
+        tmp = m_clientViewTargetDefault;
+    }
+#endif
 
 	if ( !m_bSearchedForEyeFlexes )
 	{
