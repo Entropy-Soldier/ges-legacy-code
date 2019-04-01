@@ -44,6 +44,7 @@ public:
 
 	virtual void	Init();
 
+    virtual void	DeleteUnreferencedTextures( bool printRemovedCount );
 	virtual void	LevelInit( const char *newmap );
 	virtual void	LevelShutdown( void );
 
