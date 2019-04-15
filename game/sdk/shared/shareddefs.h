@@ -755,6 +755,10 @@ struct EmitSound_t
 		m_bEmitCloseCaption( true ),
 		m_bWarnOnMissingCloseCaption( false ),
 		m_bWarnOnDirectWaveReference( false ),
+#ifdef GE_DLL
+        m_bSilentlyOverridePitch( false ),
+        m_bSilentlyOverrideVolume( false ),
+#endif
 		m_nSpeakerEntity( -1 ),
 		m_UtlVecSoundOrigin(),
 		m_hSoundScriptHandle( -1 )
@@ -775,6 +779,10 @@ struct EmitSound_t
 	bool						m_bEmitCloseCaption;
 	bool						m_bWarnOnMissingCloseCaption;
 	bool						m_bWarnOnDirectWaveReference;
+#ifdef GE_DLL
+    bool						m_bSilentlyOverridePitch; // The pitch override flag seems to carry side-effects for gunsounds.
+    bool						m_bSilentlyOverrideVolume;
+#endif
 	int							m_nSpeakerEntity;
 	mutable CUtlVector< Vector >	m_UtlVecSoundOrigin;  ///< Actual sound origin(s) (can be multiple if sound routed through speaker entity(ies) )
 	mutable HSOUNDSCRIPTHANDLE		m_hSoundScriptHandle;

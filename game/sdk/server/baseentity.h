@@ -1323,6 +1323,9 @@ public:
 	static bool	GetParametersForSound( const char *soundname, CSoundParameters &params, char const *actormodel );
 	static bool	GetParametersForSound( const char *soundname, HSOUNDSCRIPTHANDLE& handle, CSoundParameters &params, char const *actormodel );
 
+#ifdef GE_DLL
+    static void EmitAdjustedSound( IRecipientFilter& filter, int iEntIndex, const char *soundname, const Vector *pOrigin = NULL, int pitchOverride = -1, float volumeOverride = -1.0f, float soundtime = 0.0f, float *duration = NULL );
+#endif
 	static void EmitSound( IRecipientFilter& filter, int iEntIndex, const char *soundname, const Vector *pOrigin = NULL, float soundtime = 0.0f, float *duration = NULL );
 	static void EmitSound( IRecipientFilter& filter, int iEntIndex, const char *soundname, HSOUNDSCRIPTHANDLE& handle, const Vector *pOrigin = NULL, float soundtime = 0.0f, float *duration = NULL );
 	static void StopSound( int iEntIndex, const char *soundname );

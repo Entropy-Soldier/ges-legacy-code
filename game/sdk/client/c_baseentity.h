@@ -584,6 +584,9 @@ public:
 	virtual char					*GetIDString( void ) { return ""; };
 
 	// See CSoundEmitterSystem
+#ifdef GE_DLL
+    static void EmitAdjustedSound( IRecipientFilter& filter, int iEntIndex, const char *soundname, const Vector *pOrigin = NULL, int pitchOverride = -1, float volumeOverride = -1.0f, float soundtime = 0.0f, float *duration = NULL );
+#endif
 	void	EmitSound( const char *soundname, float soundtime = 0.0f, float *duration = NULL );  // Override for doing the general case of CPASAttenuationFilter( this ), and EmitSound( filter, entindex(), etc. );
 	void	EmitSound( const char *soundname, HSOUNDSCRIPTHANDLE& handle, float soundtime = 0.0f, float *duration = NULL );  // Override for doing the general case of CPASAttenuationFilter( this ), and EmitSound( filter, entindex(), etc. );
 	void	StopSound( const char *soundname );

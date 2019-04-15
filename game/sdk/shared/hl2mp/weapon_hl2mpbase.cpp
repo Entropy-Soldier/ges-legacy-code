@@ -130,7 +130,29 @@ void CWeaponHL2MPBase::WeaponSound( WeaponSound_t sound_type, float soundtime /*
 	if (!te->CanPredict())
 		return;
 
+#ifdef GE_DLL
+    CSoundParameters params;
+
+    int pitchOverride = -1;
+    float volumeOverride = -1.0f;
+
+    if ( GetParametersForSound( shootsound, params, NULL ) )
+    {
+        if (GetWeaponSoundPitchShift() != 0)
+        {
+            pitchOverride = clamp(params.pitch + GetWeaponSoundPitchShift(), 1, 250);
+        }
+
+        if (GetWeaponSoundVolumeShift() != 0.0f)
+        {
+            volumeOverride = clamp(params.volume + GetWeaponSoundVolumeShift(), 0.01, 1);
+        }
+    }
+
+    CBaseEntity::EmitAdjustedSound(filter, GetPlayerOwner()->entindex(), shootsound, &GetPlayerOwner()->GetAbsOrigin(), pitchOverride, volumeOverride);
+#else
 	CBaseEntity::EmitSound(filter, GetPlayerOwner()->entindex(), shootsound, &GetPlayerOwner()->GetAbsOrigin());
+#endif
 #else
 #ifdef GE_DLL
 	if (sound_type == SINGLE)

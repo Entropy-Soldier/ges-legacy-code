@@ -1911,6 +1911,21 @@ void CBaseCombatWeapon::WeaponSound( WeaponSound_t sound_type, float soundtime /
 	if ( !GetParametersForSound( shootsound, params, NULL ) )
 		return;
 
+#ifdef GE_DLL
+    int pitchOverride = -1;
+    float volumeOverride = -1.0f;
+
+    if (GetWeaponSoundPitchShift() != 0)
+    {
+        pitchOverride = clamp(params.pitch + GetWeaponSoundPitchShift(), 1, 250);
+    }
+
+    if (GetWeaponSoundVolumeShift() != 0.0f)
+    {
+        volumeOverride = clamp(params.volume + GetWeaponSoundVolumeShift(), 0.01, 1);
+    }
+#endif
+
 	if ( params.play_to_owner_only )
 	{
 		// Am I only to play to my owner?
@@ -1921,7 +1936,11 @@ void CBaseCombatWeapon::WeaponSound( WeaponSound_t sound_type, float soundtime /
 			{
 				filter.UsePredictionRules();
 			}
+#ifdef GE_DLL
+            EmitAdjustedSound( filter, GetOwner()->entindex(), shootsound, NULL, pitchOverride, volumeOverride, soundtime );
+#else
 			EmitSound( filter, GetOwner()->entindex(), shootsound, NULL, soundtime );
+#endif
 		}
 	}
 	else
@@ -1934,8 +1953,11 @@ void CBaseCombatWeapon::WeaponSound( WeaponSound_t sound_type, float soundtime /
 			{
 				filter.UsePredictionRules();
 			}
+#ifdef GE_DLL
+            EmitAdjustedSound( filter, GetOwner()->entindex(), shootsound, NULL, pitchOverride, volumeOverride, soundtime );
+#else
 			EmitSound( filter, GetOwner()->entindex(), shootsound, NULL, soundtime ); 
-
+#endif
 #if !defined( CLIENT_DLL )
 			if( sound_type == EMPTY )
 			{
@@ -1951,7 +1973,11 @@ void CBaseCombatWeapon::WeaponSound( WeaponSound_t sound_type, float soundtime /
 			{
 				filter.UsePredictionRules();
 			}
+#ifdef GE_DLL
+            EmitAdjustedSound( filter, entindex(), shootsound, NULL, pitchOverride, volumeOverride, soundtime );
+#else
 			EmitSound( filter, entindex(), shootsound, NULL, soundtime ); 
+#endif
 		}
 	}
 }

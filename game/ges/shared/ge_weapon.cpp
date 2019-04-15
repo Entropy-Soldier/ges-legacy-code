@@ -80,6 +80,9 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
     RecvPropFloat( RECVINFO( m_flRangeOffset ) ),
     RecvPropFloat( RECVINFO( m_flPenetrationOffset ) ),
 
+    RecvPropInt( RECVINFO( m_iWeaponSoundPitchOffset ) ),
+    RecvPropFloat( RECVINFO( m_flWeaponSoundVolumeOffset ) ),
+
     RecvPropString( RECVINFO( m_sPrintNameCustom ) ),
 
 	RecvPropBool( RECVINFO(m_bEnableGlow) ),
@@ -111,6 +114,9 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
 	SendPropFloat( SENDINFO( m_flBlastRadiusOffset ) ),
 	SendPropFloat( SENDINFO( m_flRangeOffset ) ),
     SendPropFloat( SENDINFO( m_flPenetrationOffset ) ),
+
+    SendPropInt( SENDINFO( m_iWeaponSoundPitchOffset ) ),
+    SendPropFloat( SENDINFO( m_flWeaponSoundVolumeOffset ) ),
 
     SendPropString( SENDINFO( m_sPrintNameCustom ) ),
 
@@ -156,6 +162,9 @@ BEGIN_DATADESC( CGEWeapon )
     DEFINE_FIELD( m_flBlastRadiusOffset,	FIELD_FLOAT ),
     DEFINE_FIELD( m_flRangeOffset,	FIELD_FLOAT ),
     DEFINE_FIELD( m_flPenetrationOffset,	FIELD_FLOAT ),
+
+    DEFINE_FIELD( m_iWeaponSoundPitchOffset,	FIELD_INTEGER ),
+    DEFINE_FIELD( m_flWeaponSoundVolumeOffset,	FIELD_FLOAT ),
 
 	DEFINE_THINKFUNC( OnReloadOffscreen ),
 END_DATADESC()
@@ -211,6 +220,9 @@ CGEWeapon::CGEWeapon()
     m_flBlastRadiusOffset = 0.0f;
     m_flRangeOffset = 0.0f;
     m_flPenetrationOffset = 0.0f;
+
+    m_iWeaponSoundPitchOffset = 0;
+    m_flWeaponSoundVolumeOffset = 0.0f;
 
     m_sPrintNameCustom.GetForModify()[0] = '\0';
 

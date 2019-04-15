@@ -163,6 +163,9 @@ public:
 
     virtual float	GetWeaponDamageRadius( bool modded = true )	{ return GetGEWpnData().m_flDamageRadius + (modded ? m_flBlastRadiusOffset : 0.0f); }
 
+    virtual int     GetWeaponSoundPitchShift() { return m_iWeaponSoundPitchOffset; }
+    virtual float   GetWeaponSoundVolumeShift() { return m_flWeaponSoundVolumeOffset; }
+
 	virtual bool	CanBeSilenced( void ) { return false; };
 	virtual bool	IsSilenced() { return m_bSilenced; };
 	virtual bool	IsShotgun() { return false; };
@@ -232,6 +235,9 @@ public:
     GEWeaponStatModVar( float, m_fl, RangeOffset );
 
     GEWeaponStatModVar( float, m_fl, PenetrationOffset );
+
+    GEWeaponStatModVar( int, m_i, WeaponSoundPitchOffset );
+    GEWeaponStatModVar( float, m_fl, WeaponSoundVolumeOffset );
 
     // Returns the custom print name if set, otherwise returns the standard one.
     const char *GetCustomPrintName(void);

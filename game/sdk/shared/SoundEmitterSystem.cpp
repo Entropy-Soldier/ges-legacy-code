@@ -84,6 +84,10 @@ EmitSound_t::EmitSound_t( const CSoundParameters &src )
 	m_bEmitCloseCaption = true;
 	m_bWarnOnMissingCloseCaption = false;
 	m_bWarnOnDirectWaveReference = false;
+#ifdef GE_DLL
+    m_bSilentlyOverridePitch = false;
+    m_bSilentlyOverrideVolume = false;
+#endif
 	m_nSpeakerEntity = -1;
 }
 
@@ -429,6 +433,18 @@ public:
 		{
 			params.volume = ep.m_flVolume;
 		}
+
+#ifdef GE_DLL
+        if( ep.m_bSilentlyOverridePitch )
+		{
+			params.pitch = ep.m_nPitch;
+		}
+
+		if( ep.m_bSilentlyOverrideVolume )
+		{
+			params.volume = ep.m_flVolume;
+		}
+#endif
 
 #if !defined( CLIENT_DLL )
 		bool bSwallowed = CEnvMicrophone::OnSoundPlayed( 
@@ -1077,6 +1093,35 @@ void CBaseEntity::EmitSound( const char *soundname, HSOUNDSCRIPTHANDLE& handle, 
 
 	EmitSound( filter, entindex(), params, handle );
 }
+
+#ifdef GE_DLL
+void CBaseEntity::EmitAdjustedSound( IRecipientFilter& filter, int iEntIndex, const char *soundname, const Vector *pOrigin /*= NULL*/, int pitchOverride /*== -1*/, float volumeOverride /*== -1.0f*/, float soundtime /*= 0.0f*/, float *duration /*= NULL*/ )
+{
+    VPROF_BUDGET( "CBaseEntity::EmitSound", _T( "CBaseEntity::EmitSound" ) );
+
+	// VPROF( "CBaseEntity::EmitSound" );
+	EmitSound_t params;
+	params.m_pSoundName = soundname;
+	params.m_flSoundTime = soundtime;
+	params.m_pOrigin = pOrigin;
+	params.m_pflSoundDuration = duration;
+	params.m_bWarnOnDirectWaveReference = true;
+
+    if (pitchOverride > 0.0f)
+    {
+        params.m_nPitch = pitchOverride;
+        params.m_bSilentlyOverridePitch = true;
+    }
+
+    if (volumeOverride > 0.0f)
+    {
+        params.m_flVolume = volumeOverride;
+        params.m_bSilentlyOverrideVolume = true;
+    }
+
+	EmitSound( filter, iEntIndex, params );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 

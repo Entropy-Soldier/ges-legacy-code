@@ -20,6 +20,7 @@
 #include "gemp_player.h"
 #include "ge_gameplay.h"
 #include "ge_tokenmanager.h"
+#include "eventqueue.h"
 
 #include "particle_parse.h"
 #include "networkstringtable_gamedll.h"
@@ -598,6 +599,51 @@ void pyClientCmd( CGEPlayer *pPlayer, std::string cmd )
 	engine->ClientCommand( pPlayer->edict(), cmd.c_str() );
 }
 
+void pyFireEntityInput(const char *target, const char *targetInput, bp::object value, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller)
+{
+	bp::extract<char*> to_string( value );
+	bp::extract<int> to_int( value );
+    bp::extract<float> to_float( value );
+    bp::extract<bool> to_bool( value );
+
+    bp::extract<CBaseEntity*> to_ent( value );
+    bp::extract<color32> to_color( value );
+    bp::extract<Vector> to_vector( value );
+
+	variant_t valueVariant;
+
+    if (to_string.check())
+    {
+        valueVariant.SetString(AllocPooledString(to_string()));
+    }
+    else if (to_int.check())
+    {
+        valueVariant.SetInt(to_int());
+    }
+    else if (to_float.check())
+    {
+        valueVariant.SetFloat(to_float());
+    }
+    else if (to_bool.check())
+    {
+        valueVariant.SetBool(to_bool());
+    }
+    else if (to_ent.check())
+    {
+        valueVariant.SetEntity(to_ent());
+    }
+    else if (to_color.check())
+    {
+        valueVariant.SetColor32(to_color());
+    }
+    else if (to_vector.check())
+    {
+        valueVariant.SetVector3D(to_vector());
+    }
+
+    g_EventQueue.AddEvent( target, targetInput, valueVariant, fireDelay, pActivator, pCaller);
+}
+
 bool pyIsDedicatedServer()
 {
 	return engine->IsDedicatedServer();
@@ -808,6 +854,8 @@ BOOST_PYTHON_MODULE(GEUtil)
 
 	def("ServerCommand", pyServerCmd);
 	def("ClientCommand", pyClientCmd);
+
+    def("FireEntityInput", &pyFireEntityInput, ("target", "input", arg("value")="", arg("delay")=0.0f, arg("activator")=NULL, arg("caller")=NULL));
 
 	def("IsDedicatedServer", pyIsDedicatedServer);
 	def("IsLAN", pyIsLAN);

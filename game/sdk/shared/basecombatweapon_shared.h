@@ -218,6 +218,11 @@ public:
 	virtual void			CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles ) {}
 #endif
 
+#ifdef GE_DLL
+    virtual int             GetWeaponSoundPitchShift() { return 0; }
+    virtual float           GetWeaponSoundVolumeShift() { return 0.0f; }
+#endif
+
 	virtual bool			IsWeaponZoomed() { return false; }		// Is this weapon in its 'zoomed in' mode?
 
 	// Reloading
