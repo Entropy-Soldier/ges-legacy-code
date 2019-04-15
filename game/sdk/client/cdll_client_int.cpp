@@ -469,6 +469,10 @@ public:
 	virtual void					PostInit();
 	virtual void					Shutdown( void );
 
+#ifdef GE_DLL
+    virtual void                    DeleteUnreferencedTextures( bool printRemovedCount );
+#endif
+
 	virtual void					LevelInitPreEntity( const char *pMapName );
 	virtual void					LevelInitPostEntity();
 	virtual void					LevelShutdown( void );
@@ -692,6 +696,11 @@ static void MountAdditionalContent()
 			Warning("Unable to mount extra content with appId: %i\n", nExtraContentId);
 	}
 }
+
+#ifdef GE_DLL
+extern ConVar r_flashlightdepthtexture;
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Called when the DLL is first loaded.
 // Input  : engineFactory - 
@@ -896,6 +905,16 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 
 	C_BaseAnimating::InitBoneSetupThreadPool();
 
+#ifdef GE_DLL
+    // Don't want to reload the weapons twice on our first map load.
+    materials->SetExcludedTextures("scripts/base_exclude.lst");
+
+    // Flipping this on and then off...will somehow clear the transition table and help fix the shader bug
+    // well known for the error message "Transition table overflow, grab brian!".
+    // It's really janky, but I can't seem to find another way to flush this thing.
+    r_flashlightdepthtexture.SetValue(!r_flashlightdepthtexture.GetBool());
+#endif
+
 	return true;
 }
 
@@ -905,6 +924,11 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 void CHLClient::PostInit()
 {
 	IGameSystem::PostInitAllSystems();
+
+#ifdef GE_DLL
+    // Flipping this on and then off...will somehow clear the transition table and help fix the shader bug.
+    r_flashlightdepthtexture.SetValue(!r_flashlightdepthtexture.GetBool());
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -953,8 +977,12 @@ void CHLClient::Shutdown( void )
 	//Andrew; this is the fastest and dirtiest fucking thing I could come up
 	//with to avoid that damn "CNet Encrypt:0" issue. At least this closes the
 	//game now.
+#ifdef GE_DLL
+    //TerminateProcess(GetCurrentProcess(), EXIT_SUCCESS);
+#else
 #if 0
 		TerminateProcess(GetCurrentProcess(), EXIT_SUCCESS);
+#endif
 #endif
 }
 
@@ -1324,12 +1352,58 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	gHUD.LevelInit();
 }
 
+#ifdef GE_DLL
+void CHLClient::DeleteUnreferencedTextures( bool printRemovedCount )
+{
+    IMaterial *previousMaterial = NULL;
+    int materialCount1 = 0;
+    int materialCount2 = 0;
+
+    for (MaterialHandle_t i = materials->FirstMaterial(); i != materials->InvalidMaterial(); i = materials->NextMaterial(i) )
+	{
+        if (previousMaterial)
+        {
+            previousMaterial->DeleteIfUnreferenced();
+        }
+
+        //Msg("%d\t%s\n", materialCount1, materials->GetMaterial(i)->GetName());
+        materialCount1++;
+
+        previousMaterial = materials->GetMaterial(i);
+    }
+
+    if (previousMaterial)
+    {
+        previousMaterial->DeleteIfUnreferenced();
+    }
+
+    if (printRemovedCount)
+    {
+        for (MaterialHandle_t i = materials->FirstMaterial(); i != materials->InvalidMaterial(); i = materials->NextMaterial(i) )
+	    {
+            //Msg("%d\t%s\n", materialCount2, materials->GetMaterial(i)->GetName());
+            materialCount2++;
+        }
+
+        Msg("Removed %d unreferenced materials\n", materialCount1 - materialCount2);
+    }
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Per level init
 //-----------------------------------------------------------------------------
 void CHLClient::LevelInitPostEntity( )
 {
+#ifdef GE_DLL
+    materials->UncacheAllMaterials();
+    DeleteUnreferencedTextures( true );
+    materials->SetExcludedTextures("");
+    g_pMemAlloc->CompactHeap();
+    materials->CacheUsedMaterials();
+    Msg("Finished reloading materials!\n");
+#endif
+
 	IGameSystem::LevelInitPostEntityAllSystems();
 	C_PhysPropClientside::RecreateAll();
 	internalCenterPrint->Clear();
@@ -1415,6 +1489,18 @@ void CHLClient::LevelShutdown( void )
 #ifdef GE_DLL
 	if ( engine->GetLevelName()[0] == '\0' )
 		StartMenuMusic();
+
+    // This frees up a fair bit of texture memory so that the game doesn't run out during level transition.
+    // The game loads the next level before unloading the first one, however GE:S uses so much texture
+    // memory that it seems the game actually manages to run out of its allocated memory depending on how fragmented the heap is.
+    // Anything that needs to be precached will have that done again on level load, so this should only have a moderate effect on level load times.
+    //materials->ResetTempHWMemory(true);
+    Msg("Flushed %d bytes!\n", g_pDataCache->Flush());
+    materials->UncacheAllMaterials();
+    DeleteUnreferencedTextures( true );
+    g_pMemAlloc->CompactHeap();
+
+    materials->SetExcludedTextures("scripts/base_exclude.lst");
 #endif
 }
 

@@ -91,12 +91,21 @@ static ConVar r_flashlightmodels( "r_flashlightmodels", "1" );
 static ConVar r_shadowrendertotexture( "r_shadowrendertotexture", "0" );
 static ConVar r_flashlight_version2( "r_flashlight_version2", "0" );
 
+#ifdef GE_DLL
 ConVar r_flashlightdepthtexture( "r_flashlightdepthtexture", "1" );
+ConVar r_explicitflashlightdepthtexture( "r_explicitflashlightdepthtexture", "0" ); // Setting shadow detail sets r_flashlightdepthtexture but we really don't want it.
+#else
+ConVar r_flashlightdepthtexture( "r_flashlightdepthtexture", "1" );
+#endif
 
 #if defined( _X360 )
 ConVar r_flashlightdepthres( "r_flashlightdepthres", "512" );
 #else
+#ifdef GE_DLL
+ConVar r_flashlightdepthres( "r_flashlightdepthres", "64" ); // We don't use the flashlight so don't waste much resources on it.
+#else
 ConVar r_flashlightdepthres( "r_flashlightdepthres", "1024" );
+#endif
 #endif
 
 ConVar r_threaded_client_shadow_manager( "r_threaded_client_shadow_manager", "0" );
@@ -1311,7 +1320,11 @@ bool CClientShadowMgr::Init()
 		ShutdownDepthTextureShadows();	
 	}
 
+#ifdef GE_DLL
+    if ( !bLowEnd && r_flashlightdepthtexture.GetBool() && r_explicitflashlightdepthtexture.GetBool() )
+#else
 	if ( !bLowEnd && r_flashlightdepthtexture.GetBool() )
+#endif
 	{
 		InitDepthTextureShadows();
 	}
@@ -1876,7 +1889,11 @@ ClientShadowHandle_t CClientShadowMgr::CreateFlashlight( const FlashlightState_t
 	static ClientEntityHandle_t invalidHandle = INVALID_CLIENTENTITY_HANDLE;
 
 	int shadowFlags = SHADOW_FLAGS_FLASHLIGHT | SHADOW_FLAGS_LIGHT_WORLD;
+#ifdef GE_DLL
+    if( lightState.m_bEnableShadows && r_flashlightdepthtexture.GetBool() && r_explicitflashlightdepthtexture.GetBool() )
+#else
 	if( lightState.m_bEnableShadows && r_flashlightdepthtexture.GetBool() )
+#endif
 	{
 		shadowFlags |= SHADOW_FLAGS_USE_DEPTH_TEXTURE;
 	}
@@ -2902,7 +2919,11 @@ void CClientShadowMgr::PreRender()
 			ShutdownDepthTextureShadows();	
 		}
 
+#ifdef GE_DLL
+        bool bDepthTextureActive     = r_flashlightdepthtexture.GetBool() && r_explicitflashlightdepthtexture.GetBool();
+#else
 		bool bDepthTextureActive     = r_flashlightdepthtexture.GetBool();
+#endif
 		int  nDepthTextureResolution = r_flashlightdepthres.GetInt();
 
 		// If shadow depth texture size or enable/disable changed, do appropriate deallocation/(re)allocation

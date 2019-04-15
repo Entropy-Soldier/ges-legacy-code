@@ -242,42 +242,6 @@ void ClientModeGENormal::Init()
 	GEUTIL_OverrideCommand( "connect", "__real_connect", "__OVR_connect", "Connect to the given server." );
 }
 
-void ClientModeGENormal::DeleteUnreferencedTextures( bool printRemovedCount )
-{
-    IMaterial *previousMaterial = NULL;
-    int materialCount1 = 0;
-    int materialCount2 = 0;
-
-    for (MaterialHandle_t i = materials->FirstMaterial(); i != materials->InvalidMaterial(); i = materials->NextMaterial(i) )
-	{
-        if (previousMaterial)
-        {
-            previousMaterial->DeleteIfUnreferenced();
-        }
-
-        //Msg("%d\t%s\n", materialCount1, materials->GetMaterial(i)->GetName());
-        materialCount1++;
-
-        previousMaterial = materials->GetMaterial(i);
-    }
-
-    if (previousMaterial)
-    {
-        previousMaterial->DeleteIfUnreferenced();
-    }
-
-    if (printRemovedCount)
-    {
-        for (MaterialHandle_t i = materials->FirstMaterial(); i != materials->InvalidMaterial(); i = materials->NextMaterial(i) )
-	    {
-            //Msg("%d\t%s\n", materialCount2, materials->GetMaterial(i)->GetName());
-            materialCount2++;
-        }
-
-        Msg("Removed %d unreferenced materials\n", materialCount1 - materialCount2);
-    }
-}
-
 void ClientModeGENormal::LevelInit( const char* newmap )
 {
 	g_pScreenSpaceEffects->EnableScreenSpaceEffect( "ge_entglow" );
@@ -292,19 +256,6 @@ void ClientModeGENormal::LevelShutdown( void )
     //materials->UpdateConfig(true);
 
 	BaseClass::LevelShutdown();
-
-    // This frees up a fair bit of texture memory so that the game doesn't run out during level transition.
-    // The game loads the next level before unloading the first one, however GE:S uses so much texture
-    // memory that it seems the game actually manages to run out of its allocated memory depending on how fragmented the heap is.
-    // Anything that needs to be precached will have that done again on level load, so this should only have a moderate effect on level load times.
-    // In fact it will reload almost all of these assets again when it loads the next level's assets...but I guess doing this reduces fragmentation
-    // enough that the game no longer crashes?  Will need more testing to get a better idea of the limits.
-    //materials->ResetTempHWMemory(true);
-
-    Msg("Flushed %d bytes!\n", g_pDataCache->Flush());
-    materials->UncacheAllMaterials();
-    DeleteUnreferencedTextures( true );
-    g_pMemAlloc->CompactHeap();
 }
 
 void ClientModeGENormal::OverrideMouseInput( float *x, float *y )
