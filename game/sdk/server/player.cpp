@@ -1173,10 +1173,6 @@ int CBasePlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	flArmorDmg = min( flArmorDmg, m_ArmorValue );
 
-	// Record the final damage amounts (actually apply armor dmg here!)
-	info.SetDamage( (int)flHealthDmg );
-	m_ArmorValue -= (int)flArmorDmg;
-
     // Early out if there's no damage
     // Do this after CalculateCustomDamage so the gameplay knows of all hits, even 0 damage ones.
 	if ( !info.GetDamage() )
@@ -1184,6 +1180,10 @@ int CBasePlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
     // keep track of amount of damage last sustained, if we actually took any damage.
 	m_lastDamageAmount = info.GetDamage();
+
+	// Record the final damage amounts (actually apply armor dmg here!)
+	info.SetDamage( (int)flHealthDmg );
+	m_ArmorValue -= (int)flArmorDmg;
 #endif
 
 	// this cast to INT is critical!!! If a player ends up with 0.5 health, the engine will get that

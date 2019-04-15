@@ -95,6 +95,8 @@ CGEPlayer::CGEPlayer()
 	m_iTotalMaxArmor = -1;
 	m_iTotalArmorPickup = 0;
 
+    m_hHat = NULL;
+
 	memset(m_iPVS, 0, sizeof(m_iPVS));
 }
 
@@ -1055,10 +1057,31 @@ void CGEPlayer::GiveHat()
 	if ( m_hHat.Get() )
 		return;
 
+    if (!GECharacters())
+    {
+        Warning("No character data object!  Cannot spawn hat.\n");
+        return;
+    }
+
+    const CGECharData *charData = GECharacters()->Get(m_iCharIndex);
+
+    if (!charData)
+    {
+        Warning("Failed to get character data for index %d\n", m_iCharIndex);
+        return;
+    }
+
+    if (!charData->m_pSkins.IsValidIndex(m_iSkinIndex))
+    {
+        Warning("Failed to get character data for skin %d at character index %d\n", m_iSkinIndex, m_iCharIndex);
+        return;
+    }
+
 	const char* hatModel = GECharacters()->Get(m_iCharIndex)->m_pSkins[m_iSkinIndex]->szHatModel;
 	if ( !hatModel || hatModel[0] == '\0' )
 		return;
 
+    // Does not crash up until this point.
 	SpawnHat( hatModel );
 }
 

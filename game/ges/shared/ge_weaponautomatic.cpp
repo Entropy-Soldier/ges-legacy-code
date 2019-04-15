@@ -88,7 +88,7 @@ void CGEWeaponAutomatic::PrimaryAttack( void )
 	{
 		// MUST call sound before removing a round from the clip of a CHLMachineGun
 		WeaponSound(SINGLE, m_flNextPrimaryAttack);
-		m_flNextPrimaryAttack = m_flNextPrimaryAttack + fireRate;
+		m_flNextPrimaryAttack = m_flNextPrimaryAttack + max(fireRate, 0.0002f);
 		iBulletsToFire++;
 		m_nNumShotsFired++;
 	}

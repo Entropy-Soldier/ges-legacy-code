@@ -622,13 +622,13 @@ Vector C_BaseFlex::SetViewTarget( CStudioHdr *pStudioHdr )
 
 		AngleVectors( eyeAng, &eyeDeflect );
 		eyeDeflect.x = 0;
-
+#ifndef GE_DLL // This caused eyes to break on players but not on bots?
 		// reduce deflection the more the eye is off center
 		// FIXME: this angles make no damn sense
 		eyeDeflect = eyeDeflect * (local.x * local.x);
 		local = local + eyeDeflect;
 		VectorNormalize( local );
-
+#endif
 		// check to see if the eye is aiming outside the max eye deflection
 		float flMaxEyeDeflection = pStudioHdr->MaxEyeDeflection();
 		if ( local.x < flMaxEyeDeflection )

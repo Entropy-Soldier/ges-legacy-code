@@ -51,6 +51,7 @@ PRECACHE_REGISTER(bot_player);
 CGEBotPlayer::CGEBotPlayer()
 {
 	m_flRespawnDelay = BOT_MAX_RESPAWN_DELAY;
+    m_hHat = NULL;
 }
 
 CGEBotPlayer::~CGEBotPlayer( void )
@@ -543,7 +544,27 @@ void CGEBotPlayer::GiveHat()
 	if (m_hHat.Get())
 		return;
 
-	const char* hatModel = GECharacters()->Get(m_iCharIndex)->m_pSkins[m_iSkinIndex]->szHatModel;
+    if (!GECharacters())
+    {
+        Warning("No character data object!  Cannot spawn hat.\n");
+        return;
+    }
+
+    const CGECharData *charData = GECharacters()->Get(m_iCharIndex);
+
+    if (!charData)
+    {
+        Warning("Failed to get character data for index %d\n", m_iCharIndex);
+        return;
+    }
+
+    if (!charData->m_pSkins.IsValidIndex(m_iSkinIndex))
+    {
+        Warning("Failed to get character data for skin %d at character index %d\n", m_iSkinIndex, m_iCharIndex);
+        return;
+    }
+
+	const char* hatModel = charData->m_pSkins[m_iSkinIndex]->szHatModel;
 	if (!hatModel || hatModel[0] == '\0')
 		return;
 
@@ -558,6 +579,10 @@ void CGEBotPlayer::SpawnHat(const char* hatModel, bool canBeRemoved)
 	// Get rid of any hats we're currently wearing.
 	if (m_hHat.Get())
 		KnockOffHat(true);
+
+    // Can try to spawn hats before the NPC actually exists.
+    if (!m_pNPC)
+        return;
 
 	// Simple check to ensure consistency
 	int setnum, boxnum;
