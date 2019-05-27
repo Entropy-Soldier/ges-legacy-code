@@ -525,7 +525,7 @@ protected:
 		// If we're using the grenade launcher, and the game registered a headshot, we can consider this a kill.
 		if (event->GetInt("weaponid") == WEAPON_GRENADE_LAUNCHER && event->GetBool("headshot"))
 		{
-			if (gpGlobals->curtime - m_flLastKillTime < 1.0 && CalcPlayerCount() >= 4)
+			if (gpGlobals->curtime - m_flLastKillTime < 0.5 && CalcPlayerCount() >= 4)
 				IncrementCount();
 			else
 				m_flLastKillTime = gpGlobals->curtime;
@@ -537,7 +537,7 @@ private:
 DECLARE_GE_ACHIEVEMENT(CAchTimeToTarget, ACHIEVEMENT_GES_TIMETOTARGET, "GES_TIMETOTARGET", 100, GE_ACH_UNLOCKED);
 
 
-// Pitfall: Knock 100 people into pits
+// Pitfall: Knock 50 people into pits
 class CAchPitfall : public CGEAchievement
 {
 protected:
