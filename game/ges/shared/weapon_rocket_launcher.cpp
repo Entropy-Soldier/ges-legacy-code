@@ -307,6 +307,7 @@ void CGEWeaponRocketLauncher::LaunchRocket( void )
 		pRocket->SetDamage( GetWeaponDamage() );
         pRocket->SetDamageCap( GetDamageCap() );
 		pRocket->SetDamageRadius( GetWeaponDamageRadius() );
+        pRocket->SetPushForceMult( GetWeaponPushForceMult() );
 
         // Copy custom print name string directly instead of possibly copying the normal print name.
         pRocket->SetCustomPrintName(m_sPrintNameCustom);

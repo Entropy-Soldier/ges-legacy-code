@@ -411,6 +411,7 @@ void CGEWeaponGrenade::ThrowGrenade( float throwforce, bool deathThrow /* == fal
         pGrenade->SetDamageCap( GetDamageCap() );
 		pGrenade->SetDamageRadius( GetWeaponDamageRadius() );
 		pGrenade->SetSourceWeapon(this);
+        pGrenade->SetPushForceMult( GetWeaponPushForceMult() );
 
         // Copy custom print name string directly instead of possibly copying the normal print name.
         pGrenade->SetCustomPrintName(m_sPrintNameCustom);
@@ -462,6 +463,7 @@ void CGEWeaponGrenade::ExplodeInHand( void )
 		pGrenade->SetDamage( GetWeaponDamage() );
         pGrenade->SetDamageCap( GetDamageCap() );
 		pGrenade->SetDamageRadius( GetWeaponDamageRadius() );
+        pGrenade->SetPushForceMult( GetWeaponPushForceMult() );
 
         // Copy custom print name string directly instead of possibly copying the normal print name.
         pGrenade->SetCustomPrintName(m_sPrintNameCustom);

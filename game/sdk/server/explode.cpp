@@ -388,7 +388,7 @@ void CEnvExplosion::Smoke( void )
 #ifdef GE_DLL
 // HACKHACK -- create one of these and fake a keyvalue to get the right explosion setup
 void ExplosionCreate( const Vector &center, const QAngle &angles, 
-	CBaseEntity *pOwner, int magnitude, int damagecap, int radius, int nSpawnFlags, float flExplosionForce, CBaseEntity *pInflictor, int iCustomDamageType,
+	CBaseEntity *pOwner, int magnitude, int damagecap, int radius, int nSpawnFlags, float flExplosionForce, float flExplosionForceMult, CBaseEntity *pInflictor, int iCustomDamageType,
 	const EHANDLE *ignoredEntity , Class_T ignoredClass )
 {
 	CEnvExplosion *pExplosion = (CEnvExplosion*)CBaseEntity::Create( "env_explosion", center, angles, pOwner );
@@ -402,6 +402,7 @@ void ExplosionCreate( const Vector &center, const QAngle &angles,
     pExplosion->m_iDamageCap = damagecap;
 	pExplosion->m_iRadiusOverride = radius;
 	pExplosion->m_flDamageForce = flExplosionForce;
+    pExplosion->m_flDamageForceMultiplier = flExplosionForceMult;
 	pExplosion->m_nRenderMode = kRenderTransAdd;
 
 	if ( ignoredEntity )
@@ -419,7 +420,7 @@ void ExplosionCreate(const Vector &center, const QAngle &angles,
     CBaseEntity *pOwner, int magnitude, int radius, int nSpawnFlags, float flExplosionForce, CBaseEntity *pInflictor, int iCustomDamageType,
     const EHANDLE *ignoredEntity, Class_T ignoredClass)
 {
-    ExplosionCreate( center, angles, pOwner, magnitude, INT_MAX, radius, nSpawnFlags, flExplosionForce, pInflictor, iCustomDamageType, ignoredEntity, ignoredClass );
+    ExplosionCreate( center, angles, pOwner, magnitude, INT_MAX, radius, nSpawnFlags, flExplosionForce, 1.0f, pInflictor, iCustomDamageType, ignoredEntity, ignoredClass );
 }
 #else
 // HACKHACK -- create one of these and fake a keyvalue to get the right explosion setup

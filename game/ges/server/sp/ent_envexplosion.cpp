@@ -96,7 +96,7 @@ void CEnvExplosion::InputExplode( inputdata_t &inputdata )
 	// Get the radius override if specified
 	float fRadius = ( m_iRadiusOverride > 0 ) ? m_iRadiusOverride : ( m_iMagnitude * 1.25f );
 
-	Create_GEExplosion( pAttacker,  m_hInflictor ? m_hInflictor : this, vecExplodeOrigin, m_iMagnitude, fRadius, m_iDamageCap );
+	Create_GEExplosion( pAttacker,  m_hInflictor ? m_hInflictor : this, vecExplodeOrigin, m_iMagnitude, fRadius, m_iDamageCap, m_flDamageForceMultiplier );
 
 	if ( !(m_spawnflags & SF_ENVEXPLOSION_REPEATABLE) )
 	{

@@ -465,6 +465,7 @@ void CGEWeaponGrenadeLauncher::LaunchGrenade( void )
 		pShell->SetDamage( GetWeaponDamage() );
         pShell->SetDamageCap( GetDamageCap() );
 		pShell->SetDamageRadius( GetWeaponDamageRadius() );
+        pShell->SetPushForceMult( GetWeaponPushForceMult() );
 
         // Copy custom print name string directly instead of possibly copying the normal print name.
         pShell->SetCustomPrintName(m_sPrintNameCustom);

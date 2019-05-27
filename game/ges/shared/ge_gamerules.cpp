@@ -550,7 +550,7 @@ ConVar ge_exp_allowz( "ge_exp_allowz", "1", FCVAR_GAMEDLL, "Allows excessive Z f
 // ----------------------
 // Custom Radius Damage!
 // ----------------------
-void CGERules::RadiusDamage(const CTakeDamageInfo &info, const Vector &vecSrcIn, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore)
+void CGERules::RadiusDamage(const CTakeDamageInfo &info, const Vector &vecSrcIn, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore, float flPushMult /*= 1.0f*/)
 {
 	CBaseEntity *pEntity = NULL;
 	float		flAdjustedDamage, flDamagePercent;
@@ -671,7 +671,7 @@ void CGERules::RadiusDamage(const CTakeDamageInfo &info, const Vector &vecSrcIn,
 		// Calculate damage force that will always push players away from the explosion.
 
 		float flForce = min(flAdjustedDamage + 100, 500);
-		Vector vecForce = dir * flForce;
+		Vector vecForce = dir * flForce * flPushMult;
 
 		if (!ge_exp_allowz.GetBool())
 			vecForce.z *= 0.4;

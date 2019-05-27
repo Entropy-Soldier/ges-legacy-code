@@ -36,6 +36,8 @@ public:
 	virtual int			GetCustomData( void ) { return 0; };
     virtual int	        GetDamageCap() { return m_iDamageCap; }
 	virtual void	    SetDamageCap( int iDamageCap ) { m_iDamageCap = iDamageCap; }
+    virtual void	    SetPushForceMult( float pushForceMult ) { m_flPushForceMult = pushForceMult; }
+    virtual float	    GetPushForceMult() { return m_flPushForceMult; }
 
 	virtual void SetSourceWeapon(CGEWeapon *ent)
 	{
@@ -66,12 +68,13 @@ protected:
 	CGEWeapon *m_pWeaponOwner;
 	
     int m_iDamageCap;
+    float m_flPushForceMult;
 
 	virtual void Explode() {
         if ( GetDamageRadius() > 0 ) // Can't explode if we don't have a radius.
         {
             ExplosionCreate( GetAbsOrigin(), GetAbsAngles(), GetThrower(), GetDamage(), GetDamageCap(), GetDamageRadius(), 
-                SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, this );
+                SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, GetPushForceMult(), this );
         }
 		// Effectively hide us from everyone until the explosion is done with
 		GEUTIL_DelayRemove( this, GE_EXP_MAX_DURATION );

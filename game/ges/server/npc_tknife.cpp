@@ -87,6 +87,7 @@ void CGETKnife::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
         dmgInfo.SetDamageCap( GetDamageCap() );
 		CalculateMeleeDamageForce( &dmgInfo, vecAiming, tr.endpos, TKNIFE_FORCE_SCALE );
 		dmgInfo.SetDamagePosition( tr.endpos );
+        dmgInfo.ScaleDamageForce( GetPushForceMult() );
 
 		// No need to worry about the source weapon being deleted before the projectile can hit a player
 		// if we assign its weapon right before it's about to get deleted.

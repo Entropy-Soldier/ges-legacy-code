@@ -163,6 +163,8 @@ public:
 
     virtual float	GetWeaponDamageRadius( bool modded = true )	{ return GetGEWpnData().m_flDamageRadius + (modded ? m_flBlastRadiusOffset : 0.0f); }
 
+    virtual float	GetWeaponPushForceMult( bool modded = true ) { return 1.0f + (modded ? m_flPushForceMultOffset : 0.0f); }
+
     virtual int     GetWeaponSoundPitchShift() { return m_iWeaponSoundPitchOffset; }
     virtual float   GetWeaponSoundVolumeShift() { return m_flWeaponSoundVolumeOffset; }
 
@@ -173,7 +175,7 @@ public:
 	virtual void	SetAlwaysSilenced( bool set ) { m_bIsAlwaysSilent = set; };
 	virtual bool	IsAlwaysSilenced() { return m_bIsAlwaysSilent; };
 	virtual float	GetAccFireRate( bool modded = true ) { return GetGEWpnData().m_flAccurateRateOfFire + (modded ? m_flAccFireRateOffset : 0.0f); }
-	virtual int		GetAccShots(){ return GetGEWpnData().m_flAccurateShots; }
+	virtual int		GetAccShots( bool modded = true ){ return GetGEWpnData().m_flAccurateShots + (modded ? m_iAccShotsOffset : 0); }
 
 	virtual int		GetTracerAttachment( void );
 
@@ -227,12 +229,14 @@ public:
     GEWeaponStatModVar( float, m_fl, AimBonusOffset );
 
     GEWeaponStatModVar( int, m_i, MaxClip1Offset );
-    GEWeaponStatModVar( int, m_i, MaxClip2Offset );
+    GEWeaponStatModVar( int, m_i, AccShotsOffset );
 
     GEWeaponStatModVar( int, m_i, ZoomOffsetOffset );
 
     GEWeaponStatModVar( float, m_fl, BlastRadiusOffset );
     GEWeaponStatModVar( float, m_fl, RangeOffset );
+
+    GEWeaponStatModVar( float, m_fl, PushForceMultOffset );
 
     GEWeaponStatModVar( float, m_fl, PenetrationOffset );
 

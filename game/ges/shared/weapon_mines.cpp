@@ -257,6 +257,7 @@ void CGEWeaponMine::ThrowMine( void )
 	pMine->SetDamage( GetWeaponDamage() );
     pMine->SetDamageCap( GetDamageCap() );
 	pMine->SetDamageRadius( GetWeaponDamageRadius() );
+    pMine->SetPushForceMult( GetWeaponPushForceMult() );
 
     // Copy custom print name string directly instead of possibly copying the normal print name.
     pMine->SetCustomPrintName(m_sPrintNameCustom);

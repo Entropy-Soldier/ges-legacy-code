@@ -262,6 +262,7 @@ bp::dict pyWeaponInfo( bp::object weap, CBaseCombatCharacter *pOwner = NULL )
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetWeaponDamage_overloads, CGEWeapon::GetWeaponDamage, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetDamageCap_overloads, CGEWeapon::GetDamageCap, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMaxClip1_overloads, CGEWeapon::GetMaxClip1, 0, 1);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetAccShots_overloads, CGEWeapon::GetAccShots, 0, 1);
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetWeaponFireRate_overloads, CGEWeapon::GetFireRate, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetWeaponClickFireRate_overloads, CGEWeapon::GetClickFireRate, 0, 1);
@@ -312,6 +313,7 @@ BOOST_PYTHON_MODULE(GEWeapon)
 		.def("GetMaxAmmoCount", pyGetMaxAmmoCount)
 		.def("GetClip", &CGEWeapon::Clip1)
 		.def("GetMaxClip", &CGEWeapon::GetMaxClip1, GetMaxClip1_overloads())
+        .def("GetAccShots", &CGEWeapon::GetAccShots, GetAccShots_overloads())
 		.def("GetDefaultClip", &CGEWeapon::GetDefaultClip1)
 		.def("GetDamage", &CGEWeapon::GetWeaponDamage, GetWeaponDamage_overloads())
         .def("GetDamageCap", &CGEWeapon::GetDamageCap, GetDamageCap_overloads())
@@ -359,12 +361,14 @@ BOOST_PYTHON_MODULE(GEWeapon)
 		.def("SetAimBonusOffset", &CGEWeapon::SetAimBonusOffset)
         .def("GetMaxClip1Offset", &CGEWeapon::GetMaxClip1Offset)
 		.def("SetMaxClip1Offset", &CGEWeapon::SetMaxClip1Offset)
-        .def("GetMaxClip2Offset", &CGEWeapon::GetMaxClip2Offset)
-		.def("SetMaxClip2Offset", &CGEWeapon::SetMaxClip2Offset)
+        .def("GetAccShotsOffset", &CGEWeapon::GetAccShotsOffset)
+		.def("SetAccShotsOffset", &CGEWeapon::SetAccShotsOffset)
         .def("GetZoomOffsetOffset", &CGEWeapon::GetZoomOffsetOffset)
 		.def("SetZoomOffsetOffset", &CGEWeapon::SetZoomOffsetOffset)
         .def("GetBlastRadiusOffset", &CGEWeapon::GetBlastRadiusOffset)
 		.def("SetBlastRadiusOffset", &CGEWeapon::SetBlastRadiusOffset)
+        .def("GetPushForceMultOffset", &CGEWeapon::GetPushForceMultOffset)
+		.def("SetPushForceMultOffset", &CGEWeapon::SetPushForceMultOffset)
         .def("GetRangeOffset", &CGEWeapon::GetRangeOffset)
 		.def("SetRangeOffset", &CGEWeapon::SetRangeOffset)
         .def("GetPenetrationOffset", &CGEWeapon::GetPenetrationOffset)

@@ -458,6 +458,7 @@ void CGEWeaponMelee::Hit( trace_t &traceHit )
 		info.SetWeapon(this);
         info.SetDamageCap( GetDamageCap() );
 		CalculateMeleeDamageForce( &info, hitDirection, traceHit.endpos, 0.02 );
+        info.ScaleDamageForce( GetWeaponPushForceMult() );
 
 		pHitEntity->DispatchTraceAttack( info, hitDirection, &traceHit );
 

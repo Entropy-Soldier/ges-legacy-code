@@ -72,12 +72,13 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
     RecvPropFloat( RECVINFO( m_flAimBonusOffset ) ),
 
     RecvPropInt( RECVINFO( m_iMaxClip1Offset ) ),
-    RecvPropInt( RECVINFO( m_iMaxClip2Offset ) ),
+    RecvPropInt( RECVINFO( m_iAccShotsOffset ) ),
 
     RecvPropInt( RECVINFO( m_iZoomOffsetOffset ) ),
     
     RecvPropFloat( RECVINFO( m_flBlastRadiusOffset ) ),
     RecvPropFloat( RECVINFO( m_flRangeOffset ) ),
+    RecvPropFloat( RECVINFO( m_flPushForceMultOffset ) ),
     RecvPropFloat( RECVINFO( m_flPenetrationOffset ) ),
 
     RecvPropInt( RECVINFO( m_iWeaponSoundPitchOffset ) ),
@@ -102,7 +103,7 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
     SendPropFloat( SENDINFO( m_flAccFireRateOffset ) ),
 
     SendPropInt( SENDINFO( m_iMaxClip1Offset ) ),
-	SendPropInt( SENDINFO( m_iMaxClip2Offset ) ),
+	SendPropInt( SENDINFO( m_iAccShotsOffset ) ),
 
     SendPropInt( SENDINFO( m_iZoomOffsetOffset ) ),
 
@@ -113,6 +114,7 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
 
 	SendPropFloat( SENDINFO( m_flBlastRadiusOffset ) ),
 	SendPropFloat( SENDINFO( m_flRangeOffset ) ),
+    SendPropFloat( SENDINFO( m_flPushForceMultOffset ) ),
     SendPropFloat( SENDINFO( m_flPenetrationOffset ) ),
 
     SendPropInt( SENDINFO( m_iWeaponSoundPitchOffset ) ),
@@ -150,7 +152,7 @@ BEGIN_DATADESC( CGEWeapon )
     DEFINE_FIELD( m_flAccFireRateOffset,	FIELD_FLOAT ),
 
     DEFINE_FIELD( m_iMaxClip1Offset,	FIELD_INTEGER ),
-    DEFINE_FIELD( m_iMaxClip2Offset,	FIELD_INTEGER ),
+    DEFINE_FIELD( m_iAccShotsOffset,	FIELD_INTEGER ),
 
     DEFINE_FIELD( m_iZoomOffsetOffset,	FIELD_INTEGER ),
 
@@ -208,7 +210,7 @@ CGEWeapon::CGEWeapon()
     m_flAccFireRateOffset = 0.0f;
 
     m_iMaxClip1Offset = 0;
-    m_iMaxClip2Offset = 0;
+    m_iAccShotsOffset = 0;
 
     m_iZoomOffsetOffset = 0;
 
@@ -220,6 +222,8 @@ CGEWeapon::CGEWeapon()
     m_flBlastRadiusOffset = 0.0f;
     m_flRangeOffset = 0.0f;
     m_flPenetrationOffset = 0.0f;
+
+    m_flPushForceMultOffset = 0.0f;
 
     m_iWeaponSoundPitchOffset = 0;
     m_flWeaponSoundVolumeOffset = 0.0f;
@@ -785,6 +789,8 @@ void CGEWeapon::PrepareFireBullets(int number, CBaseCombatCharacter *pOperator, 
     info.m_flBlastRadius = max(GetBlastRadiusOffset(), 0);
     info.m_flBlastRadiusDamage = max(GetRangeOffset(), 0); // Might as well recycle this too since hitscan weapons don't use it.  Yeah this feature is kind of tacked-on.
 
+    info.m_flDamageForceScale = GetWeaponPushForceMult();
+
 	if (haveplayer)
 		info.m_pAttacker = pOperator;
 
@@ -1217,7 +1223,7 @@ int CGEWeapon::GetMaxClip1( bool modded /*== true*/ )
 
 int CGEWeapon::GetMaxClip2( bool modded /*== true*/ )
 {
-	return GetWpnData().iMaxClip2 + (modded ? m_iMaxClip2Offset : 0);
+	return GetWpnData().iMaxClip2;
 }
 
 // END Accessor functions

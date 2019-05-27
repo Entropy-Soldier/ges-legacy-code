@@ -98,7 +98,7 @@ public:
 
 	// ---------------
 	// GameRules Functions
-	virtual void RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore );
+	virtual void RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore, float flPushMult = 1.0f );
 
 	virtual bool CanHaveItem( CBasePlayer *pPlayer, CItem *pItem );
 	virtual bool CanHavePlayerItem( CBasePlayer *pPlayer, CBaseCombatWeapon *pWeapon );

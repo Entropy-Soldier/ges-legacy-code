@@ -118,7 +118,7 @@ void CGEMine::InputExplode( inputdata_t &inputdata )
     {
         // Create the explosion 4 units AWAY from the surface we are attached to
         ExplosionCreate(GetAbsOrigin() + forward * 4, GetAbsAngles(), inputdata.pActivator, GetDamage(), GetDamageCap(), GetDamageRadius(),
-            SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, this);
+            SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, GetPushForceMult(), this);
     }
 	StopSound(GetAttachSound());
 	// Effectively hide us from everyone until the explosion is done with

@@ -52,6 +52,7 @@ public:
 	void SetDamage( float dmg );
 	void SetDamageRadius( float dmgR );
     void SetDamageCap( int dmgC );
+    void SetPushForceMult( float mult );
 	void SetOwner( CBaseEntity *owner );
 	void SetActivator( CBaseEntity *activator);
 
@@ -65,6 +66,7 @@ private:
 	float m_flDamage;
     int m_iDamageCap;
 	float m_flDamageRadius;
+    float m_flPushForceMult;
 
 	float m_flDieTime;
 	float m_flShakeTime;
@@ -83,6 +85,7 @@ CGE_Explosion::CGE_Explosion()
 {
 	m_flDamage = 320;
 	m_flDamageRadius = 260;
+    m_flPushForceMult = 1.0f;
 	m_flShakeTime = 0;
 	m_flDieTime = 0;
 }
@@ -100,6 +103,11 @@ void CGE_Explosion::SetDamageRadius( float dmgR )
 void CGE_Explosion::SetDamageCap( int dmgC )
 {
 	m_iDamageCap = dmgC;
+}
+
+void CGE_Explosion::SetPushForceMult(float mult)
+{
+    m_flPushForceMult = mult;
 }
 
 void CGE_Explosion::SetActivator( CBaseEntity *activator)
@@ -269,7 +277,7 @@ void CGE_Explosion::Think()
 		{
 			CTakeDamageInfo info( m_hActivator.Get(), m_hOwner.Get(), vec3_origin, GetAbsOrigin(), m_flDamage, DMG_BLAST );
             info.SetDamageCap( m_iDamageCap );
-			g_pGameRules->RadiusDamage( info, GetAbsOrigin(), m_flDamageRadius, CLASS_NONE, NULL );
+			g_pGameRules->RadiusDamage( info, GetAbsOrigin(), m_flDamageRadius, CLASS_NONE, NULL, m_flPushForceMult );
 		}
 
 		if ( gpGlobals->curtime > m_flShakeTime && gpGlobals->curtime < m_flDieTime + 1.0f )
@@ -332,7 +340,7 @@ void CGE_Explosion::DestroyHeatWave( void )
 	}
 }
 
-CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, const Vector pos, float dmg, float dmgRadius, int dmgCap )
+CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, const Vector pos, float dmg, float dmgRadius, int dmgCap, float pushScale )
 {
 	// We must have an owner
 	if ( !owner )
@@ -348,6 +356,7 @@ CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, con
         pExp->SetDamageCap( dmgCap );
 		pExp->SetDamageRadius( dmgRadius );
 		pExp->SetAbsOrigin( pos );
+        pExp->SetPushForceMult( pushScale );
 
 		DispatchSpawn( pExp );
 		pExp->Activate();
@@ -356,7 +365,7 @@ CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, con
 	return pExp;
 }
 
-CBaseEntity* Create_GEExplosion( CBaseEntity* owner, const Vector pos, float dmg, float dmgRadius, int dmgCap )
+CBaseEntity* Create_GEExplosion( CBaseEntity* owner, const Vector pos, float dmg, float dmgRadius, int dmgCap, float pushScale )
 {
-	return Create_GEExplosion( owner, NULL, pos, dmg, dmgRadius, dmgCap );
+	return Create_GEExplosion( owner, NULL, pos, dmg, dmgRadius, dmgCap, pushScale );
 }

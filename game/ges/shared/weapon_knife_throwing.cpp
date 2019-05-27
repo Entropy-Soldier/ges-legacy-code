@@ -236,6 +236,7 @@ CGETKnife *CWeaponKnifeThrowing::CreateKnife( const Vector &vecOrigin, const QAn
 
     // Copy custom print name string directly instead of possibly copying the normal print name.
     pKnife->SetCustomPrintName(m_sPrintNameCustom);
+    pKnife->SetPushForceMult( GetWeaponPushForceMult() );
 
 	return pKnife;
 }
