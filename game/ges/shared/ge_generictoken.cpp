@@ -303,7 +303,7 @@ void CGenericToken::HandleAnimEventMeleeHit( animevent_t *pEvent, CBaseCombatCha
 	AngleVectors( GetAbsAngles(), &vecDirection );
 
 	Vector vecEnd;
-	VectorMA( pOperator->Weapon_ShootPosition(), 50, vecDirection, vecEnd );
+	VectorMA( pOperator->Weapon_ShootPosition(), GetRange(), vecDirection, vecEnd );
 	CBaseEntity *pHurt = pOperator->CheckTraceHullAttack( pOperator->Weapon_ShootPosition(), vecEnd, Vector(-16,-16,-16), Vector(36,36,36), GetWeaponDamage(), DMG_CLUB );
 	
 	// did I hit someone?

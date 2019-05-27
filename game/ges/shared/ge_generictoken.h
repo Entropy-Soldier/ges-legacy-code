@@ -44,7 +44,7 @@ public:
 	virtual bool CanHolster( void );
 
 	virtual void SecondaryAttack( void ) { };
-	virtual float GetRange( void )	{	return	55.0f;	}
+    virtual float GetBaseRange( void ) { return 75.0f; }
 
 	virtual	void ImpactEffect( trace_t &trace );
 	virtual float GetDamageForActivity( Activity hitActivity );

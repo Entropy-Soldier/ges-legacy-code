@@ -27,7 +27,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define	KNIFE_RANGE		75.0f
+#define	KNIFE_RANGE		72.0f
 
 #ifdef CLIENT_DLL
 #define CWeaponKnife C_WeaponKnife
@@ -171,7 +171,7 @@ void CWeaponKnife::HandleAnimEventMeleeHit( animevent_t *pEvent, CBaseCombatChar
 //	CBaseEntity *pHurt = pOperator->CheckTraceHullAttack( pOperator->Weapon_ShootPosition(), vecEnd, 
 //		Vector(-16,-16,-16), Vector(36,36,36), GetDamageForActivity( GetActivity() ), DMG_CLUB, 0.75 );
 
-	VectorMA(pOperator->Weapon_ShootPosition(), KNIFE_RANGE, vecDirection, vecEnd);
+	VectorMA(pOperator->Weapon_ShootPosition(), GetRange(), vecDirection, vecEnd);
 	CBaseEntity *pHurt = pOperator->CheckTraceHullAttack(pOperator->Weapon_ShootPosition(), vecEnd, Vector(-16, -16, -16), Vector(36, 36, 36), GetWeaponDamage(), DMG_CLUB);
 	
 	// did I hit someone?

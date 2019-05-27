@@ -27,7 +27,7 @@
 #include "tier0/memdbgon.h"
 
 #define	SLAPPER_RANGE		68.0f
-#define	STOCK_RANGE			72.0f
+#define	STOCK_RANGE			70.0f
 #define STOCK_MODEL			"models/weapons/sniperrifle/v_buttstock.mdl"
 
 #ifdef CLIENT_DLL
