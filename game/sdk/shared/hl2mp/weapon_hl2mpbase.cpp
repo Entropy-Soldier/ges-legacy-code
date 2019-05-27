@@ -138,9 +138,18 @@ void CWeaponHL2MPBase::WeaponSound( WeaponSound_t sound_type, float soundtime /*
 
     if ( GetParametersForSound( shootsound, params, NULL ) )
     {
+        int maxPitch = 250;
+        int minPitch = 1;
+
+        if ( sound_type == RELOAD || sound_type == RELOAD_NPC ) // Some reloads sound odd when pitch shifted too much.
+        {
+            maxPitch = 200;
+            minPitch = 80;
+        }
+
         if (GetWeaponSoundPitchShift() != 0)
         {
-            pitchOverride = clamp(params.pitch + GetWeaponSoundPitchShift(), 1, 250);
+            pitchOverride = clamp(params.pitch + GetWeaponSoundPitchShift(), minPitch, maxPitch);
         }
 
         if (GetWeaponSoundVolumeShift() != 0.0f)
