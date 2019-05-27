@@ -2309,13 +2309,15 @@ void CGameMovement::FullWalkMove( )
 
 			if (bt.fraction != 1.0 && bt.plane.normal.z != 1)
 			{
-				// Yeah we probably should use gradiants for this but for the very limited purpose this has it's probably not worth it.
-				float speed = bt.plane.normal.z * sv_gravity.GetInt(); // Cosine of the angle of the vector from the z axis multiplied by gravity.  The higher the angle the slower we go.
-				Vector movedir = bt.plane.normal;
-				movedir.z = 0;
-				movedir.NormalizeInPlace();
-				
-				mv->m_vecVelocity += speed * movedir * gpGlobals->frametime * 0.4; // Dampened slightly to cover up the dinkyness.
+				// Our acceleration magnitude is the cosine of the angle of the vector from the z axis multiplied by gravity.  The higher the angle the slower we go.
+				float speed = bt.plane.normal.z * sv_gravity.GetInt(); 
+
+                // Calculate a vector that is parallel to the slope of the surface we're on and use that as the unit vector for our acceleration.
+                // The first cross product gets a vector that runs along the 0 gradiant of the slope, and the second gets one that runs along the
+                // steepest gradiant.
+                Vector movedir = Vector(0, 0, 1).Cross(bt.plane.normal).Cross(bt.plane.normal);
+
+				mv->m_vecVelocity += speed * movedir * gpGlobals->frametime;
 			}
 		}
 #endif
@@ -2589,6 +2591,26 @@ bool CGameMovement::CheckJumpButton( void )
 //	if ( !ge_allowjump.GetBool() || (((CGEPlayer*)player)->IsMPPlayer() && gpGlobals->curtime < ((CGEMPPlayer*)player)->GetNextJumpTime()) )
 	if (!ge_allowjump.GetBool() || (((CGEPlayer*)player)->IsMPPlayer() && ((CGEMPPlayer*)player)->GetJumpPenalty() > 50) )
 		return false;
+
+    bool shouldJumpAlongSurfaceNormal = false;
+    Vector jumpSurfaceNormal = Vector(0, 0, 1);
+
+    if (player->m_surfaceFriction < 0.25)
+    {
+        trace_t bt, lt;
+		TracePlayerBBox(mv->GetAbsOrigin(), mv->GetAbsOrigin() + Vector(0, 0, -32), PlayerSolidMask(), player->GetCollisionGroup(), bt);
+
+        if (bt.fraction != 1.0)
+        {
+            jumpSurfaceNormal = bt.plane.normal;
+            shouldJumpAlongSurfaceNormal = true;
+        }
+    }
+
+    if ( shouldJumpAlongSurfaceNormal && ((CGEPlayer*)player)->IsMPPlayer() && ((CGEMPPlayer*)player)->GetJumpPenalty() > 25 )
+    {
+        return false;
+    }
 #endif
 
 	// See if we are waterjumping.  If so, decrement count and return.
@@ -2648,6 +2670,17 @@ bool CGameMovement::CheckJumpButton( void )
 		return false;
 
 #ifdef GE_DLL
+    float flGroundFactor = 1.0f;
+	if (player->m_pSurfaceData)
+	{
+		flGroundFactor = player->m_pSurfaceData->game.jumpFactor;
+
+        if (flGroundFactor == 0.0f)
+        {
+            return false;
+        }
+	}
+
     // All checks are clear, time to jump!
 
 #if !defined( CLIENT_DLL )
@@ -2713,13 +2746,13 @@ bool CGameMovement::CheckJumpButton( void )
 	player->PlayStepSound( (Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true );
 	
 	MoveHelper()->PlayerSetAnimation( PLAYER_JUMP );
-
+#ifndef GE_DLL
 	float flGroundFactor = 1.0f;
 	if (player->m_pSurfaceData)
 	{
 		flGroundFactor = player->m_pSurfaceData->game.jumpFactor; 
 	}
-
+#endif
 	float flMul;
 	if ( g_bMovementOptimizations )
 	{
@@ -2747,6 +2780,40 @@ bool CGameMovement::CheckJumpButton( void )
 		flMul = sqrt(2 * sv_gravity.GetFloat() * GAMEMOVEMENT_JUMP_HEIGHT);
 	}
 
+#ifdef GE_DLL
+    // Acclerate upward
+	// If we are ducking...
+	float startz = mv->m_vecVelocity[2];
+	if ( (  player->m_Local.m_bDucking ) || (  player->GetFlags() & FL_DUCKING ) )
+	{
+		// d = 0.5 * g * t^2		- distance traveled with linear accel
+		// t = sqrt(2.0 * 45 / g)	- how long to fall 45 units
+		// v = g * t				- velocity at the end (just invert it to jump up that high)
+		// v = g * sqrt(2.0 * 45 / g )
+		// v^2 = g * g * 2.0 * 45 / g
+		// v = sqrt( g * 2.0 * 45 )
+        if (shouldJumpAlongSurfaceNormal)
+        {
+            mv->m_vecVelocity[2] = 0;
+            mv->m_vecVelocity += flGroundFactor * flMul * jumpSurfaceNormal;
+        }
+        else
+        {
+            mv->m_vecVelocity[2] = flGroundFactor * flMul;  // 2 * gravity * height
+        }
+	}
+	else
+	{
+        if (shouldJumpAlongSurfaceNormal)
+        {
+            mv->m_vecVelocity += flGroundFactor * flMul * jumpSurfaceNormal;
+        }
+        else
+        {
+            mv->m_vecVelocity[2] += flGroundFactor * flMul;  // 2 * gravity * height
+        }
+	}
+#else
 	// Acclerate upward
 	// If we are ducking...
 	float startz = mv->m_vecVelocity[2];
@@ -2764,6 +2831,7 @@ bool CGameMovement::CheckJumpButton( void )
 	{
 		mv->m_vecVelocity[2] += flGroundFactor * flMul;  // 2 * gravity * height
 	}
+#endif
 
 	// Add a little forward velocity based on your current forward velocity - if you are not sprinting.
 #if defined( HL2_DLL ) || defined( HL2_CLIENT_DLL )
