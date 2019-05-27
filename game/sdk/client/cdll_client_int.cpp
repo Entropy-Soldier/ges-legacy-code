@@ -252,6 +252,10 @@ static ConVar s_CV_ShowParticleCounts("showparticlecounts", "0", 0, "Display num
 static ConVar s_cl_team("cl_team", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default team when joining a game");
 static ConVar s_cl_class("cl_class", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default class when joining a game");
 
+#ifdef GE_DLL
+static ConVar cl_ge_full_level_reload("cl_ge_full_level_reload", "1", FCVAR_USERINFO|FCVAR_ARCHIVE, "Fully reload all possible textures between map transitions.  DISABLING THIS WILL MAKE CRASHES MUCH MORE LIKELY.");
+#endif
+
 // Physics system
 bool g_bLevelInitialized;
 bool g_bTextMode = false;
@@ -564,6 +568,10 @@ private:
 	void ResetStringTablePointers();
 
 	CUtlVector< IMaterial * > m_CachedMaterials;
+
+#ifdef GE_DLL
+    bool m_bHasBlockedMaterials;
+#endif
 };
 
 
@@ -671,6 +679,10 @@ CHLClient::CHLClient()
 {
 	// Kinda bogus, but the logic in the engine is too convoluted to put it there
 	g_bLevelInitialized = false;
+
+#ifdef GE_DLL
+    m_bHasBlockedMaterials = false;
+#endif
 }
 
 
@@ -696,10 +708,6 @@ static void MountAdditionalContent()
 			Warning("Unable to mount extra content with appId: %i\n", nExtraContentId);
 	}
 }
-
-#ifdef GE_DLL
-extern ConVar r_flashlightdepthtexture;
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Called when the DLL is first loaded.
@@ -904,17 +912,6 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	ClientWorldFactoryInit();
 
 	C_BaseAnimating::InitBoneSetupThreadPool();
-
-#ifdef GE_DLL
-    // Don't want to reload the weapons twice on our first map load.
-    materials->SetExcludedTextures("scripts/base_exclude.lst");
-
-    // Flipping this on and then off...will somehow clear the transition table and help fix the shader bug
-    // well known for the error message "Transition table overflow, grab brian!".
-    // It's really janky, but I can't seem to find another way to flush this thing.
-    r_flashlightdepthtexture.SetValue(!r_flashlightdepthtexture.GetBool());
-#endif
-
 	return true;
 }
 
@@ -924,11 +921,6 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 void CHLClient::PostInit()
 {
 	IGameSystem::PostInitAllSystems();
-
-#ifdef GE_DLL
-    // Flipping this on and then off...will somehow clear the transition table and help fix the shader bug.
-    r_flashlightdepthtexture.SetValue(!r_flashlightdepthtexture.GetBool());
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1396,12 +1388,16 @@ void CHLClient::DeleteUnreferencedTextures( bool printRemovedCount )
 void CHLClient::LevelInitPostEntity( )
 {
 #ifdef GE_DLL
-    materials->UncacheAllMaterials();
-    DeleteUnreferencedTextures( true );
-    materials->SetExcludedTextures("");
-    g_pMemAlloc->CompactHeap();
-    materials->CacheUsedMaterials();
-    Msg("Finished reloading materials!\n");
+    if (m_bHasBlockedMaterials)
+    {
+        materials->UncacheAllMaterials();
+        DeleteUnreferencedTextures( true );
+        materials->SetExcludedTextures("");
+        g_pMemAlloc->CompactHeap();
+        materials->CacheUsedMaterials();
+        Msg("Finished reloading materials!\n");
+        m_bHasBlockedMaterials = false;
+    }
 #endif
 
 	IGameSystem::LevelInitPostEntityAllSystems();
@@ -1494,13 +1490,23 @@ void CHLClient::LevelShutdown( void )
     // The game loads the next level before unloading the first one, however GE:S uses so much texture
     // memory that it seems the game actually manages to run out of its allocated memory depending on how fragmented the heap is.
     // Anything that needs to be precached will have that done again on level load, so this should only have a moderate effect on level load times.
-    //materials->ResetTempHWMemory(true);
-    Msg("Flushed %d bytes!\n", g_pDataCache->Flush());
-    materials->UncacheAllMaterials();
-    DeleteUnreferencedTextures( true );
-    g_pMemAlloc->CompactHeap();
-
-    materials->SetExcludedTextures("scripts/base_exclude.lst");
+    if (cl_ge_full_level_reload.GetBool())
+    {
+        //materials->ResetTempHWMemory(true);
+        Msg("Flushed %d bytes!\n", g_pDataCache->Flush());
+        materials->UncacheAllMaterials();
+        DeleteUnreferencedTextures(true);
+        materials->ClearBuffers(true, true, true);
+        materials->CompactMemory();
+        g_pMemAlloc->CompactHeap();
+        materials->SetExcludedTextures("scripts/base_exclude.lst");
+        Msg("Finished uncaching materials!\n");
+        m_bHasBlockedMaterials = true;
+        // If transition table overflows are ever a problem, mat_support_flashlight and RenderView are both worth exploring.
+        // Graphics settings changes seem to reset the transition table and stop an overflow but I'm not sure of a cleaner way to do it.
+        // I think rendering the newly loaded materials might do it...but honestly I still can't figure out exactly what the transition
+        // table even is so it's hard to know for sure how to avoid overflowing it other than to avoid as many fancy shaders as possible.
+    }
 #endif
 }
 
