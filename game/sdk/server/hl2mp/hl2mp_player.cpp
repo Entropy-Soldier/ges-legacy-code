@@ -948,6 +948,8 @@ public:
 	DECLARE_CLASS( CHL2MPRagdoll, CBaseAnimatingOverlay );
 	DECLARE_SERVERCLASS();
 
+    ~CHL2MPRagdoll();
+
 	// Transmit ragdolls to everyone.
 	virtual int UpdateTransmitState()
 	{
@@ -955,6 +957,10 @@ public:
 	}
 
 public:
+#ifdef GE_DLL
+    CBaseEntity *m_hHead; // We need to keep track of our head so we remove it when we get deleted.
+#endif
+
 	// In case the client has the player entity, we transmit the player index.
 	// In case the client doesn't have it, we transmit the player's model index, origin, and angles
 	// so they can create a ragdoll in the right place.
@@ -974,6 +980,15 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CHL2MPRagdoll, DT_HL2MPRagdoll )
 	SendPropVector( SENDINFO( m_vecRagdollVelocity ) )
 END_SEND_TABLE()
 
+CHL2MPRagdoll::~CHL2MPRagdoll()
+{
+    // Make sure to delete our head.
+    if (m_hHead)
+    {
+        UTIL_Remove(m_hHead);
+        m_hHead = NULL;
+    }
+}
 
 void CHL2MP_Player::CreateRagdollEntity( void )
 {
@@ -1001,6 +1016,12 @@ void CHL2MP_Player::CreateRagdollEntity( void )
 		pRagdoll->m_nForceBone = m_nForceBone;
 		pRagdoll->m_vecForce = m_vecTotalBulletForce;
 		pRagdoll->SetAbsOrigin( GetAbsOrigin() );
+        pRagdoll->m_hHead = StealHead();
+
+        if (pRagdoll->m_hHead)
+        {
+            pRagdoll->m_hHead->FollowEntity(pRagdoll, true);
+        }
 	}
 
 	// ragdolls will be removed on round restart automatically

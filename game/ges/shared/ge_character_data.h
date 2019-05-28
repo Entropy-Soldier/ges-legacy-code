@@ -16,7 +16,8 @@
 #define MAX_CHAR_BIO	256
 #define MAX_CHAR_NAME	32
 #define MAX_CHAR_IDENT	32
-#define MAX_CHAR_SKINS	4
+#define MAX_CHAR_SKINS	8
+#define MAX_CHAR_ATTACHMENTS	3
 
 #define CHAR_RANDOM_IDENT "_random"
 #define CHAR_GENDER_MALE	1
@@ -33,7 +34,9 @@ struct GECharSkin
 	// Player Model
 	char szModel[MAX_MODEL_PATH];
 	// Hat Model
-	char szHatModel[MAX_MODEL_PATH];
+	char szHatModel[MAX_CHAR_ATTACHMENTS][MAX_MODEL_PATH];
+    // Head Model
+	char szHeadModel[MAX_MODEL_PATH];
 	//World Model Skin
 	int	 iWorldSkin;
 	//View Model Skin

@@ -104,6 +104,8 @@ private:
 	CHandle< C_BaseCombatWeapon > m_hActiveLeftWeapon;
 
 	EHANDLE m_hHat;
+    EHANDLE m_hHead;
+
 	EHANDLE m_hActiveWeaponCache;
 
 	// Local state tracking

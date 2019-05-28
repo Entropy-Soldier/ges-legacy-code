@@ -1818,6 +1818,9 @@
     <ClCompile Include="ges\server\reserve_player_spot.cpp">
       <Filter>GES\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="ges\server\mp\ent_head.cpp">
+      <Filter>GES\Entities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sdk\server\plasma.h">
@@ -3583,6 +3586,9 @@
       <Filter>GES\Shared</Filter>
     </ClInclude>
     <ClInclude Include="ges\server\reserve_player_spot.h">
+      <Filter>GES\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="ges\server\mp\ent_head.h">
       <Filter>GES\Entities</Filter>
     </ClInclude>
   </ItemGroup>

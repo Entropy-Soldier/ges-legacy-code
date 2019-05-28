@@ -52,6 +52,7 @@ IMPLEMENT_CLIENTCLASS_DT(C_GEPlayer, DT_GE_Player, CGEPlayer)
 	RecvPropFloat( RECVINFO( m_flSweepTime ) ),
 
 	RecvPropEHandle( RECVINFO( m_hHat ) ),
+    RecvPropEHandle( RECVINFO( m_hHead ) ),
 	RecvPropInt( RECVINFO( m_takedamage ) ),
 END_RECV_TABLE()
 
@@ -391,6 +392,14 @@ void C_GEPlayer::ClientThink( void )
 				m_hHat.Get()->RemoveEffects( EF_NODRAW );
 		}
 
+        if ( m_hHead.Get() )
+		{
+			if ( !ShouldDrawLocalPlayer() ) //IsAlive()
+				m_hHead.Get()->AddEffects( EF_NODRAW );
+			else
+				m_hHead.Get()->RemoveEffects( EF_NODRAW );
+		}
+
 		// Adjust the weapon's FOV based on our own FOV
 		// This is basically a dinky fix for weapon FOV calculations sticking the FOV out of bounds and placing the weapon
 		// in the upper left corner of the screen.
@@ -428,6 +437,16 @@ void C_GEPlayer::ClientThink( void )
         else
         {
             m_clientViewTargetDefault = pLocalPlayer->EyePosition();
+        }
+
+        if (m_hHead)
+        {
+            C_BaseFlex *head = dynamic_cast<C_BaseFlex *>(m_hHead.Get());
+
+            if (head)
+            {
+                head->m_clientViewTargetDefault = pLocalPlayer->EyePosition();
+            }
         }
     }
 

@@ -22,7 +22,7 @@
 #define M_HALFPI	1.5707963267948966f
 
 #define MAX_ENTITY_NAME 32
-#define MAX_MODEL_PATH	512
+#define MAX_MODEL_PATH	100
 
 #define GES_AUTH_URL		"http://update.geshl2.com/gesauth.txt"
 #define GES_VERSION_URL		"http://update.geshl2.com/gesupdate.txt"

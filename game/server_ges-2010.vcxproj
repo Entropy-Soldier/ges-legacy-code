@@ -467,6 +467,7 @@
     <ClCompile Include="ges\server\ge_logic_gate.cpp" />
     <ClCompile Include="ges\server\ge_point_follower.cpp" />
     <ClCompile Include="ges\server\ge_textencryptor.cpp" />
+    <ClCompile Include="ges\server\mp\ent_head.cpp" />
     <ClCompile Include="ges\server\mp\gebot_player.cpp" />
     <ClCompile Include="ges\server\mp\ge_armorspawner.cpp" />
     <ClCompile Include="ges\server\mp\ge_entitytracker.cpp" />
@@ -1416,6 +1417,7 @@
     <ClInclude Include="ges\server\ge_recipientfilter.h" />
     <ClInclude Include="ges\server\ge_triggers.h" />
     <ClInclude Include="ges\server\ge_textencryptor.h" />
+    <ClInclude Include="ges\server\mp\ent_head.h" />
     <ClInclude Include="ges\server\mp\ge_entitytracker.h" />
     <ClInclude Include="ges\server\mp\ge_gameplayresource.h" />
     <ClInclude Include="ges\server\mp\ge_mapmanager.h" />

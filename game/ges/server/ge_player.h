@@ -67,11 +67,16 @@ public:
 	bool AddArmor( int amount, int maxAmount );
 	bool CheckInPVS(CBaseEntity *pEnt);
 
-	virtual void KnockOffHat( bool bRemove = false, const CTakeDamageInfo *dmg = NULL );
+	virtual void KnockOffHat( bool bRemove = false, const CTakeDamageInfo *dmg = NULL, int slot = 0 );
 	// Main way to assign hats to characters.  Uses model specific hats.
 	virtual void GiveHat( void );
+    // Main way to assign hats to characters.  Uses model specific hats.
+	virtual void GiveHead( void );
 	// Method of assigning whatever hat you want to a player.
-	virtual void SpawnHat( const char* hatModel, bool canBeRemoved = true );
+	virtual void SpawnHat( const char* hatModel, bool canBeRemoved = true, int slot = 0 );
+
+    // Transfers ownership of the player's head.
+    virtual CBaseEntity *StealHead();
 
 	void HideBloodScreen( void );
 
@@ -233,6 +238,7 @@ protected:
 
 	CNetworkHandle( CBaseCombatWeapon,	m_hActiveLeftWeapon );
 	CNetworkHandle( CBaseEntity,		m_hHat );
+    CNetworkHandle( CBaseEntity,		m_hHead );
 
 private:
 

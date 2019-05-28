@@ -28,6 +28,7 @@
 #include "ge_bloodscreenvm.h"
 #include "grenade_gebase.h"
 #include "ent_hat.h"
+#include "ent_head.h"
 #include "gemp_gamerules.h"
 #include "ge_radarresource.h"
 #include "ge_weaponutils.h"
@@ -52,6 +53,7 @@ IMPLEMENT_SERVERCLASS_ST(CGEPlayer, DT_GE_Player)
 	SendPropFloat(SENDINFO(m_flSweepTime)),
 
 	SendPropEHandle( SENDINFO( m_hHat ) ),
+    SendPropEHandle( SENDINFO( m_hHead ) ),
 	SendPropInt( SENDINFO( m_takedamage ) ),
 END_SEND_TABLE()
 
@@ -62,6 +64,8 @@ END_DATADESC()
 #define GE_HITOTHER_DELAY		0.15f
 
 #define INVULN_PERIOD			0.5f
+
+#define HATSLOT_HEAD -1
 
 #ifdef _MSC_VER
 #pragma warning( disable : 4355 )
@@ -96,6 +100,7 @@ CGEPlayer::CGEPlayer()
 	m_iTotalArmorPickup = 0;
 
     m_hHat = NULL;
+    m_hHead = NULL;
 
 	memset(m_iPVS, 0, sizeof(m_iPVS));
 }
@@ -678,8 +683,8 @@ int CGEPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 	// Limit our up/down force if this wasn't an explosion
 	if ( inputInfo.GetDamageType() &~ DMG_BLAST )
 		force.z = clamp( force.z, -250.0f, 250.0f );
-	else if ( m_iHealth > 0 )
-		force.z = clamp( force.z, -450.0f, 450.0f );
+	//else if ( m_iHealth > 0 )
+	//	force.z = clamp( force.z, -450.0f, 450.0f );
 
 	// Seperate explosion damage force from normal damage force because explosion damage force gets scaled differently.
 	if (inputInfo.GetDamageType() & DMG_BLAST)
@@ -689,6 +694,8 @@ int CGEPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 
 	return BaseClass::OnTakeDamage_Alive( inputInfo );
 }
+
+ConVar ge_heads_will_roll("ge_heads_will_roll", "0", FCVAR_GAMEDLL, "Oh you've done it now!");
 
 // This gets called first, then ontakedamage, which can trigger ontakedamage_alive when the baseclass is called.
 void CGEPlayer::TraceAttack( const CTakeDamageInfo &inputInfo, const Vector &vecDir, trace_t *ptr )
@@ -763,6 +770,12 @@ void CGEPlayer::TraceAttack( const CTakeDamageInfo &inputInfo, const Vector &vec
 				break;
 			case HITGROUP_HEAD:
 				KnockOffHat( false, &info );
+
+                if (ge_heads_will_roll.GetBool())
+                {
+                    KnockOffHat( false, &info, HATSLOT_HEAD );
+                }
+
 				info.ScaleDamage( pWeaponInfo->HitBoxDamage.fDamageHead );
 				break;
 			case HITGROUP_CHEST:
@@ -881,6 +894,12 @@ void CGEPlayer::Event_Killed( const CTakeDamageInfo &info )
 	AbortForcedLadderMove();
 
 	BaseClass::Event_Killed( info );
+
+    // Make sure we don't have a head anymore.
+    if (!IsBotPlayer()) // Bot players have to remove the head slightly later.
+    {
+        KnockOffHat(true, NULL, HATSLOT_HEAD);
+    }
 }
 
 void CGEPlayer::AbortForcedLadderMove()
@@ -1005,9 +1024,33 @@ CON_COMMAND(ge_knockoffhat, "Usage: ge_knockoffhat playername deletehat")
 
 ConVar ge_sillyhats("ge_sillyhats", "0", FCVAR_GAMEDLL, "Hats get extra silly!");
 
-void CGEPlayer::KnockOffHat( bool bRemove /* = false */, const CTakeDamageInfo *dmg /* = NULL */ )
+CBaseEntity *CGEPlayer::StealHead()
+{ 
+    if (!m_hHead.Get())
+    {
+        return NULL;
+    }
+    
+    m_hHead->StopFollowingEntity();
+
+    CBaseEntity *pHead = m_hHead;
+    m_hHead = NULL; 
+
+    return pHead;
+}
+
+void CGEPlayer::KnockOffHat( bool bRemove /* = false */, const CTakeDamageInfo *dmg /* = NULL */, int hatSlot /*= 0*/ )
 {
-	CBaseEntity *pHat = m_hHat;
+    CBaseEntity *pHat;
+    
+    if (hatSlot == HATSLOT_HEAD)
+    {
+        pHat = m_hHead;
+    }
+    else
+    {
+        pHat = m_hHat;
+    }
 
 	if ( bRemove )
 	{
@@ -1042,7 +1085,15 @@ void CGEPlayer::KnockOffHat( bool bRemove /* = false */, const CTakeDamageInfo *
 	}
 
 	SetHitboxSetByName( "default" );
-	m_hHat = NULL;
+
+    if (hatSlot == HATSLOT_HEAD)
+    {
+        m_hHead.Set(NULL);
+    }
+    else
+    {
+        m_hHat = NULL;
+    }
 }
 
 void CGEPlayer::GiveHat()
@@ -1077,12 +1128,60 @@ void CGEPlayer::GiveHat()
         return;
     }
 
-	const char* hatModel = GECharacters()->Get(m_iCharIndex)->m_pSkins[m_iSkinIndex]->szHatModel;
+    const char* hatModel = GECharacters()->Get(m_iCharIndex)->m_pSkins[m_iSkinIndex]->szHatModel[0];
 	if ( !hatModel || hatModel[0] == '\0' )
 		return;
 
-    // Does not crash up until this point.
 	SpawnHat( hatModel );
+}
+
+void CGEPlayer::GiveHead()
+{
+	if (IsObserver())
+	{
+		// Make sure we DO NOT have a head as an observer
+		KnockOffHat(true, NULL, HATSLOT_HEAD);
+		return;
+	}
+
+	if ( m_hHead.Get() )
+		return;
+
+    if (!GECharacters())
+    {
+        Warning("No character data object!  Cannot spawn hat.\n");
+        return;
+    }
+
+    const CGECharData *charData = GECharacters()->Get(m_iCharIndex);
+
+    if (!charData)
+    {
+        Warning("Failed to get character data for index %d\n", m_iCharIndex);
+        return;
+    }
+
+    if (!charData->m_pSkins.IsValidIndex(m_iSkinIndex))
+    {
+        Warning("Failed to get character data for skin %d at character index %d\n", m_iSkinIndex, m_iCharIndex);
+        return;
+    }
+
+	const char* headModel = GECharacters()->Get(m_iCharIndex)->m_pSkins[m_iSkinIndex]->szHeadModel;
+	if ( !headModel || headModel[0] == '\0' )
+		return;
+
+	if (m_hHead.Get())
+		KnockOffHat(true, NULL, HATSLOT_HEAD);
+
+	// Simple check to ensure consistency
+	int setnum, boxnum;
+	if (LookupHitbox("hat", setnum, boxnum))
+		SetHitboxSet(setnum);
+
+	CBaseEntity *head = CreateNewHead(EyePosition(), GetAbsAngles(), headModel);
+	head->FollowEntity(this, true);
+	m_hHead = head;
 }
 
 CON_COMMAND(ge_giveplayerhat, "Usage: ge_giveplayerhat hatmodel playername canshootoff")
@@ -1110,7 +1209,7 @@ CON_COMMAND(ge_giveplayerhat, "Usage: ge_giveplayerhat hatmodel playername cansh
 		pGETarget->SpawnHat( args[1], removable );
 }
 
-void CGEPlayer::SpawnHat( const char* hatModel, bool canBeRemoved )
+void CGEPlayer::SpawnHat( const char* hatModel, bool canBeRemoved /* == true*/, int slot /* == 0 */ )
 {
 	if (IsObserver() && !IsAlive()) // Observers can't have any hats.  Need this here so direct hat assignment doesn't make floating hats.
 		return;
@@ -1412,7 +1511,9 @@ void CGEPlayer::SetPlayerModel( void )
 	m_iSkinIndex = 0;
 
 	KnockOffHat( true );
+    KnockOffHat( true, NULL, HATSLOT_HEAD );
 	GiveHat();
+    GiveHead();
 }
 
 void CGEPlayer::SetPlayerModel( const char* szCharIdent, int iCharSkin /*=0*/, bool bNoSelOverride /*=false*/ )
@@ -1445,7 +1546,9 @@ void CGEPlayer::SetPlayerModel( const char* szCharIdent, int iCharSkin /*=0*/, b
 
 	// Deal with hats
 	KnockOffHat( true );
+    KnockOffHat( true, NULL, HATSLOT_HEAD );
 	GiveHat();
+    GiveHead();
 }
 
 const char* CGEPlayer::GetCharIdent( void )

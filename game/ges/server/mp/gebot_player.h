@@ -66,8 +66,9 @@ public:
 	virtual void PostThink();
 
 	virtual void GiveHat();
-	virtual void SpawnHat(const char* hatModel, bool canBeRemoved = true);
-	virtual void KnockOffHat( bool bRemove = false, const CTakeDamageInfo *dmg = NULL );
+    virtual void GiveHead();
+	virtual void SpawnHat( const char* hatModel, bool canBeRemoved = true, int slot = 0 );
+	virtual void KnockOffHat( bool bRemove = false, const CTakeDamageInfo *dmg = NULL, int slot = 0 );
 
 	// Bots don't need help!
 	virtual void ShowScenarioHelp() { }
@@ -86,6 +87,8 @@ public:
 	virtual void StripAllWeapons();
 	virtual void RemoveAllItems( bool removeSuit );
 	virtual CBaseCombatWeapon *GetActiveWeapon();
+
+    virtual Vector EyePosition();			// position of eyes
 
 private:
 	CNetworkHandle( CNPC_GEBase, m_pNPC );

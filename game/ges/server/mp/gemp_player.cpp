@@ -507,6 +507,7 @@ void CGEMPPlayer::Spawn()
 		RemoveAllItems(true);
 		GiveDefaultItems();
 		GiveHat();
+        GiveHead();
 
 		// Create our second view model for dualies
 		// CreateViewModel( GE_LEFT_HAND );

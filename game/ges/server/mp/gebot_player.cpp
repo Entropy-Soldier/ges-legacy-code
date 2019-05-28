@@ -19,6 +19,7 @@
 
 #include "ge_utils.h"
 #include "ent_hat.h"
+#include "ent_head.h"
 #include "ge_gameplay.h"
 #include "ge_loadoutmanager.h"
 #include "ge_tokenmanager.h"
@@ -28,6 +29,8 @@
 #include "ge_weapon.h"
 #include "ge_stats_recorder.h"
 #include "gemp_gamerules.h"
+
+#include "grenade_gebase.h"
 
 #include "gebot_player.h"
 
@@ -48,10 +51,14 @@ END_DATADESC()
 
 PRECACHE_REGISTER(bot_player);
 
+#define HATSLOT_HEAD -1
+
 CGEBotPlayer::CGEBotPlayer()
 {
 	m_flRespawnDelay = BOT_MAX_RESPAWN_DELAY;
     m_hHat = NULL;
+    m_hHead = NULL;
+    m_bRemovableHat = true;
 }
 
 CGEBotPlayer::~CGEBotPlayer( void )
@@ -333,7 +340,9 @@ bool CGEBotPlayer::PickPlayerModel( int team )
 			m_iSkinIndex = skin;
 
 			KnockOffHat( true );
+            KnockOffHat( true, NULL, HATSLOT_HEAD );
 			GiveHat();
+            GiveHead();
 
 			return true;
 		}
@@ -408,6 +417,7 @@ void CGEBotPlayer::SetPlayerModel( const char* szCharName, int iCharSkin /*=0*/,
 		return;
 
 	KnockOffHat( true );
+    KnockOffHat( true, NULL, HATSLOT_HEAD );
 
 	// Set our NPC model and skin
 	m_pNPC->SetModel( pChar->m_pSkins[iCharSkin]->szModel );
@@ -473,6 +483,9 @@ void CGEBotPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// Call back into the bot
 	m_pNPC->Event_Killed( info );
+
+    // Make sure we don't have a lingering head reference.
+    KnockOffHat(true, NULL, HATSLOT_HEAD);
 }
 
 void CGEBotPlayer::DropAllTokens( void )
@@ -532,6 +545,60 @@ void CGEBotPlayer::PostThink( void )
 	BaseClass::PostThink();
 }
 
+void CGEBotPlayer::GiveHead()
+{
+	if (IsObserver())
+	{
+		// Make sure we DO NOT have a hat as an observer
+		KnockOffHat(true, NULL, HATSLOT_HEAD);
+		return;
+	}
+
+	if (m_hHead.Get())
+		return;
+
+    if (!GECharacters())
+    {
+        Warning("No character data object!  Cannot spawn hat.\n");
+        return;
+    }
+
+    const CGECharData *charData = GECharacters()->Get(m_iCharIndex);
+
+    if (!charData)
+    {
+        Warning("Failed to get character data for index %d\n", m_iCharIndex);
+        return;
+    }
+
+    if (!charData->m_pSkins.IsValidIndex(m_iSkinIndex))
+    {
+        Warning("Failed to get character data for skin %d at character index %d\n", m_iSkinIndex, m_iCharIndex);
+        return;
+    }
+
+	const char* hatModel = charData->m_pSkins[m_iSkinIndex]->szHeadModel;
+	if (!hatModel || hatModel[0] == '\0')
+		return;
+
+    // Get rid of any hats we're currently wearing.
+	if (m_hHead.Get())
+		KnockOffHat(true, NULL, HATSLOT_HEAD);
+
+    // Can try to spawn hats before the NPC actually exists.
+    if (!m_pNPC)
+        return;
+
+	// Simple check to ensure consistency
+	int setnum, boxnum;
+	if (m_pNPC->LookupHitbox("hat", setnum, boxnum))
+		m_pNPC->SetHitboxSet(setnum);
+
+	CBaseEntity *head = CreateNewHead(EyePosition(), GetAbsAngles(), hatModel);
+	head->FollowEntity(m_pNPC, true);
+	m_hHead = head;
+}
+
 void CGEBotPlayer::GiveHat()
 {
 	if (IsObserver())
@@ -564,14 +631,14 @@ void CGEBotPlayer::GiveHat()
         return;
     }
 
-	const char* hatModel = charData->m_pSkins[m_iSkinIndex]->szHatModel;
+	const char* hatModel = charData->m_pSkins[m_iSkinIndex]->szHatModel[0];
 	if (!hatModel || hatModel[0] == '\0')
 		return;
 
 	SpawnHat(hatModel);
 }
 
-void CGEBotPlayer::SpawnHat(const char* hatModel, bool canBeRemoved)
+void CGEBotPlayer::SpawnHat(const char* hatModel, bool canBeRemoved, int slot /*== 0*/)
 {
 	if (IsObserver() && !IsAlive()) // Observers can't have any hats.  Need this here so direct hat assignment doesn't make floating hats.
 		return;
@@ -594,12 +661,31 @@ void CGEBotPlayer::SpawnHat(const char* hatModel, bool canBeRemoved)
 	m_hHat = hat;
 }
 
-void CGEBotPlayer::KnockOffHat( bool bRemove /* = false */, const CTakeDamageInfo *dmg /* = NULL */ )
+Vector CGEBotPlayer::EyePosition()
+{
+    if ( !m_pNPC.Get() )
+		return Vector(0, 0, 0);
+
+    return m_pNPC->EyePosition();
+}
+
+extern ConVar ge_sillyhats;
+
+void CGEBotPlayer::KnockOffHat( bool bRemove /* = false */, const CTakeDamageInfo *dmg /* = NULL */, int slot /*== 0*/ )
 {
 	if ( !m_pNPC.Get() )
 		return;
 
-	CBaseEntity *pHat = m_hHat.Get();
+    CBaseEntity *pHat;
+    
+    if (slot == HATSLOT_HEAD)
+    {
+        pHat = m_hHead.Get();
+    }
+    else
+    {
+        pHat = m_hHat.Get();
+    }
 
 	if ( bRemove )
 	{
@@ -607,19 +693,40 @@ void CGEBotPlayer::KnockOffHat( bool bRemove /* = false */, const CTakeDamageInf
 	}
 	else if ( pHat )
 	{
-		Vector origin = m_pNPC->EyePosition();
+		Vector origin = EyePosition();
 		origin.z += 8.0f;
 
 		pHat->Activate();
-		pHat->SetLocalOrigin( origin );
+		pHat->SetAbsOrigin( origin );
+        pHat->RemoveEffects(EF_NODRAW);
 
 		// Punt the hat appropriately
 		if ( dmg )
 			pHat->ApplyAbsVelocityImpulse( dmg->GetDamageForce() * 0.75f );
+
+        if ( ge_sillyhats.GetBool() )
+		{
+			if ( dmg && dmg->GetAttacker() )
+				ExplosionCreate(origin, GetAbsAngles(), dmg->GetAttacker(), 500, 100,
+				SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, NULL);
+			else
+				ExplosionCreate(origin, GetAbsAngles(), this, 500, 100,
+				SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, NULL);
+
+			UTIL_Remove(pHat);
+		}
 	}
 
 	m_pNPC->SetHitboxSetByName( "default" );
-	m_hHat = NULL;
+
+    if (slot == HATSLOT_HEAD)
+    {
+        m_hHead = NULL;
+    }
+    else
+    {
+        m_hHat = NULL;
+    }
 }
 
 extern ConVar ge_startarmed;

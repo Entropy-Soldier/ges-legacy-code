@@ -40,8 +40,13 @@ CGECharData::~CGECharData()
 
 GECharSkin::GECharSkin()
 {
-	szIdent[0] = szModel[0] = szHatModel[0] = szPreviewImg[0] = '\0';
+	szIdent[0] = szModel[0] = szPreviewImg[0] = '\0';
 	iWorldSkin = iViewSkin = 0;
+
+    for (int i = 0; i < MAX_CHAR_ATTACHMENTS; i++)
+    {
+        szHatModel[i][0] = '\0';
+    }
 }
 
 
@@ -192,9 +197,13 @@ void GECharacters_Precache( void *pUser )
 		for ( int k=0; pChar && k < pChar->m_pSkins.Count(); k++ )
 		{
 			if ( pChar->m_pSkins[k]->szModel[0] != '\0' )
-				CBaseEntity::PrecacheModel( pChar->m_pSkins[k]->szModel );
-			if ( pChar->m_pSkins[k]->szHatModel[0] != '\0' )
-				CBaseEntity::PrecacheModel( pChar->m_pSkins[k]->szHatModel );
+                CBaseEntity::PrecacheModel(pChar->m_pSkins[k]->szModel);
+
+            for (int j = 0; j < MAX_CHAR_ATTACHMENTS; j++)
+            {
+                if ( pChar->m_pSkins[k]->szHatModel[j][0] != '\0' )
+				    CBaseEntity::PrecacheModel( pChar->m_pSkins[k]->szHatModel[j] );
+            }
 		}
 	}
 }
@@ -241,8 +250,23 @@ void CGECharacterDataParser::Parse( KeyValues *pKeyValuesData, const char *szFil
 			Q_strncpy( skin->szIdent,		pSkinData->GetName(),								MAX_CHAR_IDENT );
 			Q_strncpy( skin->szPreviewImg,	pSkinData->GetString("previewimg", "unknown"	 ),	MAX_CHAR_NAME  );
 			Q_strncpy( skin->szModel,		pSkinData->GetString("model",	   ""			 ),	MAX_MODEL_PATH );
-			Q_strncpy( skin->szHatModel,	pSkinData->GetString("hatmodel",   ""			 ),	MAX_MODEL_PATH );
-			
+            Q_strncpy( skin->szHeadModel,	pSkinData->GetString("headmodel",   ""			 ),	MAX_MODEL_PATH );
+
+            KeyValues *pAttachmentValues = pSkinData->FindKey( "attachments" );
+            if (pAttachmentValues)
+            {
+                KeyValues *pAttachmentData = pAttachmentValues->GetFirstSubKey();
+                for (int j = 0; j < MAX_CHAR_ATTACHMENTS; j++)
+                {
+                    if( pAttachmentData == NULL )
+				        break;
+
+                    Q_strncpy( skin->szHatModel[j],	pAttachmentData->GetString("model",   ""			 ),	MAX_MODEL_PATH );
+
+                    pAttachmentData = pAttachmentData->GetNextKey();
+                }
+            }
+
 			skin->iViewSkin	 = pSkinData->GetInt( "viewmodelskin",  0 );
 			skin->iWorldSkin = pSkinData->GetInt( "worldmodelskin", 0 );
 

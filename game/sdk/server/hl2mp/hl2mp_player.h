@@ -96,6 +96,10 @@ public:
 	void GiveAllItems( void );
 	void GiveDefaultItems( void );
 
+#ifdef GE_DLL
+    virtual CBaseEntity *StealHead() { return NULL; }; // Only GEPlayers have heads to steal.
+#endif
+
 	void NoteWeaponFired( void );
 
 	void SetAnimation( PLAYER_ANIM playerAnim );

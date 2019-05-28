@@ -71,6 +71,8 @@ public:
 	DECLARE_CLASS( CGENPCRagdoll, CBaseAnimatingOverlay );
 	DECLARE_SERVERCLASS();
 
+    ~CGENPCRagdoll();
+
 	// Transmit ragdolls to everyone.
 	virtual int UpdateTransmitState()
 	{
@@ -78,6 +80,8 @@ public:
 	}
 
 public:
+    CBaseEntity *m_hHead; // Need to keep track of this, as we take ownership of it and thus responsibility to delete it.
+
 	// In case the client has the NPC entity, we transmit the NPC's index.
 	// In case the client doesn't have it, we transmit the NPC's model index, origin, and angles
 	// so they can create a ragdoll in the right place.
@@ -96,6 +100,16 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CGENPCRagdoll, DT_GENPCRagdoll )
 	SendPropVector( SENDINFO(m_vecForce), -1, SPROP_NOSCALE ),
 	SendPropVector( SENDINFO( m_vecRagdollVelocity ) )
 END_SEND_TABLE()
+
+CGENPCRagdoll::~CGENPCRagdoll()
+{
+    // Make sure to delete our head.
+    if (m_hHead)
+    {
+        UTIL_Remove(m_hHead);
+        m_hHead = NULL;
+    }
+}
 
 void CNPC_GEBase::UpdateOnRemove( void )
 {
@@ -145,6 +159,17 @@ void CNPC_GEBase::CreateRagdoll( const Vector &force )
 	if ( pRagdoll )
 	{
 		pRagdoll->m_hNPC = this;
+
+        if (m_hBotPlayer)
+        {
+            pRagdoll->m_hHead = m_hBotPlayer->StealHead();
+
+            if (pRagdoll->m_hHead)
+            {
+                pRagdoll->m_hHead->FollowEntity(pRagdoll, true);
+            }
+        }
+        
 		pRagdoll->m_vecRagdollOrigin = GetAbsOrigin();
 		pRagdoll->m_vecRagdollVelocity = GetSmoothedVelocity();
 		pRagdoll->m_nModelIndex = m_nModelIndex;
