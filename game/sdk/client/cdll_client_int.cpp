@@ -100,6 +100,7 @@
 	#include "ge_loadingscreen.h"
 	#include "ge_vieweffects.h"
 	#include "ge_blacklist.h"
+    #include "ge_utils.h"
 	#include "inetchannel.h"
 #if 0
 	// HACKHACK: this is dumb, and unsafe. Things that should be uninitialized at the
@@ -254,6 +255,8 @@ static ConVar s_cl_class("cl_class", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "D
 
 #ifdef GE_DLL
 static ConVar cl_ge_full_level_reload("cl_ge_full_level_reload", "1", FCVAR_USERINFO|FCVAR_ARCHIVE, "Fully reload all possible textures between map transitions.  DISABLING THIS WILL MAKE CRASHES MUCH MORE LIKELY.");
+static ConVar cl_ge_transition_table_recovery("cl_ge_transition_table_recovery", "1", FCVAR_USERINFO|FCVAR_ARCHIVE, "Scan the console output for transition table overflows on level change, and attempt to recover if one is detected.");
+#define TRANSITION_LOG_FILEPATH "transition.log"
 #endif
 
 // Physics system
@@ -1388,15 +1391,97 @@ void CHLClient::DeleteUnreferencedTextures( bool printRemovedCount )
 void CHLClient::LevelInitPostEntity( )
 {
 #ifdef GE_DLL
+    char standardLogfileName[64];
+    char picmipValue[16];
+    standardLogfileName[0] = '\0';
+
+    if (cl_ge_transition_table_recovery.GetBool())
+    {
+        // Start logging our console to a special file so we can detect if a transition table overflow happened and reload
+        // all of the materials again.  Yes...this is the best way I've found to detect this, it seems direct access to the console feed
+        // is not allowed.
+        ConVar *con_logfile = g_pCVar->FindVar("con_logfile");
+
+        if (!Q_strcmp(con_logfile->GetString(), TRANSITION_LOG_FILEPATH)) // Make sure we don't get stuck logging to TRANSITION_LOG_FILEPATH.
+        {
+            standardLogfileName[0] = '\0'; // Should just turn off logging when our level change is finished.
+        }
+        else
+        {
+            Q_strncpy(standardLogfileName, con_logfile->GetString(), 64);
+        }
+        
+        con_logfile->SetValue(TRANSITION_LOG_FILEPATH);
+
+        // If transition table overflows are ever a problem, mat_support_flashlight and RenderView are both worth exploring.
+        // Graphics settings changes seem to reset the transition table and stop an overflow but I'm not sure of a cleaner way to do it.
+    }
+
+    // If we've blocked some materials to assist in level load, restore them before the level is finished loading.
     if (m_bHasBlockedMaterials)
     {
-        materials->UncacheAllMaterials();
         DeleteUnreferencedTextures( true );
-        materials->SetExcludedTextures("");
         g_pMemAlloc->CompactHeap();
-        materials->CacheUsedMaterials();
-        Msg("Finished reloading materials!\n");
+        materials->SetExcludedTextures("");
+        //materials->UpdateExcludedTextures();
+        //materials->UncacheAllMaterials();
+        //materials->CacheUsedMaterials();
+        materials->ReloadMaterials();
+
+        Msg("Finished reloading textures!\n");
         m_bHasBlockedMaterials = false;
+    }
+
+    // Check if we've redirected the log file, which means we're checking for transition table overflows.
+    // If we are, scan the dedicated file and then restore the variable to its proper value, appending its contents to the
+    // true log file.
+    ConVar *con_logfile = g_pCVar->FindVar("con_logfile");
+    bool transitionTableHasOverflowed = false;
+
+    // If we've already overflowed then we always need to reload materials, so no need to check for another one.
+    if (!Q_strcmp(con_logfile->GetString(), TRANSITION_LOG_FILEPATH)) 
+    {
+        char *contents = (char*)UTIL_LoadFileForMe(TRANSITION_LOG_FILEPATH, NULL);
+
+		if (contents)
+		{
+			CUtlVector<char*> lines;
+			Q_SplitString(contents, "\n", lines);
+
+			for (int i = 0; i < lines.Count(); i++)
+			{
+                if (!Q_strcmp(lines[i], "**** WARNING: Transition table overflow. Grab Brian\r"))
+                {
+                    transitionTableHasOverflowed = true; // Looks like we have to reload the materials!
+                    break;
+                }
+			}
+
+			ClearStringVector(lines);
+		}
+
+		delete[] contents;
+
+        con_logfile->SetValue(standardLogfileName);
+
+        filesystem->RemoveFile(TRANSITION_LOG_FILEPATH); // Make sure we have a fresh start for our next logfile.
+        standardLogfileName[0] = '\0'; // The normal logfile has been restored.
+    }
+
+    // The transition table overflowed during our final material refresh...attempt another reload as the second one seems to be fine.
+    if (transitionTableHasOverflowed)
+    {
+        Msg("Transition table overflow detected!\nReloading system state!\n");
+        ConVar *mat_picmip = g_pCVar->FindVar("mat_picmip");
+
+        Q_strncpy(picmipValue, mat_picmip->GetString(), 16);
+        mat_picmip->SetValue(4);
+        materials->UpdateConfig(true);
+        mat_picmip->SetValue(picmipValue);
+        materials->UpdateConfig(true); // Restore our original picmip value before reloading materials.
+
+        //materials->ReloadMaterials();
+        Msg("Finished reloading system state!\n");
     }
 #endif
 
@@ -1424,67 +1509,67 @@ void CHLClient::ResetStringTablePointers()
 //-----------------------------------------------------------------------------
 // Purpose: Per level de-init
 //-----------------------------------------------------------------------------
-void CHLClient::LevelShutdown( void )
+void CHLClient::LevelShutdown(void)
 {
-	// HACK: Bogus, but the logic is too complicated in the engine
-	if (!g_bLevelInitialized)
-		return;
+    // HACK: Bogus, but the logic is too complicated in the engine
+    if (!g_bLevelInitialized)
+        return;
 
-	g_bLevelInitialized = false;
+    g_bLevelInitialized = false;
 
-	// Disable abs recomputations when everything is shutting down
-	CBaseEntity::EnableAbsRecomputations( false );
+    // Disable abs recomputations when everything is shutting down
+    CBaseEntity::EnableAbsRecomputations(false);
 
-	// Level shutdown sequence.
-	// First do the pre-entity shutdown of all systems
-	IGameSystem::LevelShutdownPreEntityAllSystems();
+    // Level shutdown sequence.
+    // First do the pre-entity shutdown of all systems
+    IGameSystem::LevelShutdownPreEntityAllSystems();
 
-	C_PhysPropClientside::DestroyAll();
+    C_PhysPropClientside::DestroyAll();
 
-	modemanager->LevelShutdown();
+    modemanager->LevelShutdown();
 
-	// Remove temporary entities before removing entities from the client entity list so that the te_* may
-	// clean up before hand.
-	tempents->LevelShutdown();
+    // Remove temporary entities before removing entities from the client entity list so that the te_* may
+    // clean up before hand.
+    tempents->LevelShutdown();
 
-	// Now release/delete the entities
-	cl_entitylist->Release();
+    // Now release/delete the entities
+    cl_entitylist->Release();
 
-	C_BaseEntityClassList *pClassList = s_pClassLists;
-	while ( pClassList )
-	{
-		pClassList->LevelShutdown();
-		pClassList = pClassList->m_pNextClassList;
-	}
+    C_BaseEntityClassList *pClassList = s_pClassLists;
+    while (pClassList)
+    {
+        pClassList->LevelShutdown();
+        pClassList = pClassList->m_pNextClassList;
+    }
 
-	// Now do the post-entity shutdown of all systems
-	IGameSystem::LevelShutdownPostEntityAllSystems();
+    // Now do the post-entity shutdown of all systems
+    IGameSystem::LevelShutdownPostEntityAllSystems();
 
-	view->LevelShutdown();
-	beams->ClearBeams();
-	ParticleMgr()->RemoveAllEffects();
-	
-	StopAllRumbleEffects();
+    view->LevelShutdown();
+    beams->ClearBeams();
+    ParticleMgr()->RemoveAllEffects();
 
-	gHUD.LevelShutdown();
+    StopAllRumbleEffects();
 
-	internalCenterPrint->Clear();
+    gHUD.LevelShutdown();
 
-	messagechars->Clear();
+    internalCenterPrint->Clear();
 
-	g_pParticleSystemMgr->UncacheAllParticleSystems();
-	UncacheAllMaterials();
+    messagechars->Clear();
+
+    g_pParticleSystemMgr->UncacheAllParticleSystems();
+    UncacheAllMaterials();
 
 #ifdef _XBOX
-	ReleaseRenderTargets();
+    ReleaseRenderTargets();
 #endif
 
-	// string tables are cleared on disconnect from a server, so reset our global pointers to NULL
-	ResetStringTablePointers();
+    // string tables are cleared on disconnect from a server, so reset our global pointers to NULL
+    ResetStringTablePointers();
 
 #ifdef GE_DLL
-	if ( engine->GetLevelName()[0] == '\0' )
-		StartMenuMusic();
+    if (engine->GetLevelName()[0] == '\0')
+        StartMenuMusic();
 
     // This frees up a fair bit of texture memory so that the game doesn't run out during level transition.
     // The game loads the next level before unloading the first one, however GE:S uses so much texture
@@ -1494,18 +1579,22 @@ void CHLClient::LevelShutdown( void )
     {
         //materials->ResetTempHWMemory(true);
         Msg("Flushed %d bytes!\n", g_pDataCache->Flush());
-        materials->UncacheAllMaterials();
+        //materials->UncacheAllMaterials();
         DeleteUnreferencedTextures(true);
-        materials->ClearBuffers(true, true, true);
-        materials->CompactMemory();
+        //materials->ClearBuffers(true, true, true);
+        //materials->CompactMemory();
         g_pMemAlloc->CompactHeap();
         materials->SetExcludedTextures("scripts/base_exclude.lst");
+        materials->UpdateExcludedTextures();
+        materials->ClearBuffers(true, true, true);
+        materials->CompactMemory();
+
         Msg("Finished uncaching materials!\n");
         m_bHasBlockedMaterials = true;
-        // If transition table overflows are ever a problem, mat_support_flashlight and RenderView are both worth exploring.
-        // Graphics settings changes seem to reset the transition table and stop an overflow but I'm not sure of a cleaner way to do it.
-        // I think rendering the newly loaded materials might do it...but honestly I still can't figure out exactly what the transition
-        // table even is so it's hard to know for sure how to avoid overflowing it other than to avoid as many fancy shaders as possible.
+
+        // engine->ClientCmd_Unrestricted("con_logfile transition.log");
+
+        // materials->DebugPrintUsedTextures does this make my life easy?
     }
 #endif
 }
