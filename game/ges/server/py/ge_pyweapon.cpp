@@ -274,6 +274,8 @@ BOOST_PYTHON_FUNCTION_OVERLOADS(GetMeleeWeaponRange_overloads, pyGetMeleeWeaponR
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetZoomOffset_overloads, CGEWeapon::GetZoomOffset, 0, 1);
 
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetWeaponPushForceMult_overloads, CGEWeapon::GetWeaponPushForceMult, 0, 1);
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMinSpreadVec_overloads, CGEWeapon::GetMinSpreadVec, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMaxSpreadVec_overloads, CGEWeapon::GetMaxSpreadVec, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetAimBonus_overloads, CGEWeapon::GetAimBonus, 0, 1);
@@ -320,7 +322,8 @@ BOOST_PYTHON_MODULE(GEWeapon)
         .def("GetFireRate", &CGEWeapon::GetFireRate, GetWeaponFireRate_overloads())
         .def("GetClickFireRate", &CGEWeapon::GetClickFireRate, GetWeaponClickFireRate_overloads())
         .def("GetAccFireRate", &CGEWeapon::GetAccFireRate, GetWeaponAccFireRate_overloads())
-        
+        .def("GetWeaponPushForceMult", &CGEWeapon::GetWeaponPushForceMult, GetWeaponPushForceMult_overloads())
+
         .def("GetMaxPenetrationDepth", &CGEWeapon::GetMaxPenetrationDepth, GetMaxPenetrationDepth_overloads())
 		.def("GetWeaponId", &CGEWeapon::GetWeaponID)
 		.def("GetSecondsUntilPickupAllowed", &CGEWeapon::GetSecondsUntilPickup)

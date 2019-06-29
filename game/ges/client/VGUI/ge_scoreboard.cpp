@@ -58,6 +58,11 @@ CGEScoreBoard::CGEScoreBoard(IViewPort *pViewPort):CClientScoreBoardDialog(pView
 
 	m_bTeamPlay = false;
 	m_pBackground->SetImage( SCOREBOARD_BG_FFA );
+    m_pBackground->SetPaintBackgroundEnabled(true);
+    m_pBackground->SetPaintBackgroundType(1);
+    m_pBackground->SetPaintBorderEnabled(false);
+
+    SetPaintBackgroundType(1);
 
 	// Know when we change game modes so we can show it
 	ListenForGameEvent( "hostname_change" );

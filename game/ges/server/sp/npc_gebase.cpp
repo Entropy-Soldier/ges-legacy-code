@@ -106,6 +106,7 @@ CGENPCRagdoll::~CGENPCRagdoll()
     // Make sure to delete our head.
     if (m_hHead)
     {
+        m_hHead->StopFollowingEntity();
         UTIL_Remove(m_hHead);
         m_hHead = NULL;
     }

@@ -810,6 +810,9 @@ IRagdoll* C_HL2MP_Player::GetRepresentativeRagdoll() const
 IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_HL2MPRagdoll, DT_HL2MPRagdoll, CHL2MPRagdoll )
 	RecvPropVector( RECVINFO(m_vecRagdollOrigin) ),
 	RecvPropEHandle( RECVINFO( m_hPlayer ) ),
+#ifdef GE_DLL
+    RecvPropEHandle( RECVINFO( m_hHead ) ),
+#endif
 	RecvPropInt( RECVINFO( m_nModelIndex ) ),
 	RecvPropInt( RECVINFO(m_nForceBone) ),
 	RecvPropVector( RECVINFO(m_vecForce) ),
@@ -820,7 +823,9 @@ END_RECV_TABLE()
 
 C_HL2MPRagdoll::C_HL2MPRagdoll()
 {
-
+#ifdef GE_DLL
+    m_hHead = NULL;
+#endif
 }
 
 C_HL2MPRagdoll::~C_HL2MPRagdoll()
@@ -994,6 +999,11 @@ void C_HL2MPRagdoll::CreateHL2MPRagdoll( void )
 
 #ifdef GE_DLL
 		m_nSkin = skin;
+
+        if (m_hHead)
+        {
+            m_hHead->RemoveEffects(EF_NODRAW); // I hate to do this this way but it seems to be the only viable option right now.
+        }
 #endif
 
 	InitAsClientRagdoll( boneDelta0, boneDelta1, currentBones, boneDt );

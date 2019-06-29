@@ -70,6 +70,7 @@ CHudGameplay::CHudGameplay(const char *pElementName) : BaseClass(NULL, "GEHUDGam
 		m_vWeaponLabels.AddToTail(new sWeaponLabel);
 		m_vWeaponLabels.Tail()->pImage = new vgui::ImagePanel(m_pWeaponSet, name);
 		m_vWeaponLabels.Tail()->pImage->SetShouldScaleImage(true);
+        m_vWeaponLabels.Tail()->pImage->SetPaintBackgroundType(1);
 		m_vWeaponLabels.Tail()->pLabel = new vgui::Label(m_pWeaponSet, name, "");
 	}
 

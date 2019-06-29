@@ -207,6 +207,9 @@ private:
 private:
 
 	EHANDLE	m_hPlayer;
+#ifdef GE_DLL
+    EHANDLE m_hHead;
+#endif
 	CNetworkVector( m_vecRagdollVelocity );
 	CNetworkVector( m_vecRagdollOrigin );
 };

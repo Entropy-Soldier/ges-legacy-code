@@ -247,6 +247,40 @@ void CModelPanel::SwapModel( const char *pszName, const char *pszAttached )
 	m_bPanelDirty = true;
 }
 
+#ifdef GE_DLL
+void CModelPanel::SwapModel( const char *pszName, CUtlVector<const char *> &pszAttached )
+{
+	if ( !m_pModelInfo || !pszName || !pszName[0] )
+		return;
+
+	int len = Q_strlen( pszName ) + 1;
+	char *pAlloced = new char[ len ];
+	Assert( pAlloced );
+	Q_strncpy( pAlloced, pszName, len );
+	m_pModelInfo->m_pszModelName = pAlloced;
+
+	ClearAttachedModelInfos();
+
+    for (int i = 0; i < pszAttached.Size(); i++)
+    {
+        CModelPanelAttachedModelInfo *pAttachedModelInfo = new CModelPanelAttachedModelInfo;
+	    if ( pAttachedModelInfo )
+	    {
+		    len = Q_strlen( pszAttached[i] ) + 1;
+		    pAlloced = new char[ len ];
+		    Assert( pAlloced );
+		    Q_strncpy( pAlloced, pszAttached[i], len );
+		    pAttachedModelInfo->m_pszModelName = pAlloced;
+		    pAttachedModelInfo->m_nSkin = 0;
+
+		    m_pModelInfo->m_AttachedModelsInfo.AddToTail( pAttachedModelInfo );
+	    }
+    }
+
+	m_bPanelDirty = true;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

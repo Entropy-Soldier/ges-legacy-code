@@ -186,6 +186,9 @@ public:
 
 	void	SetDefaultAnimation( const char *pszName );
 	void	SwapModel( const char *pszName, const char *pszAttached = NULL );
+#ifdef GE_DLL
+    void	SwapModel( const char *pszName, CUtlVector<const char *> &pszAttached );
+#endif
 
 	virtual void ParseModelInfo( KeyValues *inResourceData );
 

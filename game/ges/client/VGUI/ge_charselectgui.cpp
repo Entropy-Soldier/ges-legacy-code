@@ -434,7 +434,21 @@ void CGECharSelect::SkinClicked( KeyValues *data )
 		const CGECharData *pChar = m_vCharacters[idx];
 		m_iCurrSkin = clamp( data->GetInt("id"), 0, pChar->m_pSkins.Count()-1 );
 
-		m_pCharModel->SwapModel( pChar->m_pSkins[m_iCurrSkin]->szModel, "models/weapons/pp7/w_pp7.mdl" );
+        CUtlVector<const char*> attachmentPaths;
+
+        attachmentPaths.AddToTail("models/weapons/pp7/w_pp7.mdl");
+        attachmentPaths.AddToTail(pChar->m_pSkins[m_iCurrSkin]->szHeadModel);
+
+        for (int i = 0; i < MAX_CHAR_ATTACHMENTS; i++)
+        {
+            if (pChar->m_pSkins[m_iCurrSkin]->szHatModel[i][0] != '\0')
+            {
+                attachmentPaths.AddToTail(pChar->m_pSkins[m_iCurrSkin]->szHatModel[i]);
+            }
+        }
+
+        m_pCharModel->DeleteModelData();
+		m_pCharModel->SwapModel( pChar->m_pSkins[m_iCurrSkin]->szModel, attachmentPaths );
 		m_pCharModel->m_pModelInfo->m_nSkin = pChar->m_pSkins[m_iCurrSkin]->iWorldSkin;
 
 		// Set this skin as selected

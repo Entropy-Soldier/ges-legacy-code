@@ -957,14 +957,13 @@ public:
 	}
 
 public:
-#ifdef GE_DLL
-    CBaseEntity *m_hHead; // We need to keep track of our head so we remove it when we get deleted.
-#endif
-
 	// In case the client has the player entity, we transmit the player index.
 	// In case the client doesn't have it, we transmit the player's model index, origin, and angles
 	// so they can create a ragdoll in the right place.
 	CNetworkHandle( CBaseEntity, m_hPlayer );	// networked entity handle 
+#ifdef GE_DLL
+    CNetworkHandle( CBaseEntity, m_hHead );	// We need to keep track of our head so we remove it when we get deleted.
+#endif
 	CNetworkVector( m_vecRagdollVelocity );
 	CNetworkVector( m_vecRagdollOrigin );
 };
@@ -974,6 +973,9 @@ LINK_ENTITY_TO_CLASS( hl2mp_ragdoll, CHL2MPRagdoll );
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CHL2MPRagdoll, DT_HL2MPRagdoll )
 	SendPropVector( SENDINFO(m_vecRagdollOrigin), -1,  SPROP_COORD ),
 	SendPropEHandle( SENDINFO( m_hPlayer ) ),
+#ifdef GE_DLL
+    SendPropEHandle( SENDINFO( m_hHead ) ),
+#endif
 	SendPropModelIndex( SENDINFO( m_nModelIndex ) ),
 	SendPropInt		( SENDINFO(m_nForceBone), 8, 0 ),
 	SendPropVector	( SENDINFO(m_vecForce), -1, SPROP_NOSCALE ),
@@ -985,6 +987,7 @@ CHL2MPRagdoll::~CHL2MPRagdoll()
     // Make sure to delete our head.
     if (m_hHead)
     {
+        m_hHead->StopFollowingEntity();
         UTIL_Remove(m_hHead);
         m_hHead = NULL;
     }

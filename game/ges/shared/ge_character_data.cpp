@@ -199,6 +199,9 @@ void GECharacters_Precache( void *pUser )
 			if ( pChar->m_pSkins[k]->szModel[0] != '\0' )
                 CBaseEntity::PrecacheModel(pChar->m_pSkins[k]->szModel);
 
+            if ( pChar->m_pSkins[k]->szHeadModel[0] != '\0' )
+				CBaseEntity::PrecacheModel( pChar->m_pSkins[k]->szHeadModel );
+
             for (int j = 0; j < MAX_CHAR_ATTACHMENTS; j++)
             {
                 if ( pChar->m_pSkins[k]->szHatModel[j][0] != '\0' )

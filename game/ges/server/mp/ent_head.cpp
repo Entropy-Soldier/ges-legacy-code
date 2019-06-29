@@ -21,6 +21,8 @@ public:
 	DECLARE_CLASS( CGE_Head, CBaseFlex );
 	DECLARE_DATADESC();
 
+    CGE_Head();
+
 	void Spawn( void );
 	void Precache( void );
 
@@ -29,8 +31,11 @@ public:
 	void Activate();
 	void TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr );
 
+    virtual int UpdateTransmitState();
+
 private:
 	char *m_szModel;
+    bool m_bIsAttached;
 };
 
 LINK_ENTITY_TO_CLASS( prop_head, CGE_Head );
@@ -38,11 +43,24 @@ BEGIN_DATADESC( CGE_Head )
 	DEFINE_KEYFIELD(m_szModel, FIELD_STRING, "HeadModel"),
 END_DATADESC()
 
+CGE_Head::CGE_Head()
+{
+    m_bIsAttached = true;
+}
 
 void CGE_Head::Precache( void )
 {
 	if (m_szModel)
 		PrecacheModel( m_szModel );
+}
+
+// Always update heads if they're attached to players or ragdolls.
+int CGE_Head::UpdateTransmitState()
+{
+	if (m_bIsAttached)
+		return SetTransmitState(FL_EDICT_PVSCHECK);
+	else
+		return BaseClass::UpdateTransmitState();
 }
 
 void CGE_Head::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr )
@@ -62,6 +80,7 @@ void CGE_Head::Spawn( void )
 
 	Precache();
 	SetModel( m_szModel );
+    m_bIsAttached = true;
 
 	SetCollisionGroup( COLLISION_GROUP_DEBRIS );
 	VPhysicsInitNormal( SOLID_VPHYSICS, 0, false );
@@ -81,6 +100,8 @@ void CGE_Head::KnockHatOff()
 	
 	SetThink( &CGE_Head::RemoveThink );
 	SetNextThink( gpGlobals->curtime + 300.0);
+
+    m_bIsAttached = false;
 }
 
 void CGE_Head::RemoveThink()

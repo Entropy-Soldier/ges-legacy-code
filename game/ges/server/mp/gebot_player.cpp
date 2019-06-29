@@ -319,15 +319,27 @@ void CGEBotPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 		Spawn();
 }
 
+ConVar ge_bot_forceident("ge_bot_forceident", "-1", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Force bots to be a specific character.");
+
 bool CGEBotPlayer::PickPlayerModel( int team )
 {
 	// Randomly select a character for us to be (skipping over random)
 	CUtlVector<const CGECharData*> vChars;
 	GECharacters()->GetTeamMembers( team, vChars );
 
+    int sel;
+
+    if (ge_bot_forceident.GetInt() > 0)
+    {
+        sel = min(ge_bot_forceident.GetInt(), vChars.Count());
+    }
+    else
+    {
+        sel = GERandom<int>(vChars.Count());
+    }
+
 	while ( vChars.Count() > 0 )
 	{
-		int sel = GERandom<int>( vChars.Count() );
 		const CGECharData *pChar = vChars[sel];
 
 		if ( GEGameplay()->GetScenario()->CanPlayerChangeChar(this, pChar->szIdentifier) )
@@ -351,6 +363,8 @@ bool CGEBotPlayer::PickPlayerModel( int team )
 			// Don't choose him again
 			vChars.Remove( sel );
 		}
+
+        sel = GERandom<int>( vChars.Count() );
 	}
 
 	return false;
