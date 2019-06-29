@@ -360,11 +360,11 @@ void CGEPlayer::PostThink( void )
 
 	BaseClass::PostThink();
 
-	// Clamp force on alive players to 1000
-	if ( m_iHealth > 0 && m_vDmgForceThisFrame.Length() > 1000.0f )
+	// Clamp force on alive players to 2000
+	if ( m_iHealth > 0 && m_vDmgForceThisFrame.Length() > 2000.0f )
 	{
 		m_vDmgForceThisFrame.NormalizeInPlace();
-		m_vDmgForceThisFrame *= 1000.0f;
+		m_vDmgForceThisFrame *= 2000.0f;
 	}
 
 	// Check to see if we're below 300 velocity or if the force would slow us down
@@ -681,8 +681,8 @@ int CGEPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 	DevMsg("%f basedamage\n", inputInfo.GetBaseDamage());
 
 	// Limit our up/down force if this wasn't an explosion
-	if ( inputInfo.GetDamageType() &~ DMG_BLAST )
-		force.z = clamp( force.z, -250.0f, 250.0f );
+	//if ( inputInfo.GetDamageType() &~ DMG_BLAST )
+	//	force.z = clamp( force.z, -250.0f, 250.0f );
 	//else if ( m_iHealth > 0 )
 	//	force.z = clamp( force.z, -450.0f, 450.0f );
 
@@ -1030,11 +1030,12 @@ CBaseEntity *CGEPlayer::StealHead()
     {
         return NULL;
     }
-    
-    m_hHead->StopFollowingEntity();
 
     CBaseEntity *pHead = m_hHead;
     m_hHead = NULL; 
+
+    pHead->StopFollowingEntity();
+    pHead->RemoveEffects(EF_NODRAW);
 
     return pHead;
 }
