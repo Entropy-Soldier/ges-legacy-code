@@ -78,14 +78,20 @@ public:
 #endif
 
 	DECLARE_DATADESC();
+#ifdef GE_DLL
+protected:
+	COutputEvent m_OnPlayerTouch;
+	COutputEvent m_OnCacheInteraction;
+#endif
 private:
 	void ComeToRest( void );
 
 private:
 	bool		m_bActivateWhenAtRest;
+#ifndef GE_DLL
 	COutputEvent m_OnPlayerTouch;
 	COutputEvent m_OnCacheInteraction;
-	
+#endif
 	Vector		m_vOriginalSpawnOrigin;
 	QAngle		m_vOriginalSpawnAngles;
 

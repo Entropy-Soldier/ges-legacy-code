@@ -361,7 +361,8 @@ bool CGERules::CanHavePlayerItem( CBasePlayer *pPlayer, CBaseCombatWeapon *pWeap
 
 bool CGERules::CanHaveItem( CBasePlayer *pPlayer, CItem *pItem )
 {
-	return GEGameplay()->GetScenario()->CanPlayerHaveItem( ToGEPlayer(pPlayer), pItem );
+    Warning("Called CanHaveItem in gamerules when it was assumed defunct!\n");
+	return true;
 }
 
 void CGERules::PlayerGotItem( CBasePlayer *pPlayer, CItem *pItem )
@@ -371,7 +372,8 @@ void CGERules::PlayerGotItem( CBasePlayer *pPlayer, CItem *pItem )
 
 bool CGERules::ShouldForcePickup( CBasePlayer *pPlayer, CBaseEntity *pItem )
 {
-	return GEGameplay()->GetScenario()->ShouldForcePickup( ToGEPlayer(pPlayer), pItem );
+    Warning("Called ShouldForcePickup in gamerules when it was assumed defunct!\n");
+	return true;
 }
 	
 bool CGERules::FShouldSwitchWeapon( CBasePlayer *pPlayer, CBaseCombatWeapon *pWeapon )

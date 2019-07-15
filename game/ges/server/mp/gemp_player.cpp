@@ -1865,11 +1865,34 @@ bool CGEMPPlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 	if ( GEMPRules()->IsIntermission() )
 		return false;
 
-	CGEWeapon *pGEWeapon = ToGEWeapon(pWeapon);
-	if ( !pGEWeapon->CanEquip(this) || !GEGameplay()->GetScenario()->CanPlayerHaveItem(this, pGEWeapon) )
+    CGEWeapon *pGEWeapon = ToGEWeapon(pWeapon);
+
+    if (!pGEWeapon)
+    {
+        return false;
+    }
+
+    // Make sure we're actually touching the weapon before we tell the gamemode about it.
+    if ( ( pWeapon->UseWorldSpacePickupChecks() && !UTIL_ItemCanBeTouchedByPlayer(pWeapon, this) ) || !IsAllowedToPickupWeapons())
+    {
+        return false;
+    }
+
+    int pickupCode = GEGameplay()->GetScenario()->HandleItemPickup(this, pGEWeapon);
+
+	if ( !pGEWeapon->CanEquip(this) || (pickupCode == PICKUP_DENY) )
 		return false;
 
-	bool forcepickup = GERules()->ShouldForcePickup(this, pWeapon);
+    // If desired, delete the item.  Do not make a sound, so the gamemode can have a custom pickup sound.
+    if (pickupCode == PICKUP_DELETE)
+	{
+		pWeapon->SetOwner( NULL );
+		pWeapon->SetOwnerEntity( NULL );
+		UTIL_Remove( pWeapon );
+        return false; // We didn't -really- pick up the item, we deleted it.
+	}
+
+	bool forcepickup = (pickupCode == PICKUP_FORCE);
 
 	// We have to do this before we actually fire the weapon pickup code so the skin data is overwritten before it starts getting read.
     // Ammo-based pickup weapons like mines use their skins to affect their dropped ammo box and thus shouldn't transfer skins like this.
@@ -1888,9 +1911,8 @@ bool CGEMPPlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 	}
 
 	bool ret = BaseClass::BumpWeapon(pWeapon);
-    bool canReachWeapon = UTIL_ItemCanBeTouchedByPlayer( pWeapon, this ) && IsAllowedToPickupWeapons();
 
-	if (!ret && (forcepickup || ((pGEWeapon->GetWeaponID() == WEAPON_MOONRAKER || pGEWeapon->GetWeaponID() == WEAPON_KNIFE) && canReachWeapon)))
+	if (!ret && (forcepickup || ((pGEWeapon->GetWeaponID() == WEAPON_MOONRAKER || pGEWeapon->GetWeaponID() == WEAPON_KNIFE))))
 	{
 		// If we didn't pick it up and the game rules say we should have anyway remove it from the world
 		pWeapon->SetOwner( NULL );

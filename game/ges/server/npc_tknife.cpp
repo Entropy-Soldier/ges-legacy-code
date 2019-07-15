@@ -242,11 +242,15 @@ void CGETKnife::PickupTouch( CBaseEntity *pOther )
 	if ( !pPicker->IsAllowedToPickupWeapons() )
 		return;
 
+    int pickupCode = GEGameplay()->GetScenario()->HandleItemPickup( ToGEPlayer(pPicker), this );
+
     // Make sure the gameplay is fine with us picking this up.
-    if ( !GEGameplay()->GetScenario()->CanPlayerHaveItem( ToGEPlayer(pPicker), this ) )
+    if ( pickupCode == PICKUP_DENY )
         return;
 
-	if ( MyTouch( pPicker ) )
+    // Order is important here due to short circuiting.  DELETE will prevent MyTouch from being called,
+    // thus stopping anything from being given by the item.  FORCE will only be relevant if MyTouch is called and fails.
+	if ( (pickupCode == PICKUP_DELETE) || MyTouch( pPicker ) || (pickupCode == PICKUP_FORCE) )
 	{
         GEGameplay()->GetScenario()->OnPlayerGetItem( ToGEPlayer(pPicker), this );
 

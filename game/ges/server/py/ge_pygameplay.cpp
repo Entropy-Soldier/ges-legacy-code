@@ -383,10 +383,10 @@ public:
 		TRYFUNCRET( this->get_override("CanPlayerRespawn")(bp::ptr(pPlayer)), true );
 	}
 
-	virtual bool CanPlayerHaveItem(CGEPlayer *pPlayer, CBaseEntity *pEntity)
-	{
-		TRYFUNCRET( this->get_override("CanPlayerHaveItem")(bp::ptr(pPlayer), bp::ptr(pEntity)), true );
-	}
+    virtual int HandleItemPickup(CGEPlayer *pPlayer, CBaseEntity *pEntity)
+    {
+        TRYFUNCRET( this->get_override("HandleItemPickup")(bp::ptr(pPlayer), bp::ptr(pEntity)), true );
+    }
 
 	virtual void OnPlayerGetItem(CGEPlayer *pPlayer, CBaseEntity *pEntity)
 	{
@@ -408,11 +408,6 @@ public:
 			HandlePythonException();
 		}
 	}	
-
-	virtual bool ShouldForcePickup(CGEPlayer *pPlayer, CBaseEntity *pEntity)
-	{
-		TRYFUNCRET( this->get_override("ShouldForcePickup")(bp::ptr(pPlayer), bp::ptr(pEntity)), false );
-	}
 	
 	virtual void OnPlayerSpawn(CGEPlayer *pPlayer)
 	{

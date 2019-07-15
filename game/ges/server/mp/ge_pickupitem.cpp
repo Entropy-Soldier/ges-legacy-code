@@ -59,6 +59,8 @@ void CGEPickupItem::RespawnNow()
 	SetNextThink( gpGlobals->curtime );
 }
 
+extern int gEvilImpulse101;
+
 void CGEPickupItem::ItemTouch( CBaseEntity *pOther )
 {
 	if ( pOther->IsNPC() )
@@ -69,11 +71,13 @@ void CGEPickupItem::ItemTouch( CBaseEntity *pOther )
 
 		if ( pBot && pNPC )
 		{
+            int pickupCode = GEGameplay()->GetScenario()->HandleItemPickup(ToGEPlayer(pBot), this);
+
 			// ok, a player is touching this item, but can he have it?
-			if ( !g_pGameRules->CanHaveItem( pBot, this ) )
+			if ( pickupCode == PICKUP_DENY )
 				return;
 
-			if ( MyTouch( pBot ) )
+			if ( (pickupCode == PICKUP_DELETE) || MyTouch( pBot ) || (pickupCode == PICKUP_FORCE) )
 			{
 				SetTouch( NULL );
 				SetThink( NULL );
@@ -86,7 +90,57 @@ void CGEPickupItem::ItemTouch( CBaseEntity *pOther )
 	}
 	else
 	{
-		BaseClass::ItemTouch( pOther );
+	    // if it's not a player, ignore
+	    if ( !pOther->IsPlayer() )
+		    return;
+
+	    CBasePlayer *pPlayer = (CBasePlayer *)pOther;
+
+	    // Must be a valid pickup scenario (no blocking). Though this is a more expensive
+	    // check than some that follow, this has to be first Obecause it's the only one
+	    // that inhibits firing the output OnCacheInteraction.
+	    if ( ItemCanBeTouchedByPlayer( pPlayer ) == false )
+		    return;
+
+	    m_OnCacheInteraction.FireOutput(pOther, this);
+
+	    // Can I even pick stuff up?
+	    if ( !pPlayer->IsAllowedToPickupWeapons() )
+		    return;
+
+        int pickupCode = GEGameplay()->GetScenario()->HandleItemPickup(ToGEPlayer(pPlayer), this);
+
+	    // ok, a player is touching this item, but can he have it?
+	    if ( pickupCode == PICKUP_DENY )
+	    {
+		    // no? Ignore the touch.
+		    return;
+	    }
+
+        // Order is important here due to short circuiting.  DELETE will prevent MyTouch from being called,
+        // thus stopping anything from being given by the item.  FORCE will only be relevant if MyTouch is called and fails.
+	    if ( (pickupCode == PICKUP_DELETE) || MyTouch( pPlayer ) || (pickupCode == PICKUP_FORCE) )
+	    {
+		    m_OnPlayerTouch.FireOutput(pOther, this);
+
+		    SetTouch( NULL );
+		    SetThink( NULL );
+
+		    // player grabbed the item. 
+		    g_pGameRules->PlayerGotItem( pPlayer, this );
+		    if ( g_pGameRules->ItemShouldRespawn( this ) == GR_ITEM_RESPAWN_YES )
+		    {
+			    Respawn(); 
+		    }
+		    else
+		    {
+			    UTIL_Remove( this );
+		    }
+	    }
+	    else if (gEvilImpulse101)
+	    {
+		    UTIL_Remove( this );
+	    }
 	}
 }
 

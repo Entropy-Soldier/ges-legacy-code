@@ -46,10 +46,11 @@ public:
 		Msg( "[PYGP] Called CanPlayerRespawn()\n" ); 
 		return true;
 	}
-	virtual bool CanPlayerHaveItem(CGEPlayer *pPlayer, CBaseEntity *pEntity) { 
-		Msg( "[PYGP] Called CanPlayerHaveItem()\n" );
+    virtual int HandleItemPickup()
+    {
+        Msg( "[PYGP] Called HandleItemPickup()\n" );
 		return true;
-	}
+    }
 	virtual void OnPlayerGetItem(CGEPlayer *pPlayer, CBaseEntity *pEntity) { 
 		Msg( "[PYGP] Called OnPlayerGetItem()\n" );
 	}
@@ -66,10 +67,6 @@ public:
 	}
 	virtual void CalculateCustomDamage(CGEPlayer *pVictim, const CTakeDamageInfo &inputInfo, float &health, float &armor) { 
 		Msg( "[PYGP] Called CalculateCustomDamage()\n" );
-	}
-	virtual bool ShouldForcePickup(CGEPlayer *pPlayer, CBaseEntity *pEntity) { 
-		Msg( "[PYGP] Called ShouldForcePickup()\n" ); 
-		return false;
 	}
 	
     virtual void OnItemTracked( CBaseEntity *pItem, int reason, int trackerList ){

@@ -141,7 +141,7 @@ bool CGEArmorVest::MyTouch( CBasePlayer *pPlayer )
 	if ( !pGEPlayer )
 		return false;
 
-	return pGEPlayer->AddArmor(m_iAmount,  ge_limithalfarmorpickup.GetBool() ? m_iAmount : MAX_ARMOR) || GERules()->ShouldForcePickup(pPlayer, this);
+	return pGEPlayer->AddArmor(m_iAmount,  ge_limithalfarmorpickup.GetBool() ? m_iAmount : MAX_ARMOR);
 }
 
 

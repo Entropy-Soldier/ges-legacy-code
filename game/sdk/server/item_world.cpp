@@ -453,6 +453,10 @@ void CItem::ItemTouch( CBaseEntity *pOther )
 		{
 			UTIL_Remove( this );
 
+#ifdef GE_DLL
+            Warning("Called HL2 item pickup code when it was assumed we never would!\n");
+#endif
+
 #ifndef GE_DLL
 #ifdef HL2MP
 			HL2MPRules()->RemoveLevelDesignerPlacedObject( this );

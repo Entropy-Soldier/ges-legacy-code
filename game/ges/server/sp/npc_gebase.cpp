@@ -911,17 +911,6 @@ bool CNPC_GEBase::BumpWeapon( CGEWeapon *pWeapon )
 {
 	bool canHaveWeapon = true;
 
-	// Bots get extra scrutiny due to gameplay restrictions
-	CGEBotPlayer *pBot = m_hBotPlayer.Get();
-	if ( pBot )
-	{
-		if ( !GEGameplay()->GetScenario()->CanPlayerHaveItem(pBot, pWeapon) )
-			return false;
-
-		if ( !g_pGameRules->CanHavePlayerItem( pBot, pWeapon ) )
-			return false;
-	}
-
 	// Can I have this weapon type?
 	if ( !IsAllowedToPickupWeapons() || !pWeapon->CanEquip(this) )
 		canHaveWeapon = false;
@@ -932,6 +921,29 @@ bool CNPC_GEBase::BumpWeapon( CGEWeapon *pWeapon )
 	// Don't let the NPC fetch weapons through walls (use MASK_SOLID so that you can't pickup through windows)
 	if( !pWeapon->FVisible( this, MASK_SOLID ) && !(GetFlags() & FL_NOTARGET) )
 		canHaveWeapon = false;
+
+    // Bots get extra scrutiny due to gameplay restrictions
+    int pickupCode = PICKUP_ALLOW;
+
+	CGEBotPlayer *pBot = m_hBotPlayer.Get();
+	if ( pBot )
+	{
+        pickupCode = GEGameplay()->GetScenario()->HandleItemPickup(pBot, pWeapon);
+
+		if ( pickupCode == PICKUP_DENY )
+			return false;
+
+		if ( !g_pGameRules->CanHavePlayerItem( pBot, pWeapon ) )
+			return false;
+	}
+
+    if (pickupCode == PICKUP_DELETE)
+    {
+        pWeapon->SetOwner( NULL );
+		pWeapon->SetOwnerEntity( NULL );
+		UTIL_Remove(pWeapon);
+        return false; // We didn't -really- pick up the item, we deleted it.
+    }
 
 	if ( canHaveWeapon && !!Weapon_OwnsThisType( pWeapon->GetClassname(), pWeapon->GetSubType() ) ) 
 	{
@@ -966,7 +978,7 @@ bool CNPC_GEBase::BumpWeapon( CGEWeapon *pWeapon )
 			}
 		}
 	}
-	else if ( pBot && (GERules()->ShouldForcePickup(pBot, pWeapon) || pWeapon->GetWeaponID() == WEAPON_MOONRAKER) )
+	else if ( pBot && (pickupCode == PICKUP_FORCE || pWeapon->GetWeaponID() == WEAPON_MOONRAKER || pWeapon->GetWeaponID() == WEAPON_KNIFE) )
 	{
 		// If we didn't pick it up and the game rules say we should have anyway remove it from the world
 		pWeapon->SetOwner( NULL );
@@ -1005,6 +1017,21 @@ CBaseEntity	*CNPC_GEBase::GiveNamedItem( const char *pszName, int iSubType, bool
 	CBaseCombatWeapon *pWeapon = dynamic_cast<CBaseCombatWeapon*>( (CBaseEntity*)pent );
 	if ( pWeapon )
 	{
+        int pickupCode = PICKUP_ALLOW;
+
+	    CGEBotPlayer *pBot = m_hBotPlayer.Get();
+	    if ( pBot )
+	    {
+            pickupCode = GEGameplay()->GetScenario()->HandleItemPickup(pBot, pWeapon);
+
+            if (pickupCode == PICKUP_DENY || pickupCode == PICKUP_DELETE || !g_pGameRules->CanHavePlayerItem( pBot, pWeapon ))
+            {
+                // Don't actually want this weapon after all.
+                UTIL_Remove(pWeapon);
+                return NULL;
+            }
+	    }
+
 		pWeapon->SetShouldGiveDefaultClip( giveDefaultClip );
 
 		Weapon_Equip( pWeapon );

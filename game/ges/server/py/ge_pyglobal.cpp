@@ -153,6 +153,12 @@ BOOST_PYTHON_MODULE(GEGlobal)
     self.attr("ET_END_ITEMPICKED")    = ET_END_ITEMPICKED;
 	self.attr("ET_END_ITEMDELETED")   = ET_END_ITEMDELETED;
 
+    // Pickup callback states
+    self.attr("PICKUP_DENY")   = PICKUP_DENY;
+	self.attr("PICKUP_ALLOW")  = PICKUP_ALLOW;
+    self.attr("PICKUP_FORCE")  = PICKUP_FORCE;
+	self.attr("PICKUP_DELETE") = PICKUP_DELETE;
+
 	self.attr("HUD_PRINTNOTIFY")	= HUD_PRINTNOTIFY;
 	self.attr("HUD_PRINTCONSOLE") = HUD_PRINTCONSOLE;
 	self.attr("HUD_PRINTTALK")	= HUD_PRINTTALK;

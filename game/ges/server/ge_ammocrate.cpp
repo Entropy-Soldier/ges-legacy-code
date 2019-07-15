@@ -316,7 +316,7 @@ bool CGEAmmoCrate::MyTouch( CBasePlayer *pPlayer )
 	// it has no ammo
 	// we've just taken some ammo and don't allow partial pickups
 	// the gamemode wants to force us to take it.
-	if ( !HasAmmo() || (someAmmoTaken && !ge_partialammopickups.GetBool()) || GERules()->ShouldForcePickup( pPlayer, this ) )
+	if ( !HasAmmo() || (someAmmoTaken && !ge_partialammopickups.GetBool()) )
 		return true;
 	
 	// But if it's still around, make sure to refill all of the included ammo types after a little while.

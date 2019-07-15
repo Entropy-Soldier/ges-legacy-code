@@ -120,6 +120,10 @@ class C_GEGameplayEventListener { };
 #define AMMOCRATE_MODEL	"models/weapons/ammocrate.mdl"
 #define BABYCRATE_MODEL	"models/weapons/ammocrate_small.mdl"
 
+#define PICKUP_DENY 0
+#define PICKUP_ALLOW 1
+#define PICKUP_FORCE 2
+#define PICKUP_DELETE 3
 
 //Max Ammo Definitions
 const int AMMO_9MM_MAX			=	800;
