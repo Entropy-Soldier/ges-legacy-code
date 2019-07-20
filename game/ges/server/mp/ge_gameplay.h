@@ -54,6 +54,7 @@ public:
 
 	virtual void ClientConnect(CGEPlayer *pPlayer)=0;
 	virtual void ClientDisconnect(CGEPlayer *pPlayer)=0;
+    virtual void ClientFinishDisconnect(CGEPlayer *pPlayer)=0;
 
 	virtual void OnPlayerSpawn(CGEPlayer *pPlayer)=0;
 	virtual void OnPlayerObserver(CGEPlayer *pPlayer)=0;

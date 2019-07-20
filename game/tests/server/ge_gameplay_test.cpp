@@ -30,6 +30,7 @@ public:
 
 	virtual void ClientConnect( CGEPlayer *pPlayer ) { Msg( "[PYGP] Called OnPlayerConnect()\n" ); }
 	virtual void ClientDisconnect( CGEPlayer *pPlayer ) { Msg( "[PYGP] Called OnPlayerDisconnect()\n" ); }
+    virtual void ClientFinishDisconnect( CGEPlayer *pPlayer ) { Msg( "[PYGP] Called OnPlayerFinishDisconnect()\n" ); }
 
 	virtual void OnThink() { Msg( "[PYGP] Called OnThink()\n" ); }
 

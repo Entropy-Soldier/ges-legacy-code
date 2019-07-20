@@ -1630,6 +1630,10 @@ void CGEMPRules::ClientDisconnected( edict_t *pEntity )
 		if ( GetScenario() )
 			GetScenario()->ClientDisconnect( player );
 
+        player->DropAllTokens();
+
+        GetScenario()->ClientFinishDisconnect( player );
+
 		// Stop tracking me if I am a Bot
 		if ( player->IsBotPlayer() )
 			m_vBotList.FindAndRemove( player->GetRefEHandle() );

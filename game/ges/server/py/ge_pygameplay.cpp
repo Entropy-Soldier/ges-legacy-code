@@ -348,6 +348,12 @@ public:
 		PY_CALLHOOKS( FUNC_GP_PLAYERDISCONNECT, bp::make_tuple(bp::ptr(pPlayer)) );
 	}
 
+    virtual void ClientFinishDisconnect( CGEPlayer *pPlayer )
+	{
+		TRYFUNC( this->get_override("OnPlayerDisconnect")(bp::ptr(pPlayer)) );
+		PY_CALLHOOKS( FUNC_GP_PLAYERDISCONNECT, bp::make_tuple(bp::ptr(pPlayer)) );
+	}
+
 	virtual void OnThink()
 	{
 		PY_CALLHOOKS( FUNC_GP_THINK, bp::make_tuple() );
