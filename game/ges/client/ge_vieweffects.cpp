@@ -152,10 +152,10 @@ void CGEViewEffects::DrawCrosshair( void )
 	if ( ShouldDrawCrosshair( pPlayer ) )
 	{
 		// Default size
-		float size = YRES( 50 );
+		float size = YRES( 1 ); // Has to be really close to the camera so the farz clip plane doesn't cull it on zooming weapons.
 
 		// Base offset from the camera
-		Vector offset( 1200.0f, 0, 0 );
+		Vector offset( 24.0f, 0, 0 );
 
 		// Adjust distance for zoom
 		float zoom = pPlayer->GetZoom() + pPlayer->GetDefaultFOV();
