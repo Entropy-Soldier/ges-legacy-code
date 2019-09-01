@@ -922,6 +922,9 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 	if ( iTeam == TEAM_SPECTATOR && bKill )
 		CommitSuicide(false, true);
 
+    // We are changing teams, drop any tokens we might have
+	DropAllTokens(); // Needs to happen before the player is officially on the other team, so they can drop the tokens on their old team.
+
     // Record our old team for later since it's about to change.
     int oldTeam = GetTeamNumber();
 
@@ -934,9 +937,6 @@ void CGEMPPlayer::ChangeTeam( int iTeam, bool bWasForced /* = false */ )
 		SetPlayerTeamModel();
 	else
 		BaseClass::SetPlayerModel();
-
-	// We are changing teams, drop any tokens we might have
-	DropAllTokens(); // Mostly just a failsafe against force switches at this point since we usually force suicide.
 
 	// Also make sure we aren't moving onto a ladder.
 	AbortForcedLadderMove();

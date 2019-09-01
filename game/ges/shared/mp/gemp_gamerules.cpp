@@ -1566,6 +1566,8 @@ void CGEMPRules::ClientDisconnected( edict_t *pEntity )
 	CGEMPPlayer *player = (CGEMPPlayer*) CBaseEntity::Instance( pEntity );
 	if ( player )
 	{
+        player->SetConnected( PlayerDisconnecting );
+
 		// If a player has this player as their last attacker, nullify it to prevent invalid pointer.
 		FOR_EACH_PLAYER(pPlayer)
 			if (pPlayer->GetLastAttacker() == player)

@@ -1413,6 +1413,7 @@ void CHLClient::LevelInitPostEntity( )
         
         con_logfile->SetValue(TRANSITION_LOG_FILEPATH);
 
+        Msg("Reload materials: %s\n", m_bHasBlockedMaterials ? "True" : "False");
         // If transition table overflows are ever a problem, mat_support_flashlight and RenderView are both worth exploring.
         // Graphics settings changes seem to reset the transition table and stop an overflow but I'm not sure of a cleaner way to do it.
     }
