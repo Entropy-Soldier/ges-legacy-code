@@ -698,6 +698,7 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 		.def("TransferToken", &CGETokenManager::TransferToken)
 		.def("CaptureToken", &CGETokenManager::CaptureToken)
 		.def("GetTokens", pyGetTokens)
+        .def("EnforceTokens", &CGETokenManager::EnforceTokens) // Useful to be able to do this manually on specific events.
 		.def("SetupCaptureArea", raw_function(pySetupCaptureArea))
 		.def("SpawnCaptureAreaNearPlayer", &CGETokenManager::SpawnCaptureAreaNearPlayer, return_value_policy<reference_existing_object>())
         .def("SpawnCaptureAreaAtPoint", &CGETokenManager::SpawnCaptureAreaAtPoint, return_value_policy<reference_existing_object>())

@@ -486,7 +486,19 @@ void CGETokenManager::SpawnTokens( const char *name /*=NULL*/ )
 	}
 }
 
-void CGETokenManager::RemoveTokens( const char *name /*=NULL*/, int count /*=-1*/ )
+struct TokenPriorityPair
+{
+    CGEWeapon *token;
+    unsigned int priority;
+};
+
+// Sort function for our weapons based on their weights
+inline int __cdecl CompareTokenPriority( const TokenPriorityPair *ppLeft, const TokenPriorityPair *ppRight )
+{
+	return ppLeft->priority - ppRight->priority;
+}
+
+void CGETokenManager::RemoveTokens( const char *name /*=NULL*/, int count /*=-1*/, bool forceRemove /*==true*/ )
 {
 	FOR_EACH_DICT( m_vTokenTypes, idx )
 	{
@@ -495,14 +507,49 @@ void CGETokenManager::RemoveTokens( const char *name /*=NULL*/, int count /*=-1*
 		{
 			CGETokenDef *ttype = m_vTokenTypes[idx];
 			// Avoid corruption of the list while iterating
-			CUtlVector<EHANDLE> tokens;
-			tokens.AddVectorToTail( ttype->vTokens );
+			CUtlVector<TokenPriorityPair> tokens;
+
+            for ( int i = 0; i < ttype->vTokens.Count(); i++ )
+            {
+                CGEWeapon *tokenWeapon = (CGEWeapon*)ttype->vTokens[i].Get();
+
+                if (tokenWeapon)
+                {
+                    unsigned int priority = tokenWeapon->GetLimitEnforcementPriority();
+
+                    if (tokenWeapon->GetOwner()) // Owned tokens get 1000 extra priority.
+                    {
+                        priority += 1000;
+                    }
+                    else if (tokenWeapon->GetOriginalOwnerID() != -1) // Tokens that have just been dropped get 100 extra priority.
+                    {
+                        priority += 100;
+                    }
+
+                    tokens.AddToTail({tokenWeapon, priority});
+                }
+                else
+                {
+                    Warning("Token definition exists with invalid token handle!\n");
+                }
+            }
+
+            // Sort based on priority so we remove the undesired tokens first.
+            tokens.Sort(CompareTokenPriority);
 
 			int toRemove = (count > 0) ? min( count, tokens.Count() ) : tokens.Count();
 			for ( int i=0; i < toRemove; i++ )
 			{
+                // Tokens with a priority of 10000 should not be removed unless we're forced to do so.
+                // If we hit a token with this priority all the tokens past it will have an even higher priority
+                // so just break here.
+                if ( tokens[i].priority >= 10000 && !forceRemove)
+                {
+                    break;
+                }
+
 				// Issue a removal, limits and lists are adjusted elsewhere
-				RemoveTokenEnt( (CGEWeapon*) tokens[i].Get(), false );
+				RemoveTokenEnt( tokens[i].token, false );
 			}
 
 			// Realign our spawner count based on our limit
@@ -1070,7 +1117,7 @@ void CGETokenManager::EnforceTokens( void )
 		if ( diff > 0 )
 			SpawnTokens( pDef->szClassName );
 		else if ( diff < 0 )
-			RemoveTokens( pDef->szClassName, abs(diff) );
+			RemoveTokens( pDef->szClassName, abs(diff), false );
 	}
 
 	FOR_EACH_DICT( m_vCaptureAreas, idx )
@@ -1094,7 +1141,7 @@ void CGETokenManager::EnforceTokens( void )
 		}
 	}
 
-	m_flNextEnforcement = gpGlobals->curtime + 0.25;
+	m_flNextEnforcement = gpGlobals->curtime + 5.00;
 }
 
 void CGETokenManager::ApplyTokenSettings( CGETokenDef *ttype, CGEWeapon *pToken /*=NULL*/ )

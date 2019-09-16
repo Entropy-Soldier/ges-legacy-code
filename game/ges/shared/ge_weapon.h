@@ -96,6 +96,13 @@ public:
 	QAngle	GetOriginalSpawnAngles( void ) { return m_vOriginalSpawnAngles;	}
 
     CGEPlayer *GetOriginalOwner( void );
+
+    // Token Related Functions
+
+    // Gets the value that determines the order token weapons are removed by the limit enforcer.
+    unsigned int GetLimitEnforcementPriority()                        { return m_iLimitEnforcementPriority; };
+    // Sets the value that determines the order token weapons are removed by the limit enforcer.
+    void         SetLimitEnforcementPriority( unsigned int priority ) { m_iLimitEnforcementPriority = priority; };
 #endif
 
 	// Get GE weapon specific weapon data.
@@ -265,6 +272,7 @@ private:
 #ifdef GAME_DLL
 	void SetEnableGlow( bool state );
 	bool m_bServerGlow;
+    unsigned int m_iLimitEnforcementPriority;
 #else
 	CEntGlowEffect *m_pEntGlowEffect;
 	bool m_bClientGlow;

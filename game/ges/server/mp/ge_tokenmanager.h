@@ -137,7 +137,7 @@ public:
 	// TODO: Replace all these public functions with "ResetWorld"
 	// Functions for Token and Capture Area Spawning
 	void SpawnTokens( const char *token = NULL );
-	void RemoveTokens( const char *token = NULL, int count = -1 );
+	void RemoveTokens( const char *token = NULL, int count = -1, bool forceRemove = true );
 	void ResetTokenSpawners( const char *token = NULL, int count = -1 );
 
 	void SpawnCaptureAreas( const char *name = NULL );

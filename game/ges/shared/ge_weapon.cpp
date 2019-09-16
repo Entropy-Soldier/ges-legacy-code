@@ -233,6 +233,7 @@ CGEWeapon::CGEWeapon()
 #ifdef GAME_DLL
 	m_flDeployTime = 0.0f;
 	m_flPickupAllowedTime = 0.0f;
+    m_iLimitEnforcementPriority = 0; // By default we have minimum priority.
 
 	color32 col32 = { 255, 255, 255, 100 };
 	m_GlowColor.Set( col32 );
