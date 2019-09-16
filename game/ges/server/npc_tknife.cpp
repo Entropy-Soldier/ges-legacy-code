@@ -194,6 +194,7 @@ void CGETKnife::DamageTouch( CBaseEntity *pOther )
 		CTakeDamageInfo	dmgInfo( this, GetOwnerEntity(), GetDamage(), DMG_SLASH | DMG_NEVERGIB );
         dmgInfo.SetDamageCap( GetDamageCap() );
 		CalculateMeleeDamageForce( &dmgInfo, vecAiming, tr.endpos, TKNIFE_FORCE_SCALE );
+        dmgInfo.ScaleDamageForce( GetPushForceMult() );
 		dmgInfo.SetDamagePosition( tr.endpos );
 
 		if ( this->GetOwnerEntity() && this->GetOwnerEntity()->IsPlayer() )

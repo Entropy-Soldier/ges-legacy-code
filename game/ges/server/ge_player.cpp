@@ -371,9 +371,9 @@ void CGEPlayer::PostThink( void )
 	// This lets weapons like shotguns apply a single large push but prevents automatic weapons from stun locking someone.
 	// Some fancy vector projection stuff might be possible to cap out the speed you can go in one direction but still allow
 	// Players to propell you perpindicular to that direction, but chances are if you're taking that much push force you're already dead.
-	if (GetAbsVelocity().Length() < 300 || (GetAbsVelocity() + m_vDmgForceThisFrame).Length() < GetAbsVelocity().Length())
-		ApplyAbsVelocityImpulse( m_vDmgForceThisFrame );
-
+	//if (GetAbsVelocity().Length() < 300 || (GetAbsVelocity() + m_vDmgForceThisFrame).Length() < GetAbsVelocity().Length())
+	
+    ApplyAbsVelocityImpulse( m_vDmgForceThisFrame );
 
 	// Play hitsound based on total damage dealt this frame, if we did any.
 	if (m_iFrameDamageOutput > 0)
