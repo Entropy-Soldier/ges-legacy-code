@@ -570,7 +570,7 @@ bool CGEDoor::CheckUse(CBaseEntity *pActivator)
 void CGEDoor::Blocked(CBaseEntity *pOther)
 {
 	// Weapons shouldn't be allowed to jam doors.
-	if (pOther && Q_strncmp(pOther->GetClassname(), "weapon_", 7) == 0)
+	if (pOther && (!Q_strncmp(pOther->GetClassname(), "weapon_", 7) || !Q_strncmp(pOther->GetClassname(), "token_", 6)))
 	{
 		UTIL_Remove(pOther);
 		return;

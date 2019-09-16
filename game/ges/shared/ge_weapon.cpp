@@ -238,6 +238,10 @@ CGEWeapon::CGEWeapon()
 	color32 col32 = { 255, 255, 255, 100 };
 	m_GlowColor.Set( col32 );
 	m_GlowDist.Set( 250.0f );
+
+    m_vLastPhysPos = vec3_origin;
+    m_vLastPhysAngle = vec3_angle;
+    m_bDoPlayerclipCheck = false;
 #else
 	m_flLastBobCalc = 0;
 	m_flLastSpeedrat = 0;
@@ -346,6 +350,8 @@ void CGEWeapon::Drop( const Vector &vecVelocity )
 
 	// We're a pickup again.
 	GEEntityTracker()->AddItemToTracker( this, ET_START_ITEMDROPPED, ET_LIST_WEAPON );
+
+    m_vLastPhysPos = vec3_origin; // Reset phys tracker state
 #endif
 
 	CGEMPPlayer *pGEMPPlayer = ToGEMPPlayer( GetOwner() );
@@ -938,6 +944,41 @@ bool CGEWeapon::IsWeaponVisible( void )
 		return !IsEffectActive( EF_NODRAW );
 	else
 		return BaseClass::IsWeaponVisible();
+}
+
+void CGEWeapon::VPhysicsUpdate(IPhysicsObject *pPhysics)
+{
+#ifdef GAME_DLL
+    trace_t	playerClipTrace;
+
+    Vector physPos;
+    QAngle physAngles;
+    pPhysics->GetPosition(&physPos, &physAngles);
+
+    // Only do this if we have a previous physics frame.
+    if (m_bDoPlayerclipCheck && m_vLastPhysPos != vec3_origin)
+    {
+	    UTIL_TraceLine( m_vLastPhysPos, physPos, (CONTENTS_PLAYERCLIP|CONTENTS_MONSTERCLIP), this, COLLISION_GROUP_NONE, &playerClipTrace );
+
+        if (!playerClipTrace.startsolid && playerClipTrace.fraction < 1.0f)
+        {
+            if (playerClipTrace.plane.normal.z == 0)
+            {
+                pPhysics->SetPosition(m_vLastPhysPos, m_vLastPhysAngle, true);
+
+                Vector physVelocity;
+                AngularImpulse physAngVelocity;
+                pPhysics->GetVelocity(&physVelocity, &physAngVelocity);
+                pPhysics->SetVelocityInstantaneous(&vec3_origin, &vec3_origin);
+            }
+        }
+    }
+
+    m_vLastPhysPos = physPos;
+    m_vLastPhysAngle = physAngles;
+#endif
+
+    BaseClass::VPhysicsUpdate(pPhysics);
 }
 
 void CGEWeapon::ItemPreFrame( void )

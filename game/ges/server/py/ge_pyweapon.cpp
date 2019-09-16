@@ -334,6 +334,7 @@ BOOST_PYTHON_MODULE(GEWeapon)
 
         .def("GetLimitEnforcementPriority", &CGEWeapon::GetLimitEnforcementPriority)
         .def("SetLimitEnforcementPriority", &CGEWeapon::SetLimitEnforcementPriority)
+        .def("SetPlayerclipCollision", &CGEWeapon::SetPlayerclipCollision)
         .def("GetWeaponDamageRadius", &CGEWeapon::GetWeaponDamageRadius, GetWeaponDamageRadius_overloads())
         .def("GetWeaponMeleeRange", pyGetMeleeWeaponRange, GetMeleeWeaponRange_overloads())
 

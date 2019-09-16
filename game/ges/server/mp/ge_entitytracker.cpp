@@ -120,7 +120,7 @@ bool CGEEntityTracker::RemoveItemFromTracker( CBaseEntity *pEntity, char reason,
 		const char* targetClassName = pEntity->GetClassname();
 
 		// Find our target list.
-		if (!Q_strncmp(targetClassName, "weapon_", 7))
+		if (!Q_strncmp(targetClassName, "weapon_", 7) || !Q_strncmp(targetClassName, "token_", 6))
 			targetlist = ET_LIST_WEAPON;
 		else if (!Q_strcmp(targetClassName, "ge_ammocrate"))
 			targetlist = ET_LIST_AMMO;

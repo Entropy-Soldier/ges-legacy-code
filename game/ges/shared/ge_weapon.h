@@ -73,6 +73,8 @@ public:
 	virtual void	PrepareFireBullets(int number, CBaseCombatCharacter *pOperator, Vector vecShootOrigin, Vector vecShootDir, bool haveplayer);
 	virtual void	PreOwnerDeath(); //Fired when owner dies but before anything else.
 
+    virtual void	VPhysicsUpdate( IPhysicsObject *pPhysics );
+
 #ifdef GAME_DLL
 	virtual void	Spawn();
 	virtual void	UpdateOnRemove();
@@ -103,6 +105,8 @@ public:
     unsigned int GetLimitEnforcementPriority()                        { return m_iLimitEnforcementPriority; };
     // Sets the value that determines the order token weapons are removed by the limit enforcer.
     void         SetLimitEnforcementPriority( unsigned int priority ) { m_iLimitEnforcementPriority = priority; };
+    // Causes the weapon to check against vertical playerclips to prevent getting thrown out of the map.
+    void         SetPlayerclipCollision(bool enabled) { m_bDoPlayerclipCheck = enabled; };
 #endif
 
 	// Get GE weapon specific weapon data.
@@ -294,6 +298,10 @@ private:
 	float			m_flDeployTime;
 
 	float			m_flPickupAllowedTime;
+
+    Vector m_vLastPhysPos;
+    QAngle m_vLastPhysAngle;
+    bool m_bDoPlayerclipCheck;
 #endif
 
 	CGEWeapon( const CGEWeapon & );
