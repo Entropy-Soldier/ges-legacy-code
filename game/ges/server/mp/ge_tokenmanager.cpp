@@ -134,7 +134,7 @@ void CGETokenManager::RemoveTokenDef( const char *szClassName )
 	}
 }
 
-void CGETokenManager::TransferToken( CGEWeapon *pToken, CGEPlayer *pNewOwner )
+void CGETokenManager::TransferToken( CGEWeapon *pToken, CGEPlayer *pNewOwner, Vector velocityOverride /*== vec3_invalid*/ )
 {
 	if ( !pToken )
 		return;
@@ -166,7 +166,14 @@ void CGETokenManager::TransferToken( CGEWeapon *pToken, CGEPlayer *pNewOwner )
 	}
 	else
 	{
-		pOldOwner->Weapon_Drop( pToken );
+        if (velocityOverride == vec3_invalid)
+        {
+            pOldOwner->Weapon_Drop( pToken );
+        }
+        else
+        {
+            pOldOwner->Weapon_Drop( pToken, NULL, &velocityOverride );
+        }
 	}
 
 	if ( pGeneric )

@@ -568,6 +568,7 @@ BOOST_PYTHON_FUNCTION_OVERLOADS(pyEndRound_overloads, pyEndRound, 0, 2);
 BOOST_PYTHON_FUNCTION_OVERLOADS(pyGetWeaponLoadout_overloads, pyGetWeaponLoadout, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(CGETokenManager_RemoveTokenEnt_overloads, CGETokenManager::RemoveTokenEnt, 1, 2);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(CGETokenManager_SetGlobalAmmo_overloads, CGETokenManager::SetGlobalAmmo, 1, 2);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(CGETokenManager_TransferToken_overloads, CGETokenManager::TransferToken, 2, 3);
 
 BOOST_PYTHON_MODULE(GEMPGameRules)
 {
@@ -695,7 +696,7 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 		.def("IsValidToken", &CGETokenManager::IsValidToken)
 		.def("RemoveToken", &CGETokenManager::RemoveTokenDef)
 		.def("RemoveTokenEnt", &CGETokenManager::RemoveTokenEnt, CGETokenManager_RemoveTokenEnt_overloads())
-		.def("TransferToken", &CGETokenManager::TransferToken)
+		.def("TransferToken", &CGETokenManager::TransferToken, CGETokenManager_TransferToken_overloads())
 		.def("CaptureToken", &CGETokenManager::CaptureToken)
 		.def("GetTokens", pyGetTokens)
         .def("EnforceTokens", &CGETokenManager::EnforceTokens) // Useful to be able to do this manually on specific events.

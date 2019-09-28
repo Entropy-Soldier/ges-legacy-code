@@ -101,7 +101,7 @@ public:
 	int  GetNumTokenDef( void )						{ return m_vTokenTypes.Count(); }
 
 	void RemoveTokenEnt( CGEWeapon *pToken, bool bAdjustLimit = true );
-	void TransferToken( CGEWeapon *pToken, CGEPlayer *pNewOwner );
+	void TransferToken( CGEWeapon *pToken, CGEPlayer *pNewOwner, Vector velocityOverride = vec3_invalid );
 	void CaptureToken( CGEWeapon *pToken );
 
 	// Capture Areas

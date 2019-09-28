@@ -1984,12 +1984,14 @@ void CBaseCombatCharacter::Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector
 		if ( pVelocity )
 		{
 			vecThrow = *pVelocity;
+#ifndef GE_DLL
 			float flLen = vecThrow.Length();
 			if (flLen > 400)
 			{
 				VectorNormalize(vecThrow);
 				vecThrow *= 400;
 			}
+#endif
 		}
 		else
 		{
