@@ -299,9 +299,7 @@ void CGECreateServer::PopulateControls( void )
 		// Multiple custom sets can be defined as needed (can even make sets per gameplay)
 		if ( !GELoadoutParser.HasBeenParsed() )
 		{
-			GELoadoutParser.InitParser("scripts/loadouts/weapon_sets_default.X");
-			GELoadoutParser.SetHasBeenParsed( false );
-			GELoadoutParser.InitParser("scripts/loadouts/weapon_sets_custom*.X");
+			GELoadoutParser.InitParser("scripts/loadouts/weapon_sets_*.X");
 		}
 
 		// Random loadout

@@ -67,6 +67,12 @@ public:
 	int GetWeaponID( int slot = 0) { return ( slot < m_pContents.Count() && slot >= 0 ) ? m_pContents[slot]->iWeaponID : -1; }
 	int GetWeight( int slot = 0) { return ( slot < m_pContents.Count() && slot >= 0 ) ? m_pContents[slot]->iWeight : -1; }
 
+    // Sets the weapon slot of the spawner that created this crate.  Should only be used by spawners.
+    void         SetWeaponSpawnerSlot(int slot) { m_iOriginSlot = slot; }
+
+    // Gets the weapon slot of the spawner that created this crate.  Will be -1 in the event it was not created by a spawner.
+    int          GetWeaponSpawnerSlot() { return m_iOriginSlot; }
+
 	// Entity Functions
 	void InputInsertAmmo(inputdata_t &inputdata);
 	void InputRemoveAmmo(inputdata_t &inputdata);
@@ -85,6 +91,7 @@ private:
 		int		iGlbIndex; // Index of the ammo type in the global ammo listing.  -1 if not global ammo.
 	};
 
+    int m_iOriginSlot;
 
 	CUtlVector<AmmoData*> m_pContents;
 };

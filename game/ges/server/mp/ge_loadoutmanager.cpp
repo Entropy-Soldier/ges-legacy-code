@@ -130,10 +130,10 @@ void CGELoadoutManager::ParseLoadouts( void )
 	// Parsing individually allows us to overwrite the default sets with custom ones
 	// Multiple custom sets can be defined as needed (can even make sets per gameplay)
 	GELoadoutParser.SetLoadoutManager(this);
+	//GELoadoutParser.SetHasBeenParsed( false );
+	//GELoadoutParser.InitParser("scripts/loadouts/weapon_sets_default.X");
 	GELoadoutParser.SetHasBeenParsed( false );
-	GELoadoutParser.InitParser("scripts/loadouts/weapon_sets_default.X");
-	GELoadoutParser.SetHasBeenParsed( false );
-	GELoadoutParser.InitParser("scripts/loadouts/weapon_sets_custom*.X");
+	GELoadoutParser.InitParser("scripts/loadouts/weapon_sets_*.X");
 
 	// Load gameplay affinity last to ensure we can make links to loadouts
 	ParseGameplayAffinity();
@@ -655,6 +655,17 @@ int CGELoadoutManager::GetWeaponInSlot( int slot )
 	}
 
 	return WEAPON_NONE;
+}
+
+const char *CGELoadoutManager::GetExtraSlotData( int slot )
+{
+	if ( slot >= 0 && slot < MAX_WEAPON_SPAWN_SLOTS )
+	{
+		if ( CurrLoadout() )
+			return CurrLoadout()->GetSlotExtraData( slot );
+	}
+
+	return NULL;
 }
 
 void CGELoadoutManager::OnTokenAdded( const char *szClassname )

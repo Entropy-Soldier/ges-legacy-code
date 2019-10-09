@@ -33,6 +33,7 @@ public:
 
 	// Get the current active weapon in the slot provided or the entire enchilada
 	int  GetWeaponInSlot( int slot );
+    const char *GetExtraSlotData( int slot );
 	bool GetWeaponSet( CUtlVector<int> &set );
 	void GetRecentLoadouts(CUtlVector<CGELoadout*> &loadouts);
 

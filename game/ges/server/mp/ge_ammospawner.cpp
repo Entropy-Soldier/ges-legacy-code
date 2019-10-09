@@ -63,11 +63,13 @@ bool CGEAmmoSpawner::OnEntSpawned( bool isOverrideEnt )
 	// Don't do 2 isOverrideEnt checks if we don't have to.
 	if (BaseClass::OnEntSpawned(isOverrideEnt))
 	{
-		CGEAmmoCrate *pCrate = (CGEAmmoCrate*)GetEnt();
+		CGEAmmoCrate *pCrate = dynamic_cast<CGEAmmoCrate *>(GetEnt());
 
 		// Might as well check though I'm pretty much certain we can never get to this point without a valid pCrate cast.
 		if (!pCrate)
 			return false; // If we early out here somehow we'll end up with a non-ammo crate entity with normal spawner settings somehow.
+
+        pCrate->SetWeaponSpawnerSlot(GetSlot());
 
 		// Load us up with the appropriate ammo
 		int weapid = GEMPRules()->GetLoadoutManager()->GetWeaponInSlot(GetSlot()); // If this isn't a valid weapon or slot AddAmmoType will not do anything.

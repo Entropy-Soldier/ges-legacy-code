@@ -270,6 +270,14 @@ int pyGetWeaponInSlot( int iSlot )
 	return GEMPRules()->GetLoadoutManager()->CurrLoadout()->GetWeapon( iSlot );
 }
 
+const char *pyGetWeaponExtraDataInSlot( int iSlot )
+{
+	if ( !GEMPRules() )
+		return NULL;
+
+	return GEMPRules()->GetLoadoutManager()->CurrLoadout()->GetSlotExtraData( iSlot );
+}
+
 bp::list pyGetWeaponLoadout( const char *szName = NULL )
 {
 	const CGELoadout *loadout = NULL;
@@ -610,6 +618,7 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 	def("DisableSuperfluousAreas", pyDisableSuperfluousAreas);
 
 	def("GetWeaponInSlot", pyGetWeaponInSlot);
+    def("GetWeaponExtraDataInSlot", pyGetWeaponExtraDataInSlot);
 	def("GetWeaponLoadout", pyGetWeaponLoadout, pyGetWeaponLoadout_overloads());
 
 	def("SetPlayerWinner", pySetPlayerWinner);

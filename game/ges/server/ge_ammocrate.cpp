@@ -41,6 +41,7 @@ ConVar ge_partialammopickups("ge_partialammopickups", "0", FCVAR_GAMEDLL | FCVAR
 
 CGEAmmoCrate::CGEAmmoCrate( void )
 {
+    m_iOriginSlot = -1;
 }
 
 CGEAmmoCrate::~CGEAmmoCrate( void )

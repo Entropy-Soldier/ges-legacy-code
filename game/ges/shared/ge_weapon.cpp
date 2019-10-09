@@ -242,6 +242,7 @@ CGEWeapon::CGEWeapon()
     m_vLastPhysPos = vec3_origin;
     m_vLastPhysAngle = vec3_angle;
     m_bDoPlayerclipCheck = false;
+    m_iOriginSlot = -1; // Not from spawner by default.
 #else
 	m_flLastBobCalc = 0;
 	m_flLastSpeedrat = 0;

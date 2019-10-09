@@ -31,12 +31,13 @@ CGELoadout::CGELoadout( void )
 	{
 		m_vLoadedWeapons.AddToTail( WEAPON_NONE );
 		m_vActiveWeapons.AddToTail( WEAPON_NONE );
+        m_vExtraSlotData.AddToTail( NULL );
 	}
 }
 
 CGELoadout::~CGELoadout( void )
 {
-
+    m_vExtraSlotData.PurgeAndDeleteElements();
 }
 
 void CGELoadout::Activate( void )
@@ -109,8 +110,11 @@ void CGELoadout::Activate( void )
 
 void CGELoadout::ResetWeaponList()
 {
-	for ( int i=0; i < MAX_WEAPON_SPAWN_SLOTS; i++ )
-		m_vLoadedWeapons[i] = WEAPON_NONE;	
+    for (int i = 0; i < MAX_WEAPON_SPAWN_SLOTS; i++)
+    {
+        m_vLoadedWeapons[i] = WEAPON_NONE;	
+        m_vExtraSlotData[i] = NULL;
+    }
 }
 
 void CGELoadout::LoadWeapons( KeyValues *pWeapons )
@@ -124,8 +128,23 @@ void CGELoadout::LoadWeapons( KeyValues *pWeapons )
 			if ( iSlot < 0 || iSlot >= MAX_WEAPON_SPAWN_SLOTS )
 				return;
 
-			m_vLoadedWeapons[iSlot] = TranslateWeaponName( pWpnMover->GetString() );
-			
+            KeyValues *pWpnKey = pWpnMover->GetFirstSubKey();
+
+            // Support for additional weaponset data.
+            if (pWpnKey)
+            {
+                m_vLoadedWeapons[iSlot] = TranslateWeaponName( pWpnKey->GetName() );
+
+                const char *extraSlotData = pWpnKey->GetString();
+                int extraSlotDataLen = min(Q_strlen(extraSlotData) + 1, 256);
+                m_vExtraSlotData[iSlot] = new char[extraSlotDataLen];
+                Q_strncpy( m_vExtraSlotData[iSlot], extraSlotData, extraSlotDataLen );
+            }
+            else
+            {
+                m_vLoadedWeapons[iSlot] = TranslateWeaponName( pWpnMover->GetString() );
+            }
+
 			pWpnMover = pWpnMover->GetNextKey();
 		}
 	}
@@ -141,6 +160,14 @@ int CGELoadout::GetWeapon( int slot ) const
 		return WEAPON_NONE;
 
 	return m_vActiveWeapons[slot];
+}
+
+const char *CGELoadout::GetSlotExtraData( int slot ) const
+{
+	if ( slot < 0 || slot >= MAX_WEAPON_SPAWN_SLOTS )
+		return NULL;
+
+	return m_vExtraSlotData[slot];
 }
 
 int CGELoadout::GetFirstWeapon( void ) const

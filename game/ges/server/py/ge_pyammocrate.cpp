@@ -94,6 +94,14 @@ bool pyAmmoIsEnabled( CGEAmmoCrate *pAmmoCrate )
 	return !(pAmmoCrate->IsEffectActive(EF_NODRAW));
 }
 
+int pyAmmoGetSpawnerSlot( CGEAmmoCrate *pAmmoCrate )
+{
+	if ( !pAmmoCrate )
+		return -1;
+
+    return pAmmoCrate->GetWeaponSpawnerSlot();
+}
+
 BOOST_PYTHON_MODULE(GEAmmoCrate)
 {
 	using namespace boost::python;
@@ -105,6 +113,7 @@ BOOST_PYTHON_MODULE(GEAmmoCrate)
 		.def("GetAmmoType", pyGetAmmoType)
 		.def("GetWeaponId", pyAmmoGetWeaponID)
 		.def("GetWeight", pyAmmoGetWeight)
+        .def("GetSpawnerSlot", pyAmmoGetSpawnerSlot)
 		.def("IsEnabled", pyAmmoIsEnabled)
 		// The following override CBaseEntity to prevent movement when held
 		.def("SetAbsOrigin", pyAmmoSetAbsOrigin)

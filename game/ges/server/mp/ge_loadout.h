@@ -32,6 +32,7 @@ public:
 	
 	// Get the active weapon in the slot provided
 	virtual int  GetWeapon( int slot ) const;
+    virtual const char *GetSlotExtraData( int slot ) const;
 	virtual CUtlVector<int>& GetWeaponList() const { return const_cast<CUtlVector<int>&>(m_vActiveWeapons); }
 
 	// Guarantees to return the first valid weapon in the set (skips over WEAPON_NONE's)
@@ -73,6 +74,7 @@ private:
 	// Actual is what gets used for GetWeapon(..) calls and is populated when the loadout is activated
 	CUtlVector<int> m_vActiveWeapons;
 	CUtlVector<int>	m_vLoadedWeapons;
+    CUtlVector<char*> m_vExtraSlotData;
 };
 
 #endif //GE_LOADOUT_DATA_H
