@@ -28,7 +28,7 @@ public:
 	virtual bool IsSpecial(void) { return ( m_bAllowSpecial || BaseClass::IsSpecial() ); };
 	virtual bool IsVerySpecial() { return m_bAllowSpecial; } // Spawns we've marked are very special and will be used over ones that aren't marked.
 
-    virtual bool OnEntSpawned( bool isOverrideEnt );
+    virtual bool OnEntSpawned(bool isOverrideEnt) { return true; } // No need to do anything as the item being spawned isn't a CItem.
 
     virtual void SetSlot( int newSlot );
 
@@ -52,23 +52,6 @@ END_DATADESC();
 CGEWeaponSpawner::CGEWeaponSpawner( void )
 {
 	m_bAllowSpecial = false;
-}
-
-// We don't want to do any CItem releated behavior so just set the correct weapon slot.
-bool CGEWeaponSpawner::OnEntSpawned( bool isOverrideEnt )
-{
-    // Don't want to set origin slot if the spawner was overridden and thus the slot didn't matter.
-    if ( isOverrideEnt )
-		return false;
-
-    CGEWeapon *pGEWeapon = dynamic_cast<CGEWeapon*>(GetEnt());
-
-    if (pGEWeapon)
-    {
-        pGEWeapon->SetWeaponSpawnerSlot(GetSlot());
-    }
-
-    return true;
 }
 
 void CGEWeaponSpawner::SetSlot( int newSlot )		

@@ -56,6 +56,11 @@ void CGEAmmoCrate::Spawn( void )
 	SetModel( AMMOCRATE_MODEL );
 	BaseClass::Spawn();
 
+    if (GetOwnerEntity() && (!Q_strcmp(GetOwnerEntity()->GetClassname(), "ge_weaponspawner") || !Q_strcmp(GetOwnerEntity()->GetClassname(), "ge_ammospawner")))
+    {
+        m_iOriginSlot = static_cast<CGESpawner*>(GetOwnerEntity())->GetSlot();
+    }
+
 	// Add us to the gameplay item tracker.
 	GEEntityTracker()->AddItemToTracker( this, ET_START_ITEMSPAWNED, ET_LIST_AMMO );
 

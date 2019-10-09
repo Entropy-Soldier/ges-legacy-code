@@ -267,12 +267,24 @@ int pyGetWeaponInSlot( int iSlot )
 	if ( !GEMPRules() )
 		return WEAPON_NONE;
 
+    if ( !GEMPRules()->GetLoadoutManager() )
+		return WEAPON_NONE;
+
+    if ( !GEMPRules()->GetLoadoutManager()->CurrLoadout() )
+		return WEAPON_NONE;
+
 	return GEMPRules()->GetLoadoutManager()->CurrLoadout()->GetWeapon( iSlot );
 }
 
 const char *pyGetWeaponExtraDataInSlot( int iSlot )
 {
 	if ( !GEMPRules() )
+		return NULL;
+
+    if ( !GEMPRules()->GetLoadoutManager() )
+		return NULL;
+
+    if ( !GEMPRules()->GetLoadoutManager()->CurrLoadout() )
 		return NULL;
 
 	return GEMPRules()->GetLoadoutManager()->CurrLoadout()->GetSlotExtraData( iSlot );

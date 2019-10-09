@@ -271,6 +271,11 @@ void CGEWeapon::Spawn()
 	m_vOriginalSpawnOrigin = GetAbsOrigin();
 	m_vOriginalSpawnAngles = GetAbsAngles();
 
+    if (GetOwnerEntity() && (!Q_strcmp(GetOwnerEntity()->GetClassname(), "ge_weaponspawner") || !Q_strcmp(GetOwnerEntity()->GetClassname(), "ge_ammospawner")))
+    {
+        m_iOriginSlot = static_cast<CGESpawner*>(GetOwnerEntity())->GetSlot();
+    }
+
 	// Notify the token manager we are arriving
 	if (GEMPRules()->GetTokenManager()->OnTokenSpawned( this )) // If we're actually allowed to spawn...
 		GEEntityTracker()->AddItemToTracker( this, ET_START_ITEMSPAWNED, ET_LIST_WEAPON ); // Add us to the approperate entity tracker list

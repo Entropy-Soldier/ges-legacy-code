@@ -69,8 +69,6 @@ bool CGEAmmoSpawner::OnEntSpawned( bool isOverrideEnt )
 		if (!pCrate)
 			return false; // If we early out here somehow we'll end up with a non-ammo crate entity with normal spawner settings somehow.
 
-        pCrate->SetWeaponSpawnerSlot(GetSlot());
-
 		// Load us up with the appropriate ammo
 		int weapid = GEMPRules()->GetLoadoutManager()->GetWeaponInSlot(GetSlot()); // If this isn't a valid weapon or slot AddAmmoType will not do anything.
 		pCrate->AddAmmoType(weapid, -1); // Adding the first ammo type spawns the crate.
