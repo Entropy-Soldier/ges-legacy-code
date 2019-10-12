@@ -570,6 +570,12 @@ private:
 	void UncacheAllMaterials( );
 	void ResetStringTablePointers();
 
+#ifdef GE_DLL
+    void GetCurrentMapName( char *outputBuffer, int outputBufferSize ); // Gets filename of the current map, without the path.
+    bool GenerateAndApplyCustomTextureBlockList(); // Generates a texture block list based on the current map and next map, and enables it.
+    void NonAsyncAppendFileToFile(FileHandle_t writeFile, const char *readFileName, const char *readFilePath);
+#endif
+
 	CUtlVector< IMaterial * > m_CachedMaterials;
 
 #ifdef GE_DLL
@@ -1507,6 +1513,119 @@ void CHLClient::ResetStringTablePointers()
 #endif
 }
 
+#ifdef GE_DLL
+void CHLClient::GetCurrentMapName( char *outputBuffer, int outputBufferSize )
+{
+    // Get the map path, usually in the form maps/mapname.bsp
+    const char *currentLevelNamePath = engine->GetLevelName();
+
+    // Find the two points between which our desired name lies.
+    int lastSlashIndex = 0;
+    int lastPeriodIndex = -1;
+
+    int32 i = 0;
+    for (; currentLevelNamePath[i] != '\0'; i++)
+    {
+        if (currentLevelNamePath[i] == '/')
+        {
+            lastSlashIndex = i;
+        }
+        else if (currentLevelNamePath[i] == '.')
+        {
+            lastPeriodIndex = i;
+        }
+    }
+
+    // If we don't have a period just set it to the end of the string.
+    if (lastPeriodIndex == -1)
+    {
+        lastPeriodIndex = i;
+    }
+
+    int nameLength = min(lastPeriodIndex - (lastSlashIndex + 1), outputBufferSize); // Make sure we stay in the buffer.
+    i = 0;
+    for (; i < nameLength; i++)
+    {
+        outputBuffer[i] = currentLevelNamePath[i + lastSlashIndex + 1];
+    }
+    outputBuffer[i] = '\0';
+}
+
+void CHLClient::NonAsyncAppendFileToFile(FileHandle_t writeFile, const char *readFileName, const char *readFilePath)
+{
+    if (!filesystem->FileExists(readFileName, readFilePath))
+    {
+        Msg("No texture manifest for %s!  Map transitions involving this map may be suboptimal.\n", readFileName);
+        return;
+    }
+
+    CUtlBuffer readBuffer;
+
+    filesystem->ReadFile(readFileName, readFilePath, readBuffer);
+
+    filesystem->Write( readBuffer.Base(), readBuffer.Size() - 1, writeFile); // Don't include the null terminator.
+
+    // Add newline at the end of the file if one doesn't exist.
+    if (((const char *)readBuffer.Base())[readBuffer.Size() - 2] != '\n')
+    {
+        filesystem->Write( "\r\n", 2, writeFile);
+    }
+}
+
+bool CHLClient::GenerateAndApplyCustomTextureBlockList()
+{
+    ConVar *nextlevel_var = g_pCVar->FindVar("nextlevel");
+    const char *nextlevel_string = "";
+
+    if (nextlevel_var)
+    {
+        nextlevel_string = nextlevel_var->GetString();
+    }
+
+    char currentLevelNameBuffer[128];
+    GetCurrentMapName( currentLevelNameBuffer, sizeof(currentLevelNameBuffer)/sizeof(char) );
+
+    if (currentLevelNameBuffer[0] == '\0')
+    {
+        Warning("Switching to menu, applying default texture blocks.\n");
+        materials->SetExcludedTextures("scripts/maps/texture_manifests/working.lst");
+        materials->UpdateExcludedTextures();
+        return true;
+    }
+    else if (!Q_strcmp(currentLevelNameBuffer, nextlevel_string))
+    {
+        Warning("Reloading same map, no texture blocks required.\n");
+        return false;
+    }
+    else
+    {
+        Warning("Switching from level %s to level %s\n", currentLevelNameBuffer, nextlevel_string);
+    }
+
+    char currentLevelTextureManifest[256];
+    Q_snprintf(currentLevelTextureManifest, sizeof(currentLevelTextureManifest) / sizeof(char), "scripts/maps/texture_manifests/%s.lst", currentLevelNameBuffer);
+
+    char nextLevelTextureManifest[256];
+    Q_snprintf(nextLevelTextureManifest, sizeof(nextLevelTextureManifest) / sizeof(char), "scripts/maps/texture_manifests/%s.lst", nextlevel_string);
+
+    Warning("Appending files %s and %s to working list!\n", currentLevelTextureManifest, nextLevelTextureManifest);
+
+    // Combine all relevant files into one file.
+    FileHandle_t workingTextureList = filesystem->Open("scripts/maps/texture_manifests/working.lst", "wb+", "MOD");
+
+    NonAsyncAppendFileToFile(workingTextureList, "scripts/maps/texture_manifests/default.lst", "MOD" );
+    NonAsyncAppendFileToFile(workingTextureList, currentLevelTextureManifest, "MOD" );
+    NonAsyncAppendFileToFile(workingTextureList, nextLevelTextureManifest, "MOD" );
+
+    filesystem->Close(workingTextureList);
+
+    // Apply our finished texture block list.
+    materials->SetExcludedTextures("scripts/maps/texture_manifests/working.lst");
+    materials->UpdateExcludedTextures();
+    return true;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Per level de-init
 //-----------------------------------------------------------------------------
@@ -1585,13 +1704,11 @@ void CHLClient::LevelShutdown(void)
         //materials->ClearBuffers(true, true, true);
         //materials->CompactMemory();
         g_pMemAlloc->CompactHeap();
-        materials->SetExcludedTextures("scripts/base_exclude.lst");
-        materials->UpdateExcludedTextures();
+        m_bHasBlockedMaterials = GenerateAndApplyCustomTextureBlockList();
         materials->ClearBuffers(true, true, true);
         materials->CompactMemory();
 
         Msg("Finished uncaching materials!\n");
-        m_bHasBlockedMaterials = true;
 
         // engine->ClientCmd_Unrestricted("con_logfile transition.log");
 

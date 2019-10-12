@@ -88,6 +88,7 @@ ConVar mp_waitingforplayers_cancel( "mp_waitingforplayers_cancel", "0", FCVAR_GA
 ConVar mp_clan_readyrestart( "mp_clan_readyrestart", "0", FCVAR_GAMEDLL, "If non-zero, game will restart once someone from each team gives the ready signal" );
 ConVar mp_clan_ready_signal( "mp_clan_ready_signal", "ready", FCVAR_GAMEDLL, "Text that team leader from each team must speak for the match to begin" );
 
+#ifndef GE_DLL
 ConVar nextlevel( "nextlevel", 
 				  "", 
 				  FCVAR_GAMEDLL | FCVAR_NOTIFY,
@@ -96,8 +97,19 @@ ConVar nextlevel( "nextlevel",
 #else
 				  "If set to a valid map name, will change to this map during the next changelevel" );
 #endif // CSTRIKE_DLL || TF_DLL
-					  					  
+#endif  					  
 #endif
+
+#ifdef GE_DLL
+ConVar nextlevel( "nextlevel", 
+				  "", 
+				  FCVAR_REPLICATED | FCVAR_NOTIFY,
+#if defined( CSTRIKE_DLL ) || defined( TF_DLL )
+				  "If set to a valid map name, will trigger a changelevel to the specified map at the end of the round" );
+#else
+				  "If set to a valid map name, will change to this map during the next changelevel" );
+#endif // CSTRIKE_DLL || TF_DLL
+#endif  	
 
 #ifndef CLIENT_DLL
 int CMultiplayRules::m_nMapCycleTimeStamp = 0;

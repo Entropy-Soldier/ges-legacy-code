@@ -26,12 +26,18 @@ extern ConVar mp_waitingforplayers_restart;
 extern ConVar mp_waitingforplayers_cancel;
 extern ConVar mp_clan_readyrestart;
 extern ConVar mp_clan_ready_signal;
+#ifndef GE_DLL
 extern ConVar nextlevel;
+#endif
 
 #define VOICE_COMMAND_MAX_SUBTITLE_DIST	1900
 
 class CBaseMultiplayerPlayer;
 
+#endif
+
+#ifdef GE_DLL
+extern ConVar nextlevel;
 #endif
 
 #define MAX_SPEAK_CONCEPT_LEN 64

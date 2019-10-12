@@ -948,6 +948,7 @@ void CBaseEntity::HandleBulletPenetration( CBaseCombatWeapon *pWeapon, const Fir
 	refireInfo.m_iAmmoType		= info.m_iAmmoType;
 	refireInfo.m_iTracerFreq	= info.m_iTracerFreq;
 	refireInfo.m_iDamage		= info.m_iDamage;
+    refireInfo.m_flDamageForceScale = info.m_flDamageForceScale;
 	refireInfo.m_pAttacker		= info.m_pAttacker ? info.m_pAttacker : this;
 
 	FireBullets( refireInfo );

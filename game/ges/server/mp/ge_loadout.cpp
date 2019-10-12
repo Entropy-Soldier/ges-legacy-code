@@ -136,7 +136,7 @@ void CGELoadout::LoadWeapons( KeyValues *pWeapons )
                 m_vLoadedWeapons[iSlot] = TranslateWeaponName( pWpnKey->GetName() );
 
                 const char *extraSlotData = pWpnKey->GetString();
-                int extraSlotDataLen = min(Q_strlen(extraSlotData) + 1, 256);
+                int extraSlotDataLen = Q_strlen(extraSlotData) + 1;
                 m_vExtraSlotData[iSlot] = new char[extraSlotDataLen];
                 Q_strncpy( m_vExtraSlotData[iSlot], extraSlotData, extraSlotDataLen );
             }
