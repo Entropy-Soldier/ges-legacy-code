@@ -20,7 +20,6 @@ struct MapSelectionData
 	int		minplayers;
 	int		maxplayers;
 	int		teamthreshold;
-	int		resintensity;
 };
 
 struct MapWeightData

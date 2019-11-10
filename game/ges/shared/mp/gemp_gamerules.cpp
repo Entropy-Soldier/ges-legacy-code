@@ -120,7 +120,7 @@ ConVar ge_roundcount( "ge_roundcount", "0", FCVAR_REPLICATED, "Number of rounds 
 ConVar ge_winscore	( "ge_winscore", "0", FCVAR_REPLICATED, "Amount of points needed for a given player to win the round in non-teamplay.  use 0 to disable.", true, 0, true, 99999, GEWinScore_Callback );
 ConVar ge_teamwinscore	( "ge_teamwinscore", "0", FCVAR_REPLICATED, "Amount of team points needed for a given team to win the round in teamplay.  use 0 to disable.", true, 0, true, 99999, GETeamWinScore_Callback );
 ConVar ge_teamplay	( "ge_teamplay", "0", FCVAR_REPLICATED, "Turns on team play if the current scenario supports it.", GETeamplay_Callback );
-ConVar ge_velocity	( "ge_velocity", "1.0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Player movement velocity multiplier, applies in multiples of 0.25 [0.7 to 2.0]", true, 0.7, true, 2.0, GEVelocity_Callback );
+ConVar ge_velocity	( "ge_velocity", "1.0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Player movement velocity multiplier, applies in multiples of 0.5 [0.5 to 2.0]", true, 0.5, true, 2.0, GEVelocity_Callback );
 ConVar ge_infiniteammo( "ge_infiniteammo", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Players never run out of ammo!", GEInfAmmo_Callback );
 ConVar ge_nextnextmap( "ge_nextnextmap", "", FCVAR_GAMEDLL, "Map to switch to immediately upon loading next map");
 ConVar ge_alertcodeoverride("ge_alertcodeoverride", "-1", FCVAR_GAMEDLL, "Override alert code with this value. bit 1 = desynch spread, bit 2 = use mersine twister, bit 3 = check player speed", GEAlertCode_Callback);
@@ -253,11 +253,8 @@ void GEVelocity_Callback( IConVar *var, const char *pOldString, float fOldValue 
 	ConVar *cVar = static_cast<ConVar*>(var);
 	float value = cVar->GetFloat();
 
-	// Make sure we only go to the nearest 0.1 value if < 1 or 0.25 value if > 1
-	if ( value < 1.0f )
-		value = floor( value * 10.0f + 0.5f ) / 10.0f;
-	else
-		value = floor( value * 4.0f + 0.5f ) / 4.0f;
+	// Round to nearest tenth
+	value = floor( value * 10.0f + 0.5f ) / 10.0f;
 
 	cVar->SetValue( value );
 
@@ -1682,8 +1679,8 @@ void CGEMPRules::SetupChangeLevel( const char *next_level /*= NULL*/ )
 		if ( m_flChangeLevelTime > 0 )
 			return;
 
-		// If we have defined a "nextlevel", and it is not the transistion map, use that instead of choosing one
-		if ( *nextlevel.GetString() && Q_strcmp(nextlevel.GetString(), "ge_transition") )
+		// If we have defined a "nextlevel" use that instead of choosing one
+		if ( *nextlevel.GetString() )
 			Q_strncpy( m_szNextLevel, nextlevel.GetString(), sizeof(m_szNextLevel) );
 		else
 		{
@@ -1693,6 +1690,8 @@ void CGEMPRules::SetupChangeLevel( const char *next_level /*= NULL*/ )
 				Q_strncpy(m_szNextLevel, GESNewMap, sizeof(m_szNextLevel));
 			else
 				GetNextLevelName(m_szNextLevel, sizeof(m_szNextLevel));
+
+            nextlevel.SetValue( m_szNextLevel );
 		}
 	}
 
@@ -1703,62 +1702,50 @@ void CGEMPRules::SetupChangeLevel( const char *next_level /*= NULL*/ )
 		event->SetString("levelname", m_szNextLevel);
 		gameeventmanager->FireEvent(event);
 	}
-
-	MapSelectionData *curMapData = m_pMapManager->GetCurrentMapSelectionData();
-	MapSelectionData *nextMapData = m_pMapManager->GetMapSelectionData(m_szNextLevel);
-
-	if ( nextMapData && curMapData && nextMapData->resintensity + curMapData->resintensity >= 10 )
-	{
-		ge_nextnextmap.SetValue(m_szNextLevel);
-		Q_strncpy(m_szNextLevel, "ge_transition", sizeof(m_szNextLevel));
-	}
 	
-	// Record our rotation log, but only if this isn't a transistion.
-	if (Q_strcmp(curMapData->mapname, "ge_transition"))
+    // Record the map name in our game setup record
+	CUtlVector<const char*> vMaps;
+	CUtlVector<const char*> vModes;
+	CUtlVector<const char*> vWepnames;
+	CUtlVector<CGELoadout*> vWeapons;
+	char linebuffer[128];
+
+	GetMapManager()->GetRecentMaps(vMaps);
+	GEGameplay()->GetRecentModes(vModes);
+	GetLoadoutManager()->GetRecentLoadouts(vWeapons);
+
+	for (int i = 0; i < vWeapons.Count(); i++)
+		vWepnames.AddToTail(vWeapons[i]->GetIdent());
+
+	FileHandle_t file = filesystem->Open("gamesetuprecord.txt", "w", "MOD");
+
+	if (file)
 	{
-		CUtlVector<const char*> vMaps;
-		CUtlVector<const char*> vModes;
-		CUtlVector<const char*> vWepnames;
-		CUtlVector<CGELoadout*> vWeapons;
-		char linebuffer[128];
-
-		GetMapManager()->GetRecentMaps(vMaps);
-		GEGameplay()->GetRecentModes(vModes);
-		GetLoadoutManager()->GetRecentLoadouts(vWeapons);
-
-		for (int i = 0; i < vWeapons.Count(); i++)
-			vWepnames.AddToTail(vWeapons[i]->GetIdent());
-
-		FileHandle_t file = filesystem->Open("gamesetuprecord.txt", "w", "MOD");
-
-		if (file)
+		filesystem->Write("Maps:\n", V_strlen("Maps:\n"), file);
+		for (int i = 0; i < vMaps.Count(); i++)
 		{
-			filesystem->Write("Maps:\n", V_strlen("Maps:\n"), file);
-			for (int i = 0; i < vMaps.Count(); i++)
-			{
-				Q_snprintf(linebuffer, 128, "%s\n", vMaps[i]);
-				filesystem->Write(linebuffer, V_strlen(linebuffer), file);
-			}
-			filesystem->Write("-\n", V_strlen("-\n"), file);
-
-			filesystem->Write("Modes:\n", V_strlen("Modes:\n"), file);
-			for (int i = 0; i < vModes.Count(); i++)
-			{
-				Q_snprintf(linebuffer, 128, "%s\n", vModes[i]);
-				filesystem->Write(linebuffer, V_strlen(linebuffer), file);
-			}
-			filesystem->Write("-\n", V_strlen("-\n"), file);
-
-			filesystem->Write("Weps:\n", V_strlen("Weps:\n"), file);
-			for (int i = 0; i < vWepnames.Count(); i++)
-			{
-				Q_snprintf(linebuffer, 128, "%s\n", vWepnames[i]);
-				filesystem->Write(linebuffer, V_strlen(linebuffer), file);
-			}
-			filesystem->Write("-\n", V_strlen("-\n"), file);
-
-			filesystem->Close(file);
+			Q_snprintf(linebuffer, 128, "%s\n", vMaps[i]);
+			filesystem->Write(linebuffer, V_strlen(linebuffer), file);
 		}
+		filesystem->Write("-\n", V_strlen("-\n"), file);
+
+		filesystem->Write("Modes:\n", V_strlen("Modes:\n"), file);
+		for (int i = 0; i < vModes.Count(); i++)
+		{
+			Q_snprintf(linebuffer, 128, "%s\n", vModes[i]);
+			filesystem->Write(linebuffer, V_strlen(linebuffer), file);
+		}
+		filesystem->Write("-\n", V_strlen("-\n"), file);
+
+		filesystem->Write("Weps:\n", V_strlen("Weps:\n"), file);
+		for (int i = 0; i < vWepnames.Count(); i++)
+		{
+			Q_snprintf(linebuffer, 128, "%s\n", vWepnames[i]);
+			filesystem->Write(linebuffer, V_strlen(linebuffer), file);
+		}
+		filesystem->Write("-\n", V_strlen("-\n"), file);
+
+		filesystem->Close(file);
 	}
 
 	// Notify everyone

@@ -103,7 +103,7 @@ ConVar nextlevel( "nextlevel",
 #ifdef GE_DLL
 ConVar nextlevel( "nextlevel", 
 				  "", 
-				  FCVAR_REPLICATED | FCVAR_NOTIFY,
+				  FCVAR_REPLICATED,
 #if defined( CSTRIKE_DLL ) || defined( TF_DLL )
 				  "If set to a valid map name, will trigger a changelevel to the specified map at the end of the round" );
 #else
@@ -1170,14 +1170,24 @@ bool CMultiplayRules::Init()
 		}
 
 #ifdef GE_DLL
-		for ( int i = 0; i < m_MapList.Count(); i++ )
-		{
-			if ( gpGlobals->mapname.ToCStr() && Q_stricmp(m_MapList[i], gpGlobals->mapname.ToCStr()) == 0)
-			{
-					m_nMapCycleindex = i;
-					IncrementMapCycleIndex();
-			}
-		}
+        // If we're not currently on the map cycle, align us to the last item that matches our map name.
+        if (gpGlobals->mapname.ToCStr() && Q_stricmp(m_MapList[m_nMapCycleindex], gpGlobals->mapname.ToCStr()) != 0)
+        {
+            for ( int i = 0; i < m_MapList.Count(); i++ )
+            {
+                if (gpGlobals->mapname.ToCStr() && Q_stricmp(m_MapList[i], gpGlobals->mapname.ToCStr()) == 0)
+                {
+                    m_nMapCycleindex = i;
+                    IncrementMapCycleIndex();
+                }
+            }
+        }
+        else
+        {
+            // Already on the desired map so let's use our current index so we don't skip indexes on lists with 
+            // redundant entries.
+            IncrementMapCycleIndex();
+        }
 #endif
 
 		// If somehow we have no maps in the list then add the current one

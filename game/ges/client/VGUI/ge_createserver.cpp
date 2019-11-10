@@ -271,12 +271,9 @@ void CGECreateServer::PopulateControls( void )
 		const char *pFilename = filesystem->FindFirstEx( "maps\\*.bsp", "MOD", &findHandle );
 		while ( pFilename )
 		{
-			if ( stricmp(pFilename, "ge_transition.bsp") ) //They don't need to pick our dinky crash avoidance map.
-			{
-				// Add the map to the list
-				Q_FileBase(pFilename, file, 32);
-				maplist->AddItem(file, new KeyValues(file));
-			}
+			// Add the map to the list
+			Q_FileBase(pFilename, file, 32);
+			maplist->AddItem(file, new KeyValues(file));
 
 			pFilename = filesystem->FindNext( findHandle );
 		}
