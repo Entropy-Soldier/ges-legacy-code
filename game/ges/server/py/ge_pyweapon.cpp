@@ -96,7 +96,7 @@ int pyGetWeaponSlot( CGEWeapon *pWeap )
 
 	// Return the highest slot position for this weapon id
 	int weapid = pWeap->GetWeaponID();
-	int slot = 0;
+	int slot = -1;
 	for ( int i=0; i < MAX_WEAPON_SPAWN_SLOTS; i++ )
 	{
 		if ( GEMPRules()->GetLoadoutManager()->GetWeaponInSlot(i) == weapid )

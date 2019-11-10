@@ -94,6 +94,9 @@ public:
 	int   GetHudColor( void )				{ return m_iScoreBoardColor; }
 	void  SetHudColor( int color )			{ m_iScoreBoardColor = color; }
 
+    void MakeInvisible();
+    void MakeVisible();
+
 	// These are accessors to the Accuracy and Efficiency statistics for this player (set by GEStats)
 	int  GetFavoriteWeapon( void )		{ return m_iFavoriteWeapon; }
 	void SetFavoriteWeapon( int wep )	{ m_iFavoriteWeapon = wep; }

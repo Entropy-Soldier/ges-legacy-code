@@ -184,6 +184,8 @@ BOOST_PYTHON_MODULE(GEEntity)
 		.def("SetAbsOrigin", &CBaseEntity::SetAbsOrigin)
 		.def("GetAbsAngles", &CBaseEntity::GetAbsAngles, return_value_policy<copy_const_reference>())
 		.def("SetAbsAngles", &CBaseEntity::SetAbsAngles)
+        .def("GetAbsVelocity", &CBaseEntity::GetAbsVelocity, return_value_policy<copy_const_reference>())
+		.def("SetAbsVelocity", &CBaseEntity::SetAbsVelocity)
 		.def("GetEyeAngles", pyEyeAngles, return_value_policy<copy_const_reference>())
 		.def("GetUID", pyGetEntSerial)
 		.def("GetIndex", &CBaseEntity::entindex);

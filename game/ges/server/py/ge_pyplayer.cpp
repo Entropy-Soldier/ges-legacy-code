@@ -70,16 +70,6 @@ bool pyHasWeapon( CBaseCombatCharacter *pEnt, bp::object weap_or_id )
 	return false;
 }
 
-void pyMakeInvisible( CBaseCombatCharacter *pEnt )
-{
-	pEnt->SetRenderMode(kRenderNone);
-}
-
-void pyMakeVisible( CBaseCombatCharacter *pEnt )
-{
-	pEnt->SetRenderMode(kRenderNormal);
-}
-
 bool pyWeaponSwitch( CBaseCombatCharacter *pEnt, bp::object weap_or_id )
 {
 	if ( !pEnt )
@@ -325,9 +315,11 @@ BOOST_PYTHON_MODULE(GEPlayer)
         .def("GetPosition", pyPlayerGetOrigin)
         .def("SetVelocity", pyPlayerSetVelocity)
         .def("GetVelocity", pyPlayerGetVelocity)
+        .def("IsInAimMode", &CGEPlayer::IsInAimMode)
+        .def("IsDucking", &CGEPlayer::IsDucking)
 		.def("KnockOffHat", &CGEPlayer::KnockOffHat, KnockOffHat_overloads())
-		.def("MakeInvisible", pyMakeInvisible)
-		.def("MakeVisible", pyMakeVisible)
+		.def("MakeInvisible", &CGEPlayer::MakeInvisible)
+		.def("MakeVisible", &CGEPlayer::MakeVisible)
 		.def("SetDamageMultiplier", &CGEPlayer::SetDamageMultiplier)
 		.def("SetSpeedMultiplier", &CGEPlayer::SetSpeedMultiplier)
 		.def("SetScoreBoardColor", &CGEPlayer::SetHudColor)

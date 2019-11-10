@@ -902,6 +902,36 @@ void CGEPlayer::Event_Killed( const CTakeDamageInfo &info )
     }
 }
 
+void CGEPlayer::MakeInvisible()
+{
+	SetRenderMode(kRenderNone);
+
+    if (m_hHead)
+    {
+        m_hHead->SetRenderMode(kRenderNone);
+    }
+
+    if (m_hHat)
+    {
+        m_hHat->SetRenderMode(kRenderNone);
+    }
+}
+
+void CGEPlayer::MakeVisible()
+{
+	SetRenderMode(kRenderNormal);
+
+    if (m_hHead)
+    {
+        m_hHead->SetRenderMode(kRenderNormal);
+    }
+
+    if (m_hHat)
+    {
+        m_hHat->SetRenderMode(kRenderNormal);
+    }
+}
+
 void CGEPlayer::AbortForcedLadderMove()
 {
 	LadderMove_t* lm = GetLadderMove();
