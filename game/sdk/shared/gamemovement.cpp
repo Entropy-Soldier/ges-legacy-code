@@ -1938,18 +1938,17 @@ void CGameMovement::WalkMove( void )
 
 	CHandle< CBaseEntity > oldground;
 	oldground = player->GetGroundEntity();
-	#ifdef GE_DLL
 
+#ifdef GE_DLL
 	float jumppenalty = ((CGEMPPlayer*)player)->GetJumpPenalty();
 
 	fmove = mv->m_flForwardMove * (1 - max(jumppenalty - 20, 0) / 160);
 	smove = mv->m_flSideMove * (1 - max(jumppenalty - 20, 0) / 160);
-	
-	#else
+#else
 	// Copy movement amounts
 	fmove = mv->m_flForwardMove;
 	smove = mv->m_flSideMove;
-	#endif
+#endif
 
 	// Zero out z components of movement vectors
 	if ( g_bMovementOptimizations )
