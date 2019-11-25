@@ -882,6 +882,18 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 #ifdef GE_DLL
 	// Start the music manager
 	StartGEMusicManager();
+
+    // Set data cache limits to be more tightly bound.
+
+    DataCacheLimits_t limit32MB(32*1024*1024);
+    DataCacheLimits_t limit64MB(64*1024*1024); 
+    DataCacheLimits_t limit128MB(128*1024*1024);
+
+    g_pDataCache->SetSectionLimits("ModelData", limit32MB);
+    g_pDataCache->SetSectionLimits("ModelMesh", limit128MB);
+    g_pDataCache->SetSectionLimits("AnimBlock", limit64MB);
+    g_pDataCache->SetSectionLimits("ColorMesh", limit64MB);
+    g_pDataCache->SetSize((32 + 128 + 64 + 64 + 32)*1024*1024); // 32 Extra MB of space for minor unlisted sections.
 #endif
 
 	if ( !view )
@@ -1289,14 +1301,14 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	if (g_bLevelInitialized)
 		return;
 
-	#ifdef GE_DLL
+#ifdef GE_DLL
 	INetChannelInfo *connectionInfo = engine->GetNetChannelInfo();
 	if ( connectionInfo )
 	{
 		if ( !InvestigateGEServer(connectionInfo->GetAddress(), false) )
 			engine->ClientCmd_Unrestricted("disconnect"); // Somehow authed a previously denied server after starting connection to it.
 	}
-	#endif
+#endif
 
 	g_bLevelInitialized = true;
 
@@ -1428,11 +1440,16 @@ void CHLClient::LevelInitPostEntity( )
     if (m_bHasBlockedMaterials)
     {
         DeleteUnreferencedTextures( true );
-        g_pMemAlloc->CompactHeap();
-        materials->SetExcludedTextures("");
         //materials->UpdateExcludedTextures();
         //materials->UncacheAllMaterials();
         //materials->CacheUsedMaterials();
+        Msg("Flushed %d bytes!\n", g_pDataCache->Flush());
+
+        materials->ClearBuffers(true, true);
+        materials->CompactMemory();
+        g_pMemAlloc->CompactHeap();
+
+        materials->SetExcludedTextures("");
         materials->ReloadMaterials();
 
         Msg("Finished reloading textures!\n");
