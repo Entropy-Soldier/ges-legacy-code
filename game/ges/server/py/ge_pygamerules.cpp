@@ -487,6 +487,11 @@ void pySetExcludedCharacters( const char *str_list )
 	g_pGameplayResource->SetCharacterExclusion( str_list );
 }
 
+void pySetWeaponSlotNameOverride( int slot, const char *name )
+{
+    g_pGameplayResource->SetWeaponSlotNameOverride(slot, name);
+}
+
 bp::list pyGetTokens( CGETokenManager *pTM, const char *szClassName )
 {
 	CUtlVector<EHANDLE> tokens;
@@ -632,6 +637,8 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 	def("GetWeaponInSlot", pyGetWeaponInSlot);
     def("GetWeaponExtraDataInSlot", pyGetWeaponExtraDataInSlot);
 	def("GetWeaponLoadout", pyGetWeaponLoadout, pyGetWeaponLoadout_overloads());
+
+    def("SetWeaponSlotNameOverride", pySetWeaponSlotNameOverride);
 
 	def("SetPlayerWinner", pySetPlayerWinner);
 	def("SetTeamWinner", pySetTeamWinner);

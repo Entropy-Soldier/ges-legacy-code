@@ -29,6 +29,7 @@ IMPLEMENT_SERVERCLASS_ST( CGEGameplayResource, DT_GEGameplayResource )
 	SendPropString( SENDINFO(m_LoadoutIdent) ),
 	SendPropString( SENDINFO(m_LoadoutName) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_LoadoutWeapons), SendPropInt( SENDINFO_ARRAY(m_LoadoutWeapons) ) ),
+    SendPropArray( SendPropStringT( SENDINFO_ARRAY(m_LoadoutNameOverrides) ), m_LoadoutNameOverrides ),
 	// Character Data
 	SendPropString( SENDINFO(m_CharExclusion) ),
 END_SEND_TABLE()
@@ -101,6 +102,11 @@ void CGEGameplayResource::OnLoadoutChanged( const char *ident, const char *name,
 			m_LoadoutWeapons.Set( i, weapons[i] );
 		else
 			m_LoadoutWeapons.Set( i, WEAPON_NONE );
+
+        if (m_LoadoutNameOverrides.Get(i).ToCStr()[0] != '\0')
+        {
+            m_LoadoutNameOverrides.Set(i, AllocPooledString(""));
+        }
 	}
 }
 
@@ -126,4 +132,14 @@ void CGEGameplayResource::SetCharacterExclusion( const char *str_list )
 
 	tmp[min(k,127)] = '\0';
 	Q_strncpy( m_CharExclusion.GetForModify(), tmp, 128 );
+}
+
+void CGEGameplayResource::SetWeaponSlotNameOverride( int slot, const char *name )
+{
+    if (slot < 0 || slot >= MAX_WEAPON_SPAWN_SLOTS || name == NULL)
+    {
+        return;
+    }
+
+    m_LoadoutNameOverrides.Set(slot, AllocPooledString(name));
 }

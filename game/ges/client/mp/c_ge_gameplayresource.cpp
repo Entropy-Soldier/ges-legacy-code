@@ -27,6 +27,7 @@ IMPLEMENT_CLIENTCLASS_DT(C_GEGameplayResource, DT_GEGameplayResource, CGEGamepla
 	RecvPropString( RECVINFO(m_LoadoutIdent) ),
 	RecvPropString( RECVINFO(m_LoadoutName) ),
 	RecvPropArray3( RECVINFO_ARRAY(m_LoadoutWeapons), RecvPropInt( RECVINFO(m_LoadoutWeapons[0]) ) ),
+    RecvPropArray( RecvPropString( RECVINFO(m_LoadoutNameOverrides[0]) ), m_LoadoutNameOverrides ),
 	// Character Data
 	RecvPropString( RECVINFO(m_CharExclusion) ),
 END_RECV_TABLE()
@@ -71,6 +72,7 @@ C_GEGameplayResource::C_GEGameplayResource()
 	m_GameplayRoundStart = 0;
 
 	memset( m_LoadoutWeapons, WEAPON_NONE, sizeof(m_LoadoutWeapons) );
+    memset( m_LoadoutNameOverrides, '\0', sizeof( m_LoadoutNameOverrides ) );
 
 	g_geGR = this;
 }
@@ -98,6 +100,14 @@ int C_GEGameplayResource::GetLoadoutWeapon( int slot )
 		return WEAPON_NONE;
 
 	return m_LoadoutWeapons[slot];
+}
+
+const char *C_GEGameplayResource::GetLoadoutSlotNameOverride(int slot)
+{
+    if ( slot < 0 || slot >= MAX_WEAPON_SPAWN_SLOTS )
+		return "";
+
+    return m_LoadoutNameOverrides[slot];
 }
 
 void C_GEGameplayResource::GetCharacterExclusion( CUtlVector<char*> &list )

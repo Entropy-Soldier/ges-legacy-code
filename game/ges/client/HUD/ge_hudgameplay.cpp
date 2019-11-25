@@ -178,11 +178,23 @@ void CHudGameplay::OnGameplayDataUpdate(void)
 
 	for (int i = 0; i < weapons.Count(); i++)
 	{
-		szName = g_pVGuiLocalize->Find(GetWeaponPrintName(weapons[i]));
-		if (szName)
-			_snwprintf(szPrintName, 32, L"%i. %s", i + 1, szName);
-		else
-			_snwprintf(szPrintName, 32, L"%i. Unknown Weapon", i + 1);
+        const char *nameOverride = GEGameplayRes()->GetLoadoutSlotNameOverride(i);
+        if (nameOverride[0] == '\0') // No override for this weapon slot name.
+        {
+            szName = g_pVGuiLocalize->Find(GetWeaponPrintName(weapons[i]));
+		    if (szName)
+			    _snwprintf(szPrintName, 32, L"%i. %s", i + 1, szName);
+		    else
+			    _snwprintf(szPrintName, 32, L"%i. Unknown Weapon", i + 1);
+        }
+        else
+        {
+            szName = g_pVGuiLocalize->Find(nameOverride);
+		    if (szName)
+			    _snwprintf(szPrintName, 32, L"%i. %s", i + 1, szName);
+		    else
+			    _snwprintf(szPrintName, 32, L"%i. %S", i + 1, nameOverride);
+        }
 
 		m_vWeaponLabels[i]->pLabel->SetText(szPrintName);
 		m_vWeaponLabels[i]->pLabel->SetFgColor(m_TextColor);

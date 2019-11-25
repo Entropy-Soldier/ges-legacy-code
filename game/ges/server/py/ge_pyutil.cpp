@@ -292,6 +292,113 @@ void pyAddDownloadable( const char *file )
 	}
 }
 
+// Team assumed to be MI6 for team filtering purposes.
+void AppendAllRelevantSpawnersToVector( int spawnerFlags, int team, CUtlVector<EHANDLE> &relevantSpawnersOut)
+{
+    struct SpawnerFlagAssociation
+    {
+        int reqFlags;
+        int team; // -1 means all teams are valid.
+        int spawnerId;
+    };
+
+    SpawnerFlagAssociation associationTable[] = 
+    {
+        { CGETokenManager::LOC_AMMO,        TEAM_UNASSIGNED, SPAWN_AMMO },
+        { CGETokenManager::LOC_WEAPON,      TEAM_UNASSIGNED, SPAWN_WEAPON },
+        { CGETokenManager::LOC_ARMOR,       TEAM_UNASSIGNED, SPAWN_ARMOR },
+        { CGETokenManager::LOC_TOKEN,       TEAM_UNASSIGNED, SPAWN_TOKEN },
+        { CGETokenManager::LOC_TOKEN,       TEAM_MI6,        SPAWN_TOKEN_MI6 },
+        { CGETokenManager::LOC_TOKEN,       TEAM_JANUS,      SPAWN_TOKEN_JANUS },
+        { CGETokenManager::LOC_PLAYERSPAWN, TEAM_UNASSIGNED, SPAWN_PLAYER },
+        { CGETokenManager::LOC_PLAYERSPAWN, TEAM_MI6,        SPAWN_PLAYER_MI6 },
+        { CGETokenManager::LOC_PLAYERSPAWN, TEAM_JANUS,      SPAWN_PLAYER_JANUS },
+    };
+    int associationTableCount = sizeof(associationTable) / sizeof(SpawnerFlagAssociation);
+
+    for (int i = 0; i < associationTableCount; i++)
+    {
+        if ((associationTable[i].reqFlags & spawnerFlags) != associationTable[i].reqFlags) // Ensure required flags are present before adding.
+        {
+            continue;
+        }
+
+        if (team != -1 && team != associationTable[i].team) // Ensure correct team, -1 captures all teams.
+        {
+            continue;
+        }
+
+        const CUtlVector<EHANDLE> *spawnersOfType = GEMPRules()->GetSpawnersOfType(associationTable[i].spawnerId);
+
+        if (spawnersOfType)
+        {
+            relevantSpawnersOut.AddVectorToTail( *spawnersOfType );
+        }
+        else
+        {
+            Warning("Tried to locate invalid spawner type %d\n", associationTable[i].spawnerId);
+        }
+    }
+}
+
+
+Vector pyGetNearestSpawnerOriginToPoint( Vector point, int spawnerFlags, int team = -1 )
+{
+    if (!GEMPRules())
+    {
+        return vec3_invalid;
+    }
+
+    CUtlVector<EHANDLE> validSpawners;
+
+    AppendAllRelevantSpawnersToVector( spawnerFlags, team, validSpawners );
+
+    byte PVS[ MAX_MAP_CLUSTERS/8 ];
+	int clusterIndex = engine->GetClusterForOrigin( point );
+	engine->GetPVSForCluster( clusterIndex, sizeof(PVS), PVS );
+
+    // Spawners in our PVS take precedent over all other spawners.
+    bool foundPVSSpawner = false;
+    float closestDistSqr = 48000.0f*48000.0f; // Max hammer grid diagonal = 2^15*sqrt(2) ~= 46k
+    EHANDLE closestSpawner = NULL;
+
+    for (int i = 0; i < validSpawners.Count(); i++)
+    {
+        if (engine->CheckOriginInPVS(validSpawners[i]->GetAbsOrigin(), PVS, sizeof(PVS)))
+        {
+            if (!foundPVSSpawner)
+            {
+                foundPVSSpawner = true;
+                closestDistSqr = validSpawners[i]->GetAbsOrigin().DistToSqr(point);
+                closestSpawner = validSpawners[i];
+                continue;
+            }
+        }
+        else
+        {
+            if (foundPVSSpawner)
+            {
+                continue;
+            }
+        }
+
+        if (validSpawners[i]->GetAbsOrigin().DistToSqr(point) < closestDistSqr)
+        {
+            closestDistSqr = validSpawners[i]->GetAbsOrigin().DistToSqr(point);
+            closestSpawner = validSpawners[i];
+        }
+    }
+
+    if (closestSpawner)
+    {
+        return closestSpawner->GetAbsOrigin();
+    }
+    else
+    {
+        return vec3_invalid;
+    }
+}
+
 void pyPlaySoundTo( bp::object dest, const char* soundname, bool bDimMusic = false )
 {
 	if ( !soundname )
@@ -820,6 +927,7 @@ public:
 };
 
 BOOST_PYTHON_FUNCTION_OVERLOADS(Trace_overloads, pyTrace, 3, 4);
+BOOST_PYTHON_FUNCTION_OVERLOADS(ClosestSpawner_overloads, pyGetNearestSpawnerOriginToPoint, 2, 3);
 
 BOOST_PYTHON_MODULE(GEUtil)
 {
@@ -863,6 +971,8 @@ BOOST_PYTHON_MODULE(GEUtil)
 	def("PostDeathMessage", pyPostDeathMessage);
 	def("EmitGameplayEvent", pyEmitGameplayEvent, ("name", arg("value1")="", arg("value2")="", arg("value3")="", arg("value4")="", arg("send_to_clients")=false));
 	
+    def("GetNearestSpawnerOriginToPoint", pyGetNearestSpawnerOriginToPoint, ClosestSpawner_overloads());
+
 	// Temporary Entities
 	enum_< TEMPENT_TYPE >("TempEnt")
 		.value("RING", RING)

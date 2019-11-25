@@ -50,6 +50,7 @@ public:
 
 	int  GetLoadoutWeapon( int slot );
 	void GetLoadoutWeaponList( CUtlVector<int>& list );
+    const char *GetLoadoutSlotNameOverride( int slot );
 
 	void GetCharacterExclusion( CUtlVector<char*> &list );
 
@@ -67,6 +68,7 @@ protected:
 	char m_LoadoutIdent[32];
 	char m_LoadoutName[64];
 	int  m_LoadoutWeapons[MAX_WEAPON_SPAWN_SLOTS];
+    char m_LoadoutNameOverrides[MAX_WEAPON_SPAWN_SLOTS][MAX_WEAPON_OVERRIDE_NAME_LENGTH];
 
 	// Character Data
 	char m_CharExclusion[128];

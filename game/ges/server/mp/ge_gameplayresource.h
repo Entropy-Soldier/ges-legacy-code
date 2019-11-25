@@ -35,6 +35,9 @@ public:
 	// Character Events
 	virtual void SetCharacterExclusion( const char *str_list );
 
+    // Character Events
+	virtual void SetWeaponSlotNameOverride( int slot, const char *name );
+
 protected:
 	// Gameplay Data
 	CNetworkString( m_GameplayIdent, 32 );
@@ -48,6 +51,7 @@ protected:
 	CNetworkString( m_LoadoutIdent, 32 );
 	CNetworkString( m_LoadoutName,  64 );
 	CNetworkArray( int, m_LoadoutWeapons, MAX_WEAPON_SPAWN_SLOTS );
+    CNetworkArray( string_t, m_LoadoutNameOverrides, MAX_WEAPON_SPAWN_SLOTS );
 	// Character Data
 	CNetworkString( m_CharExclusion, 128 );
 };
