@@ -156,6 +156,7 @@ public:
 
 	virtual float GetRunStartTime()					{ return m_flRunTime; }
 	virtual void  SetRunStartTime(float time)		{ m_flRunTime = time; }
+    virtual void  SetRunStartTimeToMatchVelocity(float velocity);
 	
 	virtual int   GetRunCode()					{ return m_flRunCode; }
 	virtual void  SetRunCode(float code)		{ m_flRunCode = code; }

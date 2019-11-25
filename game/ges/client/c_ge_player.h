@@ -83,6 +83,17 @@ public:
 	virtual int GetMaxArmor();
 	virtual int GetMaxHealth()	{ return m_iMaxHealth; };
 
+    float GetJumpVelocityMult()	{ return m_flJumpHeightMult; }
+    float GetStrafeRunMult()	{ return m_flStrafeRunMult; }
+
+    void  SetMaxMidairJumps(int count)      { m_iMaxMidairJumps = count; }
+    int   GetMaxMidairJumps()               { return m_iMaxMidairJumps; }
+
+    // Resets remaining midair jumps to the max.
+    void  RestoreMidairJumps()              { m_iRemainingMidairJumps = m_iMaxMidairJumps; }
+    // Checks to see if we can perform a midair jump.  If so, removes one midair jump from our counter and returns true.  Returns false otherwise.
+    int   TestMidairJump()                  { if (m_iRemainingMidairJumps > 0) { m_iRemainingMidairJumps--; return true; } else { return false; }; }
+
 	C_BaseEntity *GetHat()		{ return m_hHat.Get(); };
 
 	virtual float GetSweepTime()	{ return m_flSweepTime; }
@@ -124,6 +135,12 @@ private:
 
 	int m_iTotalMaxArmor;
 	int m_iTotalArmorPickup;
+
+    float m_flJumpHeightMult;
+    float m_flStrafeRunMult;
+
+    int m_iMaxMidairJumps;
+    int m_iRemainingMidairJumps;
 
 	// Stores the weapon that was most recently used in each bucket.
 	int m_iLastUsedWeaponInBucket[10];

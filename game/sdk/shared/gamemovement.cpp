@@ -2018,6 +2018,7 @@ void CGameMovement::WalkMove( void )
 	float strafeboost = 1.0;
 	int prevcode = ((CGEMPPlayer*)player)->GetRunCode();
 	float runtime = gpGlobals->curtime - ((CGEMPPlayer*)player)->GetRunStartTime();
+    float maxStrafeBoost = max(((CGEMPPlayer*)player)->GetStrafeRunMult(), 1);
 
 	int pfcode, pscode;
 
@@ -2032,14 +2033,14 @@ void CGameMovement::WalkMove( void )
 		if (newstrafe)
 		{
 			if (prevstrafe) // Continuing a strafe
-				((CGEMPPlayer*)player)->SetRunStartTime(gpGlobals->curtime - clamp(runtime, 0, 1.5));
+				((CGEMPPlayer*)player)->SetRunStartTime(gpGlobals->curtime - clamp(runtime, 0, maxStrafeBoost*1.1));
 			else // Just started strafing
-				((CGEMPPlayer*)player)->SetRunStartTime(gpGlobals->curtime - clamp(runtime * -2, 0, 1.5));
+				((CGEMPPlayer*)player)->SetRunStartTime(gpGlobals->curtime - clamp(runtime * -2, 0, maxStrafeBoost*1.1));
 		}
 		else // Not strafing
 		{
 			if (prevstrafe) // Stopped strafing
-				((CGEMPPlayer*)player)->SetRunStartTime(gpGlobals->curtime + clamp(runtime / 2, 0, 0.75)); //Timer is half the length so decays twice as fast.
+				((CGEMPPlayer*)player)->SetRunStartTime(gpGlobals->curtime + clamp(runtime / 2, 0, (maxStrafeBoost*1.1)/2)); //Timer is half the length so decays twice as fast.
 			// We don't need to update for non-strafe to non-strafe.
 		}
 
@@ -2050,9 +2051,9 @@ void CGameMovement::WalkMove( void )
 		runtime = min(runtime, 0); //Don't let runtime become positive when not strafing.  Otherwise acceleration is possible.
 
 	if (runtime >= 0)
-		strafeboost = clamp(runtime * 0.4 + 0.8, 1, 1.4);
+		strafeboost = clamp(runtime * 0.4 + 0.8, 1, maxStrafeBoost);
 	else
-		strafeboost = clamp(runtime * -0.8 + 0.8, 1, 1.4); //The decay timer is only half the length so the formula needs to be adjusted for that.
+		strafeboost = clamp(runtime * -0.8 + 0.8, 1, maxStrafeBoost); //The decay timer is only half the length so the formula needs to be adjusted for that.
 
 	//Calculate aimmode speed penalty.
 
@@ -2246,8 +2247,9 @@ void CGameMovement::FullWalkMove( )
 			// Make sure we don't continue a strafe run after loosing a bunch of speed to something in midair.
 			// Appears twice, here it takes into account jumps with very short falls and the other one takes into account
 			// falls without any preceeding jump.  At some point I should add a "OnLanded" function or something.
-			if (player->GetAbsVelocity().Length2D() < GE_NORM_SPEED)
-				((CGEMPPlayer*)player)->SetRunStartTime(gpGlobals->curtime);
+			//if (player->GetAbsVelocity().Length2D() < GE_NORM_SPEED)
+			//	((CGEMPPlayer*)player)->SetRunStartTime(gpGlobals->curtime);
+            ((CGEMPPlayer*)player)->SetRunStartTimeToMatchVelocity(mv->m_vecVelocity.Length2D());
 
 			// Make sure we don't use crouched hit boxes on landing
 			player->m_Local.m_bInDuckJump = false;
@@ -2592,6 +2594,7 @@ bool CGameMovement::CheckJumpButton( void )
 		return false;
 
     bool shouldJumpAlongSurfaceNormal = false;
+    bool isMidairJump = false;
     Vector jumpSurfaceNormal = Vector(0, 0, 1);
 
     if (player->m_surfaceFriction < 0.25)
@@ -2644,12 +2647,14 @@ bool CGameMovement::CheckJumpButton( void )
 		return false;
 	}
 
-	// No more effect
+#ifndef GE_DLL
+    // No more effect
  	if (player->GetGroundEntity() == NULL)
 	{
 		mv->m_nOldButtons |= IN_JUMP;
 		return false;		// in air, so no effect
 	}
+#endif
 
 	// Don't allow jumping when the player is in a stasis field.
 #ifndef HL2_EPISODIC
@@ -2680,11 +2685,32 @@ bool CGameMovement::CheckJumpButton( void )
         }
 	}
 
+    float flPlayerScaleFactor = ((CGEPlayer*)player)->GetJumpVelocityMult();
+
+    if ( flPlayerScaleFactor == 0.0f ) // We've had our jump stolen away!
+    {
+        return false;
+    }
+
+    if (player->GetGroundEntity() == NULL)
+	{
+        mv->m_nOldButtons |= IN_JUMP;
+
+        if (!((CGEPlayer*)player)->TestMidairJump())
+        {
+		    return false;		// in air, so no effect
+        }
+        else
+        {
+            isMidairJump = true;
+        }
+	}
+
     // All checks are clear, time to jump!
 
 #if !defined( CLIENT_DLL )
     // First, force update our last ground position to prevent bunnyhopping players from stopping the updating of theirs.
-    if ( player->GetGroundEntity()->IsWorld() ) // Only record jumps off of the world and not entities.
+    if ( player->GetGroundEntity() && player->GetGroundEntity()->IsWorld() ) // Only record jumps off of the world and not entities.
         ((CGEMPPlayer*)player)->SetLastWalkPosition( player->GetAbsOrigin() );
 #endif
 
@@ -2783,35 +2809,69 @@ bool CGameMovement::CheckJumpButton( void )
     // Acclerate upward
 	// If we are ducking...
 	float startz = mv->m_vecVelocity[2];
-	if ( (  player->m_Local.m_bDucking ) || (  player->GetFlags() & FL_DUCKING ) )
-	{
-		// d = 0.5 * g * t^2		- distance traveled with linear accel
-		// t = sqrt(2.0 * 45 / g)	- how long to fall 45 units
-		// v = g * t				- velocity at the end (just invert it to jump up that high)
-		// v = g * sqrt(2.0 * 45 / g )
-		// v^2 = g * g * 2.0 * 45 / g
-		// v = sqrt( g * 2.0 * 45 )
-        if (shouldJumpAlongSurfaceNormal)
+
+    float scaledJumpVelocity = flMul*flPlayerScaleFactor*flGroundFactor;
+
+    if (isMidairJump)
+    {
+        float zVelocity = max(scaledJumpVelocity, mv->m_vecVelocity[2] + scaledJumpVelocity*0.2);
+        mv->m_vecVelocity[2] = 0;
+
+        Vector forward, right, up;
+        AngleVectors(mv->m_vecViewAngles, &forward, &right, &up);  // Determine movement angles
+
+        Vector desiredLateralVelocity = mv->m_flForwardMove * forward + mv->m_flSideMove * right;
+
+        Vector currentVelocityDir = mv->m_vecVelocity;
+        currentVelocityDir.NormalizeInPlace();
+        Vector desiredLateralVelocityDir = desiredLateralVelocity;
+        desiredLateralVelocityDir.NormalizeInPlace();
+
+        float retainSpeedMult = currentVelocityDir.Dot(desiredLateralVelocityDir);
+
+        if (retainSpeedMult > 0.0 && (mv->m_vecVelocity.Length2D() * retainSpeedMult) > desiredLateralVelocity.Length2D())
         {
-            mv->m_vecVelocity[2] = 0;
-            mv->m_vecVelocity += flGroundFactor * flMul * jumpSurfaceNormal;
+            mv->m_vecVelocity = desiredLateralVelocityDir * mv->m_vecVelocity.Length2D() * retainSpeedMult;
         }
         else
         {
-            mv->m_vecVelocity[2] = flGroundFactor * flMul;  // 2 * gravity * height
+            mv->m_vecVelocity = desiredLateralVelocity;
         }
-	}
-	else
-	{
-        if (shouldJumpAlongSurfaceNormal)
+
+        mv->m_vecVelocity[2] = zVelocity;
+    }
+    else
+    {
+        if ((player->m_Local.m_bDucking) || (player->GetFlags() & FL_DUCKING))
         {
-            mv->m_vecVelocity += flGroundFactor * flMul * jumpSurfaceNormal;
+            // d = 0.5 * g * t^2		- distance traveled with linear accel
+            // t = sqrt(2.0 * 45 / g)	- how long to fall 45 units
+            // v = g * t				- velocity at the end (just invert it to jump up that high)
+            // v = g * sqrt(2.0 * 45 / g )
+            // v^2 = g * g * 2.0 * 45 / g
+            // v = sqrt( g * 2.0 * 45 )
+            if (shouldJumpAlongSurfaceNormal)
+            {
+                mv->m_vecVelocity[2] = 0;
+                mv->m_vecVelocity += scaledJumpVelocity * jumpSurfaceNormal;
+            }
+            else
+            {
+                mv->m_vecVelocity[2] = scaledJumpVelocity;  // 2 * gravity * height
+            }
         }
         else
         {
-            mv->m_vecVelocity[2] += flGroundFactor * flMul;  // 2 * gravity * height
+            if (shouldJumpAlongSurfaceNormal)
+            {
+                mv->m_vecVelocity += scaledJumpVelocity * jumpSurfaceNormal;
+            }
+            else
+            {
+                mv->m_vecVelocity[2] += scaledJumpVelocity;  // 2 * gravity * height
+            }
         }
-	}
+    }
 #else
 	// Acclerate upward
 	// If we are ducking...
@@ -4190,7 +4250,7 @@ void CGameMovement::CheckFalling( void )
 				player->m_Local.m_flFallVelocity = max( 0.1f, player->m_Local.m_flFallVelocity );
 			}
 
-			#ifdef GE_DLL
+#ifdef GE_DLL
 			float fallvalue = player->m_Local.m_flFallVelocity - PLAYER_FALL_PUNCH_THRESHOLD;
 
 			if (player->IsDucked()) // Landing while ducked squares our fall penalty.
@@ -4207,9 +4267,11 @@ void CGameMovement::CheckFalling( void )
 			}
 
 			// Make sure we don't continue a strafe run after loosing a bunch of speed to something in midair.
-			if (player->GetAbsVelocity().Length2D() < GE_NORM_SPEED)
-				((CGEMPPlayer*)player)->SetRunStartTime(gpGlobals->curtime);
-			#endif
+			//if (player->GetAbsVelocity().Length2D() < GE_NORM_SPEED)
+			//	((CGEMPPlayer*)player)->SetRunStartTime(gpGlobals->curtime);
+
+            ((CGEMPPlayer*)player)->SetRunStartTimeToMatchVelocity(mv->m_vecVelocity.Length2D());
+#endif
 
 			if ( player->m_Local.m_flFallVelocity > PLAYER_MAX_SAFE_FALL_SPEED )
 			{
@@ -4251,6 +4313,10 @@ void CGameMovement::CheckFalling( void )
 	//
 	if ( player->GetGroundEntity() != NULL ) 
 	{		
+#ifdef GE_DLL
+        // We landed, so restore our midair jumps.
+        ((CGEPlayer*)player)->RestoreMidairJumps();
+#endif
 		player->m_Local.m_flFallVelocity = 0;
 	}
 }

@@ -85,6 +85,11 @@ CGEPlayer *pyGetOwner( CBaseEntity *pEnt )
 	return ToGEPlayer( pEnt->GetOwnerEntity() );
 }
 
+CBaseEntity *pyGetGroundEntity( CBaseEntity *pEnt )
+{
+	return pEnt->GetGroundEntity();
+}
+
 static const char *EHANDLE_str( CHandle<CBaseEntity> &h )
 {
 	if ( h.Get() )
@@ -177,8 +182,11 @@ BOOST_PYTHON_MODULE(GEEntity)
 		.def("GetTargetName", pyGetTargetName)
 		.def("SetModel", &CBaseEntity::SetModel)
 		.def("IsAlive", &CBaseEntity::IsAlive)
+        .def("GetGroundEntity", pyGetGroundEntity, return_value_policy<reference_existing_object>())
 		.def("IsPlayer", pyIsPlayer)
 		.def("IsNPC", pyIsNPC)
+        .def("IsWorld", &CBaseEntity::IsWorld)
+        .def("IsInWorld", &CBaseEntity::IsInWorld)
 		.def("GetTeamNumber", &CBaseEntity::GetTeamNumber)
 		.def("GetAbsOrigin", &CBaseEntity::GetAbsOrigin, return_value_policy<copy_const_reference>())
 		.def("SetAbsOrigin", &CBaseEntity::SetAbsOrigin)

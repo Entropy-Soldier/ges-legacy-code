@@ -32,7 +32,7 @@ public:
 	virtual CGEWeapon*	GetSourceWeapon(void) { return m_pWeaponOwner; };
 	virtual const char* GetPrintName( void ) { return "#GE_NOWEAPON"; };
     virtual const char* GetCustomPrintName( void ) { return m_sPrintNameCustom[0] == '\0' ? GetPrintName() : m_sPrintNameCustom; };
-    virtual void        SetCustomPrintName( const char *newName ) { Q_strncpy( m_sPrintNameCustom, newName, 32); };
+    virtual void        SetCustomPrintName( const char *newName ) { Q_strncpy( m_sPrintNameCustom, newName, MAX_WEAPON_OVERRIDE_NAME_LENGTH); };
 	virtual int			GetCustomData( void ) { return 0; };
     virtual int	        GetDamageCap() { return m_iDamageCap; }
 	virtual void	    SetDamageCap( int iDamageCap ) { m_iDamageCap = iDamageCap; }
@@ -63,7 +63,7 @@ public:
 
 protected:
 
-    char m_sPrintNameCustom[32];
+    char m_sPrintNameCustom[MAX_WEAPON_OVERRIDE_NAME_LENGTH];
 
 	CGEWeapon *m_pWeaponOwner;
 	

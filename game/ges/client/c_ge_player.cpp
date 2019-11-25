@@ -48,6 +48,12 @@ IMPLEMENT_CLIENTCLASS_DT(C_GEPlayer, DT_GE_Player, CGEPlayer)
 	RecvPropInt( RECVINFO( m_iTotalMaxArmor ) ),
 	RecvPropInt( RECVINFO( m_iTotalArmorPickup ) ),
 
+    RecvPropFloat( RECVINFO( m_flJumpHeightMult ) ),
+	RecvPropFloat( RECVINFO( m_flStrafeRunMult ) ),
+
+    RecvPropInt( RECVINFO( m_iMaxMidairJumps ) ),
+	RecvPropInt( RECVINFO( m_iRemainingMidairJumps ) ),
+
 	RecvPropFloat( RECVINFO( m_flFullZoomTime ) ),
 	RecvPropFloat( RECVINFO( m_flSweepTime ) ),
 
@@ -59,6 +65,7 @@ END_RECV_TABLE()
 BEGIN_PREDICTION_DATA( C_GEPlayer )
 DEFINE_PRED_FIELD( m_flFullZoomTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_flSweepTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_iRemainingMidairJumps, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 
 extern ConVar v_viewmodel_fov;
@@ -82,6 +89,12 @@ C_GEPlayer::C_GEPlayer()
 
 	m_iTotalMaxArmor = -1;
 	m_iTotalArmorPickup = 0;
+
+    m_flJumpHeightMult = 1.0f;
+    m_flStrafeRunMult = GE_STRAFE_MULT;
+
+    m_iRemainingMidairJumps = 0;
+    m_iMaxMidairJumps = 0;
 
 	m_flSweepTime = 0;
 

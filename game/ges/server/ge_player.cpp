@@ -49,6 +49,12 @@ IMPLEMENT_SERVERCLASS_ST(CGEPlayer, DT_GE_Player)
 	SendPropInt( SENDINFO( m_iTotalMaxArmor ) ),
 	SendPropInt( SENDINFO( m_iTotalArmorPickup ) ),
 
+    SendPropFloat(SENDINFO( m_flJumpHeightMult )),
+	SendPropFloat(SENDINFO( m_flStrafeRunMult )),
+
+    SendPropInt( SENDINFO( m_iMaxMidairJumps ) ),
+	SendPropInt( SENDINFO( m_iRemainingMidairJumps ) ),
+
 	SendPropFloat(SENDINFO(m_flFullZoomTime)),
 	SendPropFloat(SENDINFO(m_flSweepTime)),
 
@@ -98,6 +104,10 @@ CGEPlayer::CGEPlayer()
 
 	m_iTotalMaxArmor = -1;
 	m_iTotalArmorPickup = 0;
+    m_flJumpHeightMult = 1.0f;
+    m_flStrafeRunMult = GE_STRAFE_MULT;
+    m_iMaxMidairJumps = 0;
+    m_iRemainingMidairJumps = 0;
 
     m_hHat = NULL;
     m_hHead = NULL;
@@ -1309,11 +1319,12 @@ void CGEPlayer::Spawn()
 
 	SetMaxSpeed(GE_NORM_SPEED * GEMPRules()->GetSpeedMultiplier(this));
 	ResetAimMode();
+    RestoreMidairJumps();
 }
 
 void CGEPlayer::SetSpeedMultiplier(float mult)	
 {
-	m_flSpeedMultiplier = clamp(mult, 0.5f, 1.5f); 
+	m_flSpeedMultiplier = clamp(mult, 0.0f, 2.0f); 
 	SetMaxSpeed(GE_NORM_SPEED * GEMPRules()->GetSpeedMultiplier(this)); 
 }
 

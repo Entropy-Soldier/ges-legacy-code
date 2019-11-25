@@ -96,6 +96,38 @@ void C_GEMPPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDi
 	}
 }
 
+void C_GEMPPlayer::SetRunStartTimeToMatchVelocity(float velocity)
+{
+    float boostMult = velocity / MaxSpeed();
+
+    // Don't give a strafe run boost if we only landed with a little bit of momentum and were not strafe running before that.
+    if ( boostMult <= 1.2 && (gpGlobals->curtime - GetRunStartTime()) < 0.5 ) 
+    {
+        SetRunStartTime(gpGlobals->curtime);
+        return;
+    }
+
+    float runtime = (boostMult - 0.8) * 2.5;
+
+    int runcode = GetRunCode();
+
+	int fcode, scode;
+
+	fcode = runcode % 3;
+	scode = (runcode - fcode)/3;
+
+	bool isstrafing = (fcode * scode != 0);
+
+    if (isstrafing)
+    {
+        SetRunStartTime(gpGlobals->curtime - runtime);
+    }
+    else
+    {
+        SetRunStartTime(gpGlobals->curtime + runtime/2);
+    }
+}
+
 Vector C_GEMPPlayer::GetChaseCamViewOffset( CBaseEntity *target )
 {
 	// If we are specing an alive NPC return the player height always

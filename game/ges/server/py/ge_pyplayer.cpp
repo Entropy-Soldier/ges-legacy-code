@@ -205,10 +205,38 @@ Vector pyPlayerGetVelocity( CBaseCombatCharacter *player )
     return player->GetAbsVelocity();
 }
 
+// Floats don't cast to ints implicitly for these functions, requiring the gamemode coder to do an explicit conversion.
+// This is easy to forget since even pure integer operations result in a conversion to a float, so let's make life easier
+// with regards to the health/armor functions.
+void pyPlayerSetFloatHealth( CBaseCombatCharacter *player, float health )
+{
+    player->SetHealth(health);
+}
+
+void pyPlayerSetFloatArmor( CGEPlayer *player, float armor )
+{
+    player->SetArmorValue(armor);
+}
+
+void pyPlayerSetFloatMaxHealth( CGEPlayer *player, float maxHealth )
+{
+    player->SetMaxHealth(maxHealth);
+}
+
+void pyPlayerSetFloatMaxArmor( CGEPlayer *player, float maxArmor )
+{
+    player->SetMaxArmor(maxArmor);
+}
+
 void pySetPlayerModel( CGEPlayer *pPlayer, const char *szChar, int nSkin )
 {
 	if ( pPlayer )
 		pPlayer->SetPlayerModel( szChar, nSkin, true );
+}
+
+bool pyPlayerIsOnGround( CGEPlayer *player )
+{
+    return (player->GetGroundEntity() != NULL);
 }
 
 void pyResetTotalMaxArmorLimit( CGEPlayer *pPlayer )
@@ -268,6 +296,7 @@ BOOST_PYTHON_MODULE(GEPlayer)
 	class_<CBaseCombatCharacter, bases<CBaseEntity>, boost::noncopyable>("CBaseCombatCharacter", no_init)
 		.def("GetHealth", &CBaseCombatCharacter::GetHealth)
 		.def("SetHealth", &CBaseCombatCharacter::SetHealth)
+        .def("SetHealth", pyPlayerSetFloatHealth)
 		.def("GetSkin", pyGetSkin)
 		.def("GetActiveWeapon", pyGetActiveWeapon, return_value_policy<reference_existing_object>())
 		.def("HasWeapon", pyHasWeapon)
@@ -301,13 +330,16 @@ BOOST_PYTHON_MODULE(GEPlayer)
 		.def("IsObserver", &CGEPlayer::IsObserver)
 		.def("GetMaxArmor", &CGEPlayer::GetMaxArmor)
 		.def("SetMaxArmor", &CGEPlayer::SetMaxArmor)
+        .def("SetMaxArmor", pyPlayerSetFloatMaxArmor)
 		.def("GetTotalAllowedArmorPickup", &CGEPlayer::GetMaxTotalArmor)
 		.def("GetRemainingAllowedArmorPickup", pyGetRemainingArmorPickupLimit)
 		.def("SetTotalAllowedArmorPickup", &CGEPlayer::SetMaxTotalArmor)
 		.def("RenewArmorPickupLimit", pyResetTotalMaxArmorLimit)
 		.def("GetMaxHealth", &CGEPlayer::GetMaxHealth)
 		.def("SetMaxHealth", &CGEPlayer::SetMaxHealth)
+        .def("SetMaxHealth", pyPlayerSetFloatMaxHealth)
 		.def("SetArmor", &CGEPlayer::SetArmorValue)
+        .def("SetArmor", pyPlayerSetFloatArmor)
 		.def("GetPlayerModel", &CGEPlayer::GetCharIdent)
 		.def("SetPlayerModel", pySetPlayerModel)
 		.def("SetHat", &CGEPlayer::SpawnHat)
@@ -317,11 +349,16 @@ BOOST_PYTHON_MODULE(GEPlayer)
         .def("GetVelocity", pyPlayerGetVelocity)
         .def("IsInAimMode", &CGEPlayer::IsInAimMode)
         .def("IsDucking", &CGEPlayer::IsDucking)
+        .def("IsOnGround", pyPlayerIsOnGround)
 		.def("KnockOffHat", &CGEPlayer::KnockOffHat, KnockOffHat_overloads())
 		.def("MakeInvisible", &CGEPlayer::MakeInvisible)
 		.def("MakeVisible", &CGEPlayer::MakeVisible)
 		.def("SetDamageMultiplier", &CGEPlayer::SetDamageMultiplier)
 		.def("SetSpeedMultiplier", &CGEPlayer::SetSpeedMultiplier)
+        .def("SetJumpVelocityMultiplier", &CGEPlayer::SetJumpVelocityMult)
+        .def("SetStrafeRunMultiplier", &CGEPlayer::SetStrafeRunMult)
+        .def("SetSpeedMultiplier", &CGEPlayer::SetSpeedMultiplier)
+        .def("SetMaxMidairJumps", &CGEPlayer::SetMaxMidairJumps)
 		.def("SetScoreBoardColor", &CGEPlayer::SetHudColor)
 		.def("StripAllWeapons", &CGEPlayer::StripAllWeapons)
 		.def("GetAimDirection", pyAimDirection)

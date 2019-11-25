@@ -302,6 +302,8 @@ enum WeaponEvents
 };
 
 #define MAX_WEAPON_SPAWN_SLOTS	8
+#define MAX_WEAPON_OVERRIDE_NAME_LENGTH 32
+
 
 // How long each explosion waits between each damage attempt.
 #define GE_EXPLOSION_THINK_INTERVAL	0.1f
@@ -376,6 +378,7 @@ const float MAX_ARMOR = 160;
 #define GE_NORM_SPEED	190
 #define GE_AIM_SPEED_MULT	0.58
 #define GE_AIMMODE_DELAY	0.1f
+#define GE_STRAFE_MULT	1.4f
 
 #ifdef GAME_DLL
 	typedef enum

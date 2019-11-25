@@ -36,7 +36,6 @@ typedef enum
 	Secondary_Mode,
 } GEWeaponMode;
 
-
 class CGEWeapon : public CBaseHL2MPCombatWeapon
 {
 #if !defined( CLIENT_DLL )
@@ -259,8 +258,8 @@ public:
 
     // Returns the custom print name if set, otherwise returns the standard one.
     const char *GetCustomPrintName(void);
-    void SetCustomPrintName( char *newVal ) { if (CanUseWeaponMods()) Q_strncpy(m_sPrintNameCustom.GetForModify(), newVal, 32); else Warning("Gamemode tried to use weapon mods without enabling them!\n"); }
-    CNetworkString( m_sPrintNameCustom, 32 );
+    void SetCustomPrintName( char *newVal ) { if (CanUseWeaponMods()) Q_strncpy(m_sPrintNameCustom.GetForModify(), newVal, MAX_WEAPON_OVERRIDE_NAME_LENGTH); else Warning("Gamemode tried to use weapon mods without enabling them!\n"); }
+    CNetworkString( m_sPrintNameCustom, MAX_WEAPON_OVERRIDE_NAME_LENGTH );
 
 protected:
 	bool			m_bLowered;			// Whether the viewmodel is raised or lowered

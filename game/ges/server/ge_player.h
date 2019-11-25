@@ -93,6 +93,17 @@ public:
 	int   GetTotalArmorPickup( void )		{ return m_iTotalArmorPickup; }
 	int   GetHudColor( void )				{ return m_iScoreBoardColor; }
 	void  SetHudColor( int color )			{ m_iScoreBoardColor = color; }
+    float GetJumpVelocityMult()	            { return m_flJumpHeightMult; }
+    void  SetJumpVelocityMult( float mult )	{ m_flJumpHeightMult = mult; }
+    float GetStrafeRunMult()	            { return m_flStrafeRunMult; }
+    void  SetStrafeRunMult( float mult )	{ m_flStrafeRunMult = mult; }
+    void  SetMaxMidairJumps(int count)      { m_iMaxMidairJumps = count; }
+    int   GetMaxMidairJumps()               { return m_iMaxMidairJumps; }
+
+    // Resets remaining midair jumps to the max.
+    void  RestoreMidairJumps()              { m_iRemainingMidairJumps = m_iMaxMidairJumps; }
+    // Checks to see if we can perform a midair jump.  If so, removes one midair jump from our counter and returns true.  Returns false otherwise.
+    int   TestMidairJump()                  { if (m_iRemainingMidairJumps > 0) { m_iRemainingMidairJumps--; return true; } else { return false; }; }
 
     void MakeInvisible();
     void MakeVisible();
@@ -232,6 +243,10 @@ protected:
 	CNetworkVar( int,	m_iMaxArmor );
 	CNetworkVar( int,	m_iTotalMaxArmor );
 	CNetworkVar( int,	m_iTotalArmorPickup );
+    CNetworkVar( float,	m_flJumpHeightMult );
+    CNetworkVar( float,	m_flStrafeRunMult );
+    CNetworkVar( int,	m_iMaxMidairJumps );
+    CNetworkVar( int,	m_iRemainingMidairJumps );
 
 	// Let's us know when we are officially in aim mode
 	CNetworkVar(float, m_flFullZoomTime);
