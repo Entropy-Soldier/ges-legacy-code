@@ -139,6 +139,22 @@ int pyGetAmmoCount( CBaseCombatCharacter *pEnt, bp::object weap_or_ammo )
 	return 0;
 }
 
+int pySetAmmoCount( CBaseCombatCharacter *pEnt, bp::object weap_or_ammo, int count )
+{
+	bp::extract<CGEWeapon*> to_weap( weap_or_ammo );
+	bp::extract<int> to_weap_id( weap_or_ammo );
+	bp::extract<char*> to_ammo( weap_or_ammo );
+
+	if ( to_weap.check() )
+		pEnt->SetAmmoCount( count, to_weap()->GetPrimaryAmmoType() );
+	else if ( to_weap_id.check() )
+		pEnt->SetAmmoCount( count, GetAmmoDef()->Index(const_cast<char*>(GetAmmoForWeapon(to_weap_id()))));
+	else if ( to_ammo.check() )
+		pEnt->SetAmmoCount( count, GetAmmoDef()->Index(to_ammo()));
+	
+	return 0;
+}
+
 bp::list pyGetHeldWeapons( CBaseCombatCharacter *pEnt )
 {
 	bp::list weaps;
@@ -303,6 +319,7 @@ BOOST_PYTHON_MODULE(GEPlayer)
 		.def("WeaponSwitch", pyWeaponSwitch)
 		.def("StripWeapon", pyRemoveWeapon)
 		.def("GetAmmoCount", pyGetAmmoCount)
+        .def("SetAmmoCount", pySetAmmoCount)
 		.def("GetHeldWeapons", pyGetHeldWeapons)
 		.def("GetHeldWeaponIds", pyGetHeldWeaponIds)
 		// Explicitly override these functions to prevent their use

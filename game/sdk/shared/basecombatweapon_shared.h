@@ -545,7 +545,11 @@ public:
 	float					m_fMaxRange2;			// What's the furthest this weapon can be used?
 	bool					m_bReloadsSingly;		// Tryue if this weapon reloads 1 round at a time
 	float					m_fFireDuration;		// The amount of time that the weapon has sustained firing
+#ifdef GE_DLL
+	CNetworkVar( int, m_iSubType );
+#else
 	int						m_iSubType;
+#endif
 
 	float					m_flUnlockTime;
 	EHANDLE					m_hLocker;				// Who locked this weapon.

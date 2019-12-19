@@ -81,6 +81,10 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 	m_iClip2 = -1;
 	m_iPrimaryAmmoType = -1;
 	m_iSecondaryAmmoType = -1;
+
+#ifdef GE_DLL
+    m_iSubType = 0;
+#endif
 #endif
 
 #if !defined( CLIENT_DLL )
@@ -2726,6 +2730,9 @@ BEGIN_NETWORK_TABLE(CBaseCombatWeapon, DT_BaseCombatWeapon)
 	SendPropModelIndex( SENDINFO(m_iWorldModelIndex) ),
 	SendPropInt( SENDINFO(m_iState ), 8, SPROP_UNSIGNED ),
 	SendPropEHandle( SENDINFO(m_hOwner) ),
+#ifdef GE_DLL
+    SendPropInt( SENDINFO(m_iSubType )),
+#endif
 #else
 	RecvPropDataTable("LocalWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalWeaponData)),
 	RecvPropDataTable("LocalActiveWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalActiveWeaponData)),
@@ -2733,5 +2740,8 @@ BEGIN_NETWORK_TABLE(CBaseCombatWeapon, DT_BaseCombatWeapon)
 	RecvPropInt( RECVINFO(m_iWorldModelIndex)),
 	RecvPropInt( RECVINFO(m_iState )),
 	RecvPropEHandle( RECVINFO(m_hOwner ) ),
+#ifdef GE_DLL
+    RecvPropInt( RECVINFO(m_iSubType )),
+#endif
 #endif
 END_NETWORK_TABLE()

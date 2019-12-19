@@ -89,7 +89,7 @@ float pyGetMeleeWeaponRange( CGEWeapon *pWeap, bool modded = true )
     return static_cast<CGEWeaponMelee*>(pWeap)->GetRange(modded);
 }
 
-int pyGetWeaponSlot( CGEWeapon *pWeap )
+int pyGetWeaponSlot( CGEWeapon *pWeap, bool highest = true )
 {
 	if ( !pWeap )
 		return -1;
@@ -99,8 +99,15 @@ int pyGetWeaponSlot( CGEWeapon *pWeap )
 	int slot = -1;
 	for ( int i=0; i < MAX_WEAPON_SPAWN_SLOTS; i++ )
 	{
-		if ( GEMPRules()->GetLoadoutManager()->GetWeaponInSlot(i) == weapid )
-			slot = i;
+        if (GEMPRules()->GetLoadoutManager()->GetWeaponInSlot(i) == weapid)
+        {
+            slot = i;
+
+            if (!highest) // If we're looking for the lowest, break on the first one we find.  For the highest, don't do this so we go to the end.
+            {
+                break;
+            }
+        }
 	}
 
 	return slot;
@@ -158,6 +165,20 @@ void pyWeaponSetAbsAngles( CGEWeapon *weap, QAngle angles )
 		return;
 
 	weap->SetAbsAngles( angles );
+}
+
+void pyWeaponSetSubType( CGEWeapon *weap, int subtype )
+{
+	if ( !weap )
+		return;
+
+    if ( !GEMPRules()->WeaponModsEnabled() )
+    {
+        Warning("Weapon mods must be enabled to modify weapon subtypes!\n");
+        return;
+    }
+
+    weap->SetSubType(clamp(subtype, 0, MAX_WEAPON_SUBTYPES));
 }
 
 CBasePlayer *pyWeaponGetOriginalOwner( CGEWeapon *weap )
@@ -281,6 +302,8 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMaxSpreadVec_overloads, CGEWeapon::Get
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetAimBonus_overloads, CGEWeapon::GetAimBonus, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetJumpPenalty_overloads, CGEWeapon::GetJumpPenalty, 0, 1);
 
+BOOST_PYTHON_FUNCTION_OVERLOADS(GetWeaponSlot_overloads, pyGetWeaponSlot, 1, 2);
+
 BOOST_PYTHON_FUNCTION_OVERLOADS(WeaponInfo_overloads, pyWeaponInfo, 1, 2);
 BOOST_PYTHON_MODULE(GEWeapon)
 {
@@ -310,6 +333,8 @@ BOOST_PYTHON_MODULE(GEWeapon)
         .def("CanHolster", &CGEWeapon::CanHolster)
         .def("HasAmmo", &CGEWeapon::HasPrimaryAmmo)
         .def("UsesAmmo", &CGEWeapon::UsesPrimaryAmmo)
+        .def("SetSubType", pyWeaponSetSubType)
+        .def("GetSubType", &CGEWeapon::GetSubType)
         .def("GetAmmoType", pyGetAmmoType)
         .def("GetAmmoCount", pyGetAmmoCount)
         .def("SetAmmoCount", pySetAmmoCount)
@@ -330,7 +355,7 @@ BOOST_PYTHON_MODULE(GEWeapon)
         .def("GetSecondsUntilPickupAllowed", &CGEWeapon::GetSecondsUntilPickup)
         .def("SetSecondsUntilPickupAllowed", &CGEWeapon::SetSecondsUntilPickup)
         .def("SetRoundSecondsUntilPickupAllowed", &CGEWeapon::SetRoundSecondsUntilPickup)
-        .def("GetWeaponSlot", pyGetWeaponSlot)
+        .def("GetWeaponSlot", pyGetWeaponSlot, GetWeaponSlot_overloads())
         .def("SetSkin", pyWeaponSetSkin)
 
         .def("GetLimitEnforcementPriority", &CGEWeapon::GetLimitEnforcementPriority)

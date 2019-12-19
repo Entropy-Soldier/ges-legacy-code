@@ -1025,6 +1025,7 @@ bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, 
 	// clear any pending autosavedangerous
 	m_fAutoSaveDangerousTime = 0.0f;
 	m_fAutoSaveDangerousMinHealthToCommit = 0.0f;
+
 	return true;
 }
 
@@ -2400,6 +2401,29 @@ void CServerGameClients::ClientActive( edict_t *pEdict, bool bLoadGame )
 	CBasePlayer *pPlayer = ( CBasePlayer * )CBaseEntity::Instance( pEdict );
 	CSoundEnvelopeController::GetController().CheckLoopingSoundsForPlayer( pPlayer );
 	SceneManager_ClientActive( pPlayer );
+
+#ifdef GE_DLL
+    // Let the client know they hosted a server and thus might want to force terminate.
+    // Probably a better way to send this signal, though one would hope there's a better way to avoid client hangs in the first place...
+    // This setup works for the moment, might be worth revisiting if there's time.  Even without a workaround it's always possible valve
+    // will fix the issue on their own as it does seem to reside in their side of the code.  Might be worth the occasional check.
+    if (!engine->IsDedicatedServer() )
+    {
+        CBasePlayer *listenServerHost = UTIL_GetListenServerHost();
+
+        if (listenServerHost)
+        {
+            edict_t *hostEdict = listenServerHost->edict();
+
+            // If our host just connected, we've just finished starting the server and should let the host know they've
+            // been hosting a server.
+            if (hostEdict == pEdict)
+            {
+                engine->ClientCommand(listenServerHost->edict(), "cl_ge_force_client_termination_flag 1");
+            }
+        }
+    }
+#endif
 }
 
 #ifndef GE_DLL

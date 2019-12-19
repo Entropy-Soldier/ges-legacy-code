@@ -102,13 +102,12 @@
 	#include "ge_blacklist.h"
     #include "ge_utils.h"
 	#include "inetchannel.h"
-#if 0
+
 	// HACKHACK: this is dumb, and unsafe. Things that should be uninitialized at the
 	// engine-level can kiss their deconstructors goodbye. See Shutdown for an
 	// explanation.
 	DLL_IMPORT BOOL	  STDCALL TerminateProcess(HANDLE hProcess, unsigned int uExitCode);
 	DLL_IMPORT HANDLE STDCALL GetCurrentProcess(void);
-#endif
 #endif
 
 #ifdef PORTAL
@@ -256,6 +255,8 @@ static ConVar s_cl_class("cl_class", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "D
 #ifdef GE_DLL
 static ConVar cl_ge_full_level_reload("cl_ge_full_level_reload", "1", FCVAR_USERINFO|FCVAR_ARCHIVE, "Fully reload all possible textures between map transitions.  DISABLING THIS WILL MAKE CRASHES MUCH MORE LIKELY.");
 static ConVar cl_ge_transition_table_recovery("cl_ge_transition_table_recovery", "1", FCVAR_USERINFO|FCVAR_ARCHIVE, "Scan the console output for transition table overflows on level change, and attempt to recover if one is detected.");
+static ConVar cl_ge_force_client_termination("cl_ge_force_client_termination", "1", FCVAR_USERINFO|FCVAR_ARCHIVE, "If 1, will force the client to terminate at the end of unloading the GE:S client dll if a local server has been started.  If 2, will always force terminate.  This is to prevent hl2.exe hangs.");
+static ConVar cl_ge_force_client_termination_flag("cl_ge_force_client_termination_flag", "0", FCVAR_CLIENTDLL|FCVAR_SERVER_CAN_EXECUTE|FCVAR_CLIENTCMD_CAN_EXECUTE, "Keeps track of if a state where a client should force quit the application has been reached.  Should only be set manually to trigger a force terminate upon shutdown.");
 #define TRANSITION_LOG_FILEPATH "transition.log"
 #endif
 
@@ -942,6 +943,10 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 void CHLClient::PostInit()
 {
 	IGameSystem::PostInitAllSystems();
+
+#ifdef GE_DLL
+    cl_ge_force_client_termination_flag.SetValue("0");
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -982,6 +987,13 @@ void CHLClient::Shutdown( void )
 	
 	ClearKeyValuesCache();
 
+#ifdef GE_DLL
+	// Fix hang in hl2.exe
+	SteamClient()->ReleaseUser( GetHSteamPipe(), GetHSteamUser() );
+	SteamClient()->BReleaseSteamPipe( GetHSteamPipe() );
+//	SteamAPI_Shutdown();
+#endif
+
 	DisconnectTier3Libraries( );
 	DisconnectTier2Libraries( );
 	ConVar_Unregister();
@@ -991,7 +1003,23 @@ void CHLClient::Shutdown( void )
 	//with to avoid that damn "CNet Encrypt:0" issue. At least this closes the
 	//game now.
 #ifdef GE_DLL
-    //TerminateProcess(GetCurrentProcess(), EXIT_SUCCESS);
+    if (cl_ge_force_client_termination.GetInt() > 1)
+    {
+        Msg("Force-terminating process due to cl_ge_force_client_termination being set to greater than 1.\n");
+        TerminateProcess(GetCurrentProcess(), EXIT_SUCCESS);
+    }
+    else if (cl_ge_force_client_termination.GetInt() == 1)
+    {
+        if (cl_ge_force_client_termination_flag.GetBool())
+        {
+            Msg("Force-terminating process due to cl_ge_force_client_termination being set to 1 and a potential hang-state having been reached.\n");
+            TerminateProcess(GetCurrentProcess(), EXIT_SUCCESS);
+        }
+        else
+        {
+            Msg("Attempting to close process normally as a suspected hang state has not been reached this session...\n");
+        }
+    }
 #else
 #if 0
 		TerminateProcess(GetCurrentProcess(), EXIT_SUCCESS);

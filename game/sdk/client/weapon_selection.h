@@ -47,10 +47,18 @@ public:
 	virtual void CycleToNextWeapon( void ) = 0;
 	virtual void CycleToPrevWeapon( void ) = 0;
 	virtual void SwitchToLastWeapon( void );
+#ifdef GE_DLL
+	virtual C_BaseCombatWeapon *GetWeaponInSlot( int iSlot, int iSlotPos, int iSubType ) = 0;
+#else
 	virtual C_BaseCombatWeapon *GetWeaponInSlot( int iSlot, int iSlotPos ) = 0;
+#endif
 	virtual void SelectWeaponSlot( int iSlot ) = 0;
 	virtual C_BaseCombatWeapon	*GetFirstPos( int iSlot );
+#ifdef GE_DLL
+	virtual C_BaseCombatWeapon	*GetNextActivePos( int iSlot, int iSlotPos, int subtype );
+#else
 	virtual C_BaseCombatWeapon	*GetNextActivePos( int iSlot, int iSlotPos );
+#endif
 	virtual void				SetWeaponSelected( void );
 	virtual void				SelectWeapon( void );
 

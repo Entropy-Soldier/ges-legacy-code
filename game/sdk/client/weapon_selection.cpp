@@ -584,7 +584,12 @@ void CBaseHudWeaponSelection::CancelWeaponSelection( void )
 //-----------------------------------------------------------------------------
 C_BaseCombatWeapon *CBaseHudWeaponSelection::GetFirstPos( int iSlot )
 {
+#ifdef GE_DLL
+    int iLowestPosition = MAX_WEAPON_POSITIONS*MAX_WEAPON_SUBTYPES;
+#else
 	int iLowestPosition = MAX_WEAPON_POSITIONS;
+#endif
+
 	C_BaseCombatWeapon *pFirstWeapon = NULL;
 
 	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
@@ -599,12 +604,22 @@ C_BaseCombatWeapon *CBaseHudWeaponSelection::GetFirstPos( int iSlot )
 
 		if ( ( pWeapon->GetSlot() == iSlot ) && (pWeapon->VisibleInWeaponSelection()) )
 		{
+#ifdef GE_DLL
+            // If this weapon is lower in the slot than the current lowest, it's our new winner
+            int newPosition = pWeapon->GetPosition() * MAX_WEAPON_SUBTYPES + pWeapon->GetSubType();
+			if ( newPosition <= iLowestPosition )
+			{
+				iLowestPosition = newPosition;
+				pFirstWeapon = pWeapon;
+			}
+#else
 			// If this weapon is lower in the slot than the current lowest, it's our new winner
 			if ( pWeapon->GetPosition() <= iLowestPosition )
 			{
 				iLowestPosition = pWeapon->GetPosition();
 				pFirstWeapon = pWeapon;
 			}
+#endif
 		}
 	}
 
@@ -614,12 +629,21 @@ C_BaseCombatWeapon *CBaseHudWeaponSelection::GetFirstPos( int iSlot )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+#ifdef GE_DLL
+C_BaseCombatWeapon *CBaseHudWeaponSelection::GetNextActivePos( int iSlot, int iSlotPos, int iSubType )
+#else
 C_BaseCombatWeapon *CBaseHudWeaponSelection::GetNextActivePos( int iSlot, int iSlotPos )
+#endif
 {
 	if ( iSlotPos >= MAX_WEAPON_POSITIONS || iSlot >= MAX_WEAPON_SLOTS )
 		return NULL;
 
+#ifdef GE_DLL
+	int iLowestPosition = MAX_WEAPON_POSITIONS * MAX_WEAPON_SUBTYPES;
+    int iCurrentPosition = iSlotPos * MAX_WEAPON_SUBTYPES + iSubType;
+#else
 	int iLowestPosition = MAX_WEAPON_POSITIONS;
+#endif
 	C_BaseCombatWeapon *pNextWeapon = NULL;
 
 	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
@@ -634,15 +658,20 @@ C_BaseCombatWeapon *CBaseHudWeaponSelection::GetNextActivePos( int iSlot, int iS
 		if ( CanBeSelectedInHUD( pWeapon ) && pWeapon->GetSlot() == iSlot )
 		{
 			// If this weapon is lower in the slot than the current lowest, and above our desired position, it's our new winner
-		#ifdef GE_DLL
-			if ( pWeapon->GetPosition() < iLowestPosition && pWeapon->GetPosition() > iSlotPos )
-		#else
+#ifdef GE_DLL
+            int effectivePosition = pWeapon->GetPosition() * MAX_WEAPON_SUBTYPES + pWeapon->GetSubType();
+            if ( effectivePosition < iLowestPosition && effectivePosition > iCurrentPosition )
+            {
+                iLowestPosition = effectivePosition;
+				pNextWeapon = pWeapon;
+            }
+#else
 			if ( pWeapon->GetPosition() <= iLowestPosition && pWeapon->GetPosition() >= iSlotPos )
-		#endif
 			{
 				iLowestPosition = pWeapon->GetPosition();
 				pNextWeapon = pWeapon;
 			}
+#endif
 		}
 	}
 

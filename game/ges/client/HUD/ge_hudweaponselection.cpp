@@ -31,10 +31,11 @@
 
 #define SELECTION_TIMEOUT_THRESHOLD  3.5f // Seconds
 #define SELECTION_FADEOUT_TIME   2.0f
+#define MAX_DISPLAYED_WEAPONS 30	// Max number of weapons that can be displayed at once.  Should always be less than MAX_WEAPONS.
 
 using namespace vgui;
 
-ConVar cl_ge_hud_fastswitchlist("cl_ge_hud_fastswitchlist", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Show all held weapons on fast switch.");
+ConVar cl_ge_hud_fastswitchlist("cl_ge_hud_fastswitchlist", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Show all held weapons on fast switch.");
 ConVar cl_ge_hud_noswitchlist("cl_ge_hud_noswitchlist", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Hide weaponlist entirely on switch.");
 ConVar cl_ge_hud_uselastbucketitem("cl_ge_hud_uselastbucketitem", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "When first switching buckets with the number keys, select the last used weapon in that bucket.");
 
@@ -54,9 +55,9 @@ public:
 	virtual void CycleToNextWeapon( void );
 	virtual void CycleToPrevWeapon( void );
 
-	virtual C_BaseCombatWeapon *GetPrevActivePos( int iSlot, int iSlotPos );
+	virtual C_BaseCombatWeapon *GetPrevActivePos( int iSlot, int iSlotPos, int iSubType );
 
-	virtual C_BaseCombatWeapon *GetWeaponInSlot( int iSlot, int iSlotPos );
+	virtual C_BaseCombatWeapon *GetWeaponInSlot( int iSlot, int iSlotPos, int iSubType = 0 );
 	virtual void SelectWeaponSlot( int iSlot );
 
 	virtual C_BaseCombatWeapon *GetSelectedWeapon( void ) { return m_hSelectedWeapon; };
@@ -74,7 +75,7 @@ protected:
 
 	// added function: find the number that will show up in selection
 	int GetSelectionNumber(int iSlot,int iSlotPos);
-	bool FirstOfBucket(int iSlot, int iSlotPos);
+	bool FirstOfBucket(int iSlot, int iSlotPos, int iSubType);
 
 private:
 	void FastWeaponSwitch( int iWeaponSlot );
@@ -82,6 +83,10 @@ private:
 	virtual void SetSelectedWeapon( C_BaseCombatWeapon *pWeapon, bool recordSelection = true );
 
 	void DrawBox(int x, int y, int wide, int tall, Color color, int number = -1 );
+
+    virtual int GetLastUsedSlotForBucket(int bucket)	{ return (bucket >= 0 && bucket < 10) ? m_iLastUsedSlotInBucket[bucket] : -1; }
+    virtual int GetLastUsedSubtypeForBucket(int bucket) { return (bucket >= 0 && bucket < 10) ? m_iLastUsedSubTypeInBucket[bucket] : -1; }
+    virtual void SetLastUsedWeaponForBucket(int bucket, int slot, int subtype)	{ if (bucket >= 0 && bucket < 10) { m_iLastUsedSlotInBucket[bucket] = slot; m_iLastUsedSubTypeInBucket[bucket] = subtype; } }
 
 	int	m_iBoxWide;
 	int m_iBoxTall;
@@ -92,6 +97,10 @@ private:
 	int m_iTextHeight;
 
 	bool m_bFadingOut;
+
+    // Stores the weapon that was most recently used in each bucket.
+	int m_iLastUsedSlotInBucket[MAX_WEAPON_SLOTS];
+    int m_iLastUsedSubTypeInBucket[MAX_WEAPON_SLOTS];
 
 	CPanelAnimationVar( HFont, m_hNumberFont, "NumberFont", "HudWeaponSelection" );
 	CPanelAnimationVar( HFont, m_hTextFont, "Font", "HudWeaponSelection" );
@@ -124,6 +133,9 @@ CHudWeaponSelection::CHudWeaponSelection( const char *pElementName ) :
 	m_bFadingOut = false;
 	m_iBoxWide = m_iBoxTall = 0;
 	m_iNumberWidth = 0;
+
+    memset(m_iLastUsedSlotInBucket, 0, 10);
+    memset(m_iLastUsedSubTypeInBucket, 0, 10);
 }
 
 void CHudWeaponSelection::VidInit()
@@ -167,11 +179,10 @@ void CHudWeaponSelection::SetSelectedWeapon( C_BaseCombatWeapon *pWeapon, bool r
 
 	if (recordSelection)
 	{
-		// Record our selection for later quickswitch use.
-		CGEPlayer *pGEPlayer = ToGEPlayer(C_BasePlayer::GetLocalPlayer());
-
-		if (pWeapon && pGEPlayer)
-			pGEPlayer->SetLastUsedWeaponForBucket(pWeapon->GetSlot(), pWeapon->GetPosition());
+        if (pWeapon)
+        {
+            SetLastUsedWeaponForBucket(pWeapon->GetSlot(), pWeapon->GetPosition(), pWeapon->GetSubType());
+        }
 	}
 }
 
@@ -200,15 +211,16 @@ void CHudWeaponSelection::CycleToNextWeapon()
 
 	int i = pCurrWeapon->GetSlot();
 	int j = pCurrWeapon->GetPosition();
+    int k = pCurrWeapon->GetSubType();
 
 	// Loop over all weapon slots starting at our current selection's slot
 	// and our current selection's position. Try to find the next active position
 	// for this weapon's slot. If you don't find anything jump to the next slot
 	// at position 0. If nothing is found with this then we are at the end
 	// and have to grab the first weapon!
-	for ( ; i < MAX_WEAPON_SLOTS; i++, j=-1 )
+	for ( ; i < MAX_WEAPON_SLOTS; i++, j=-1, k=-1 )
 	{
-		pNextWeapon = GetNextActivePos(i, j);
+		pNextWeapon = GetNextActivePos(i, j, k);
 		if ( pNextWeapon )
 			break;
 	}
@@ -216,9 +228,9 @@ void CHudWeaponSelection::CycleToNextWeapon()
 	// We didn't find a next one so we will return the FIRST one!
 	if ( !pNextWeapon || pNextWeapon == pCurrWeapon )
 	{
-		for ( i=0,j=-1; i < MAX_WEAPON_SLOTS; i++ )
+		for ( i=0,j=-1,k=-1; i < MAX_WEAPON_SLOTS; i++ )
 		{
-			pNextWeapon = GetNextActivePos(i, j);
+			pNextWeapon = GetNextActivePos(i, j, k);
 			if ( pNextWeapon )
 				break;
 		}
@@ -226,7 +238,6 @@ void CHudWeaponSelection::CycleToNextWeapon()
 	
 	if ( !pNextWeapon )
 		pNextWeapon = pCurrWeapon;
-
 	
 	SetSelectedWeapon( pNextWeapon, hud_fastswitch.GetBool() );
 	if ( !IsInSelectionMode() )
@@ -261,15 +272,16 @@ void CHudWeaponSelection::CycleToPrevWeapon( void )
 
 	int i = pCurrWeapon->GetSlot();
 	int j = pCurrWeapon->GetPosition();
+    int k = pCurrWeapon->GetSubType();
 
 	// Loop over all weapon slots starting at our current selection's slot
 	// and our current selection's position. Try to find the previous active position
 	// for this weapon's slot. If you don't find anything jump to the previous slot
 	// at position MAX_WEAPON_POSITIONS. If nothing is found with this then we are at the end
 	// and have to grab the first weapon!
-	for ( ; i >= 0; i--, j = MAX_WEAPON_POSITIONS-1 )
+	for ( ; i >= 0; i--, j = MAX_WEAPON_POSITIONS-1, k = MAX_WEAPON_SUBTYPES-1 )
 	{
-		pPrevWeapon = GetPrevActivePos(i, j);
+		pPrevWeapon = GetPrevActivePos(i, j, k);
 		if ( pPrevWeapon )
 			break;
 	}
@@ -277,9 +289,9 @@ void CHudWeaponSelection::CycleToPrevWeapon( void )
 	// We didn't find a next one so we will return the LAST one!
 	if ( !pPrevWeapon || pPrevWeapon == pCurrWeapon )
 	{
-		for ( i=MAX_WEAPON_SLOTS-1,j=MAX_WEAPON_POSITIONS-1; i >= 0; i-- )
+		for ( i=MAX_WEAPON_SLOTS-1,j=MAX_WEAPON_POSITIONS-1,k=MAX_WEAPON_SUBTYPES-1; i >= 0; i-- )
 		{
-			pPrevWeapon = GetPrevActivePos(i, j);
+			pPrevWeapon = GetPrevActivePos(i, j, k);
 			if ( pPrevWeapon )
 				break;
 		}
@@ -297,12 +309,14 @@ void CHudWeaponSelection::CycleToPrevWeapon( void )
 	pPlayer->EmitSound( "Player.WeaponSelectionMoveSlot" );
 }
 
-C_BaseCombatWeapon *CHudWeaponSelection::GetPrevActivePos( int iSlot, int iSlotPos )
+C_BaseCombatWeapon *CHudWeaponSelection::GetPrevActivePos( int iSlot, int iSlotPos, int iSubType )
 {
 	if ( iSlotPos >= MAX_WEAPON_POSITIONS || iSlot >= MAX_WEAPON_SLOTS )
 		return NULL;
 
 	int iHighestPosition = -1;
+    int iCurrentPosition = iSlotPos * MAX_WEAPON_SUBTYPES + iSubType;
+
 	C_BaseCombatWeapon *pPrevWeapon = NULL;
 
 	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
@@ -317,10 +331,11 @@ C_BaseCombatWeapon *CHudWeaponSelection::GetPrevActivePos( int iSlot, int iSlotP
 
 		if ( CanBeSelectedInHUD( pWeapon ) && pWeapon->GetSlot() == iSlot )
 		{
+            int weaponPos = pWeapon->GetPosition() * MAX_WEAPON_SUBTYPES + pWeapon->GetSubType();
 			// If this weapon is higher in the slot then our previous highest it's the new winner
-			if ( pWeapon->GetPosition() > iHighestPosition && pWeapon->GetPosition() < iSlotPos )
+			if ( weaponPos > iHighestPosition && weaponPos < iCurrentPosition )
 			{
-				iHighestPosition = pWeapon->GetPosition();
+				iHighestPosition = weaponPos;
 				pPrevWeapon = pWeapon;
 			}
 		}
@@ -333,7 +348,7 @@ C_BaseCombatWeapon *CHudWeaponSelection::GetPrevActivePos( int iSlot, int iSlotP
 //-----------------------------------------------------------------------------
 // Purpose: returns the weapon in the specified slot
 //-----------------------------------------------------------------------------
-C_BaseCombatWeapon *CHudWeaponSelection::GetWeaponInSlot( int iSlot, int iSlotPos )
+C_BaseCombatWeapon *CHudWeaponSelection::GetWeaponInSlot( int iSlot, int iSlotPos, int iSubType )
 {
 	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
 	if ( !player )
@@ -346,7 +361,7 @@ C_BaseCombatWeapon *CHudWeaponSelection::GetWeaponInSlot( int iSlot, int iSlotPo
 		if ( pWeapon == NULL )
 			continue;
 
-		if ( pWeapon->GetSlot() == iSlot && pWeapon->GetPosition() == iSlotPos )
+		if ( pWeapon->GetSlot() == iSlot && pWeapon->GetPosition() == iSlotPos && pWeapon->GetSubType() == iSubType )
 			return pWeapon;
 	}
 
@@ -383,27 +398,33 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 
 	// see where we should start selection
 	int iPosition = -1;
+    int iSubtype = -1;
 	C_BaseCombatWeapon *pNextWeapon = NULL;
 	C_BaseCombatWeapon *pActiveWeapon = pPlayer->GetActiveWeapon();
 
-	if ( IsInSelectionMode() && GetSelectedWeapon() && GetSelectedWeapon()->GetSlot() == iSlot )
-		iPosition = GetSelectedWeapon()->GetPosition();
-	else if ( pActiveWeapon && pActiveWeapon->GetSlot() == iSlot )
-		iPosition = pActiveWeapon->GetPosition();
+    if ( IsInSelectionMode() && GetSelectedWeapon() && GetSelectedWeapon()->GetSlot() == iSlot )
+    {
+        iPosition = GetSelectedWeapon()->GetPosition();
+        iSubtype = GetSelectedWeapon()->GetSubType();
+    }
+    else if ( pActiveWeapon && pActiveWeapon->GetSlot() == iSlot )
+    {
+        iPosition = pActiveWeapon->GetPosition();
+        iSubtype = GetSelectedWeapon()->GetSubType();
+    }
 	else if ( cl_ge_hud_uselastbucketitem.GetBool() )
 	{
-		CGEPlayer *pGEPlayer = ToGEPlayer(pPlayer);
-		if ( pGEPlayer )
-			iPosition = pGEPlayer->GetLastUsedWeaponForBucket(iSlot) - 1;
+        iPosition = GetLastUsedSlotForBucket(iSlot);
+        iSubtype = GetLastUsedSubtypeForBucket(iSlot) - 1;
 	}
 
 	// search for the weapon after the current one
-	pNextWeapon = GetNextActivePos( iSlot, iPosition );
+	pNextWeapon = GetNextActivePos( iSlot, iPosition, iSubtype );
 	// make sure it's in the same bucket
 	if ( !pNextWeapon || pNextWeapon->GetSlot() != iSlot )
 	{
 		// just look for any weapon in this slot
-		pNextWeapon = GetNextActivePos(iSlot, -1);
+		pNextWeapon = GetNextActivePos( iSlot, -1, iSubtype );
 	}
 
 	if ( pNextWeapon )
@@ -489,7 +510,9 @@ void CHudWeaponSelection::OnThink( void )
 //-------------------------------------------------------------------------
 void CHudWeaponSelection::Paint()
 {
-	if ( !ShouldDraw() )
+    Assert( MAX_DISPLAYED_WEAPONS < MAX_WEAPONS );
+    
+    if ( !ShouldDraw() )
 		return;
 
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
@@ -519,78 +542,126 @@ void CHudWeaponSelection::Paint()
 
 	int text_y_pad = (m_iBoxTall / 2) - (m_iTextHeight / 2);
 
+    int count_before = 0;
+    int count_after = 0;
+    bool foundSelected = false;
+
+    for (i = MAX_WEAPON_SLOTS; i >= 0; i--)
+    {
+        for (int slotpos = MAX_WEAPON_POSITIONS; slotpos >= 0; slotpos--)
+        {
+            for (int subPos = MAX_WEAPON_SUBTYPES - 1; subPos >= 0; subPos--)
+            {
+                C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos, subPos);
+
+                if (!pWeapon)
+                    continue;
+
+                if (pWeapon == pSelectedWeapon)
+                {
+                    foundSelected = true;
+                }
+                else if (foundSelected)
+                {
+                    count_after++;
+                }
+                else
+                {
+                    count_before++;
+                }
+            }
+        }
+    }
+
+    int total_count = count_before + count_after + 1;
+    int ignore_before = 0;
+
+    if ( total_count > MAX_DISPLAYED_WEAPONS )
+    {
+        ignore_before = clamp(count_before - (MAX_DISPLAYED_WEAPONS / 2), 0, total_count - MAX_DISPLAYED_WEAPONS);
+    }
+
 	for ( i=MAX_WEAPON_SLOTS; i >= 0; i-- )
 	{
 		bool bFirstItem = true; //First bucket item
 		for (int slotpos = MAX_WEAPON_POSITIONS; slotpos >= 0; slotpos--)
 		{
-			if( num >= MAX_WEAPONS )
-				break;
+            for (int subPos = MAX_WEAPON_SUBTYPES - 1; subPos >= 0; subPos--)
+            {
+                if (num >= MAX_DISPLAYED_WEAPONS)
+                    break;
 
-			C_BaseCombatWeapon *pWeapon = GetWeaponInSlot( i, slotpos );
+                C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos, subPos);
 
-			if ( !pWeapon )
-				continue;
+                if (!pWeapon)
+                    continue;
 
-			// The default color of an unselected selectable weapon
-			Color col = m_BoxColor;
+                if (ignore_before > 0)
+                {
+                    ignore_before--;
+                    continue;
+                }
 
-			num++;
+                // The default color of an unselected selectable weapon
+                Color col = m_BoxColor;
 
-			if ( !pWeapon->CanBeSelected() )
-				// Make the box red if we can't select it
-				col = m_UnselectableBoxColor;
+                num++;
 
-			// If this is the selected weapon then make it fully opaque
-			if ( pWeapon == pSelectedWeapon )
-				col[3] = m_flSelectionAlphaOverride;
-			else
-				col[3] = m_flAlphaOverride;
+                if (!pWeapon->CanBeSelected())
+                    // Make the box red if we can't select it
+                    col = m_UnselectableBoxColor;
 
-			if( FirstOfBucket(pWeapon->GetSlot(), pWeapon->GetPosition()) )
-				DrawBox( x, y, m_iBoxWide, m_iBoxTall, col, pWeapon->GetSlot()+1 );
-			else
-				DrawBox( x, y, m_iBoxWide, m_iBoxTall, col );
+                // If this is the selected weapon then make it fully opaque
+                if (pWeapon == pSelectedWeapon)
+                    col[3] = m_flSelectionAlphaOverride;
+                else
+                    col[3] = m_flAlphaOverride;
 
-			// Draw the weapon's print name on the bucket
-			
-            const char *printName = pWeapon->GetPrintName();
+                if (FirstOfBucket(pWeapon->GetSlot(), pWeapon->GetPosition(), pWeapon->GetSubType()))
+                    DrawBox(x, y, m_iBoxWide, m_iBoxTall, col, pWeapon->GetSlot() + 1);
+                else
+                    DrawBox(x, y, m_iBoxWide, m_iBoxTall, col);
 
-            CGEWeapon *pGEWeapon = ToGEWeapon(pWeapon);
-            if (pGEWeapon)
-                printName = pGEWeapon->GetCustomPrintName();
+                // Draw the weapon's print name on the bucket
 
-			wchar_t wszName[MAX_WEAPON_STRING];
-			wchar_t *tempString = g_pVGuiLocalize->Find(printName);
+                const char *printName = pWeapon->GetPrintName();
 
-			if ( tempString )
-				_snwprintf(wszName, MAX_WEAPON_STRING, L"%s", tempString);
-			else
-				g_pVGuiLocalize->ConvertANSIToUnicode(printName, wszName, MAX_WEAPON_STRING);
+                CGEWeapon *pGEWeapon = ToGEWeapon(pWeapon);
+                if (pGEWeapon)
+                    printName = pGEWeapon->GetCustomPrintName();
 
-			if ( !pWeapon->CanBeSelected() )
-			{
-				col = m_UnselTextColor;
-				col[3] = m_flSelectionAlphaOverride;
-				surface()->DrawSetTextColor( col );
-			}
-			else
-			{
-				col = m_TextColor;
-				col[3] = m_flSelectionAlphaOverride;
-				surface()->DrawSetTextColor( col );
-			}
+                wchar_t wszName[MAX_WEAPON_STRING];
+                wchar_t *tempString = g_pVGuiLocalize->Find(printName);
 
-			int tx = x + m_iNumberWidth;
-			int ty = y + text_y_pad;
+                if (tempString)
+                    _snwprintf(wszName, MAX_WEAPON_STRING, L"%s", tempString);
+                else
+                    g_pVGuiLocalize->ConvertANSIToUnicode(printName, wszName, MAX_WEAPON_STRING);
 
-			surface()->DrawSetTextFont( m_hTextFont );
-			surface()->DrawSetTextPos( tx, ty );
-			surface()->DrawPrintText( wszName, wcslen(wszName) );
+                if (!pWeapon->CanBeSelected())
+                {
+                    col = m_UnselTextColor;
+                    col[3] = m_flSelectionAlphaOverride;
+                    surface()->DrawSetTextColor(col);
+                }
+                else
+                {
+                    col = m_TextColor;
+                    col[3] = m_flSelectionAlphaOverride;
+                    surface()->DrawSetTextColor(col);
+                }
 
-			y -= (m_iBoxTall + m_flBoxGap);
-	
-			bFirstItem = false;
+                int tx = x + m_iNumberWidth;
+                int ty = y + text_y_pad;
+
+                surface()->DrawSetTextFont(m_hTextFont);
+                surface()->DrawSetTextPos(tx, ty);
+                surface()->DrawPrintText(wszName, wcslen(wszName));
+
+                y -= (m_iBoxTall + m_flBoxGap);
+
+                bFirstItem = false;
+            }
 		}
 	}
 }
@@ -687,29 +758,26 @@ int CHudWeaponSelection::GetSelectionNumber( int iSlot, int iSlotPos )
 //-----------------------------------------------------------------------------
 // Purpose: return the selection number
 //-----------------------------------------------------------------------------
-bool CHudWeaponSelection::FirstOfBucket( int iSlot, int iSlotPos )
+bool CHudWeaponSelection::FirstOfBucket( int iSlot, int iSlotPos, int iSubType )
 {
-	C_BaseCombatWeapon *pGetWeapon = GetWeaponInSlot( iSlot, iSlotPos );
+	C_BaseCombatWeapon *pGetWeapon = GetWeaponInSlot( iSlot, iSlotPos, iSubType );
 
 	if( !pGetWeapon )
 		return false;
 
-	for ( int i=0; i < MAX_WEAPON_SLOTS; i++ )
+	for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
 	{
-		for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
-		{
-			C_BaseCombatWeapon *pCurWeapon = GetWeaponInSlot( i, slotpos );
-			if( !pCurWeapon )
-					continue;
+        for ( int subtype = 0; subtype < MAX_WEAPON_SUBTYPES; subtype++ )
+        {
+            C_BaseCombatWeapon *pCurWeapon = GetWeaponInSlot( iSlot, slotpos, subtype );
+		    if( !pCurWeapon )
+				    continue;
 
-			if( iSlot == i )
-			{
-				if( pCurWeapon == pGetWeapon )
-					return true;
-				else
-					return false;
-			}
-		}
+		    if( pCurWeapon == pGetWeapon )
+			    return true;
+		    else
+			    return false;
+        }
 	}
 	return false;
 }
@@ -726,29 +794,30 @@ void CHudWeaponSelection::FastWeaponSwitch( int iWeaponSlot )
 
 	// see where we should start selection
 	int iPosition = -1;
+    int iSubtype = -1;
 	C_BaseCombatWeapon *pActiveWeapon = pPlayer->GetActiveWeapon();
 
 	if ( pActiveWeapon && pActiveWeapon->GetSlot() == iWeaponSlot )
 	{
 		// start after this weapon
 		iPosition = pActiveWeapon->GetPosition();
+        iSubtype = pActiveWeapon->GetSubType();
 	}
 	else if ( cl_ge_hud_uselastbucketitem.GetBool() )
 	{
-		CGEPlayer *pGEPlayer = ToGEPlayer(pPlayer);
-		if ( pGEPlayer )
-			iPosition = pGEPlayer->GetLastUsedWeaponForBucket(iWeaponSlot) - 1;
+        iPosition = GetLastUsedSlotForBucket(iWeaponSlot);
+        iSubtype = GetLastUsedSubtypeForBucket(iWeaponSlot) - 1;
 	}
 
 	C_BaseCombatWeapon *pNextWeapon = NULL;
 
 	// search for the weapon after the current one
-	pNextWeapon = GetNextActivePos( iWeaponSlot, iPosition );
+	pNextWeapon = GetNextActivePos( iWeaponSlot, iPosition, iSubtype );
 	// make sure it's in the same bucket
 	if ( !pNextWeapon || pNextWeapon->GetSlot() != iWeaponSlot )
 	{
 		// just look for any weapon in this slot
-		pNextWeapon = GetNextActivePos(iWeaponSlot, -1);
+		pNextWeapon = GetNextActivePos( iWeaponSlot, -1, iSubtype );
 	}
 
 	// see if we found a weapon that's different from the current and in the selected slot

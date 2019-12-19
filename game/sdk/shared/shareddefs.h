@@ -101,6 +101,7 @@ public:
 
 #ifdef GE_DLL
 	#define MAX_WEAPON_SLOTS		7   // Incorporates token slot!
+    #define MAX_WEAPON_SUBTYPES		12
 #else
 	#define MAX_WEAPON_SLOTS		6	// hud item selection slots
 #endif
