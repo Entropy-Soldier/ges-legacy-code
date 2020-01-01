@@ -809,6 +809,55 @@ CBaseEntity* pyTrace( Vector start, Vector end, int opts, CBaseEntity *ignore = 
 	return NULL;
 }
 
+struct GEPyTraceResult
+{
+	CBaseEntity *entity;
+	Vector endpos;
+	float fraction;
+	Vector normal;
+
+	short surfaceProps;
+	bool startSolid;
+	bool allSolid;
+	
+	int contents;
+	int hitbox;
+	int hitgroup;
+
+	bool didHit;
+	bool didHitWorld;
+	bool didHitEntity;
+
+	CBaseEntity *GetEntity() { return entity; };
+};
+
+GEPyTraceResult pyAdvancedTrace(Vector start, Vector end, unsigned long mask = 0xFFFFFFFF, int collision_group = COLLISION_GROUP_NONE, CBaseEntity *ignore = NULL)
+{
+	trace_t tr;
+
+	UTIL_TraceLine(start, end, mask, ignore, collision_group, &tr);
+
+	// Return the important info in a more consise format.
+	return {
+		tr.m_pEnt,
+		tr.endpos,
+		tr.fraction,
+		tr.plane.normal,
+
+		tr.surface.surfaceProps,
+		tr.startsolid,
+		tr.allsolid,
+
+		tr.contents,
+		tr.hitbox,
+		tr.hitgroup,
+
+		tr.DidHit(),
+		tr.DidHitWorld(),
+		tr.DidHitNonWorldEntity(),
+	};
+}
+
 Vector pyVectorMA( Vector start, Vector direction, float dist )
 {
 	Vector end;
@@ -927,6 +976,7 @@ public:
 };
 
 BOOST_PYTHON_FUNCTION_OVERLOADS(Trace_overloads, pyTrace, 3, 4);
+BOOST_PYTHON_FUNCTION_OVERLOADS(AdvancedTrace_overloads, pyAdvancedTrace, 2, 5);
 BOOST_PYTHON_FUNCTION_OVERLOADS(ClosestSpawner_overloads, pyGetNearestSpawnerOriginToPoint, 2, 3);
 
 BOOST_PYTHON_MODULE(GEUtil)
@@ -1000,7 +1050,8 @@ BOOST_PYTHON_MODULE(GEUtil)
 		.value("CAPAREA", TRACE_CAPAREA);
 
 	def("Trace", pyTrace, return_value_policy<reference_existing_object>(), Trace_overloads());
-	
+	def("AdvancedTrace", pyAdvancedTrace, AdvancedTrace_overloads());
+
 	def("AddDownloadable", pyAddDownloadable);
 	def("PrecacheSound", CBaseEntity::PrecacheScriptSound);
 	def("PrecacheModel", CBaseEntity::PrecacheModel);
@@ -1104,4 +1155,19 @@ BOOST_PYTHON_MODULE(GEUtil)
 		.def("SoundTypeNoContext", &CSound::SoundTypeNoContext)
 		.def("Volume", &CSound::Volume)
 		.def("OccludedVolume", &CSound::OccludedVolume);
+
+	class_<GEPyTraceResult>("TraceResult")
+		.def("GetEntity", &GEPyTraceResult::GetEntity, return_value_policy<reference_existing_object>())
+		.def_readonly("endpos", &GEPyTraceResult::endpos)
+		.def_readonly("fraction", &GEPyTraceResult::fraction)
+		.def_readonly("normal", &GEPyTraceResult::normal)
+		.def_readonly("surfaceProps", &GEPyTraceResult::surfaceProps)
+		.def_readonly("startSolid", &GEPyTraceResult::startSolid)
+		.def_readonly("allSolid", &GEPyTraceResult::allSolid)
+		.def_readonly("contents", &GEPyTraceResult::contents)
+		.def_readonly("hitbox", &GEPyTraceResult::hitbox)
+		.def_readonly("hitgroup", &GEPyTraceResult::hitgroup)
+		.def_readonly("didHit", &GEPyTraceResult::didHit)
+		.def_readonly("didHitWorld", &GEPyTraceResult::didHitWorld)
+		.def_readonly("didHitEntity", &GEPyTraceResult::didHitEntity);
 }
