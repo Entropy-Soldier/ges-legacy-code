@@ -495,6 +495,7 @@ int CGEPlayer::OnTakeDamage( const CTakeDamageInfo &inputinfo )
 
 	// Scale the damage before doing invuln related stuff.
 	info.ScaleDamage(pGEAttacker->GetDamageMultiplier());
+	info.SetDamageCap(inputinfo.GetDamageCap() * pGEAttacker->GetDamageMultiplier());
 
     
     //---------------
