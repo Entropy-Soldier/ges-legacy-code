@@ -84,6 +84,8 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
     RecvPropInt( RECVINFO( m_iWeaponSoundPitchOffset ) ),
     RecvPropFloat( RECVINFO( m_flWeaponSoundVolumeOffset ) ),
 
+	RecvPropInt( RECVINFO( m_iWeaponSwitchWeightOffset ) ),
+
     RecvPropString( RECVINFO( m_sPrintNameCustom ) ),
 
 	RecvPropBool( RECVINFO(m_bEnableGlow) ),
@@ -119,6 +121,8 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
 
     SendPropInt( SENDINFO( m_iWeaponSoundPitchOffset ) ),
     SendPropFloat( SENDINFO( m_flWeaponSoundVolumeOffset ) ),
+
+	SendPropInt(SENDINFO( m_iWeaponSwitchWeightOffset )),
 
     SendPropString( SENDINFO( m_sPrintNameCustom ) ),
 
@@ -167,6 +171,8 @@ BEGIN_DATADESC( CGEWeapon )
 
     DEFINE_FIELD( m_iWeaponSoundPitchOffset,	FIELD_INTEGER ),
     DEFINE_FIELD( m_flWeaponSoundVolumeOffset,	FIELD_FLOAT ),
+
+	DEFINE_FIELD( m_iWeaponSwitchWeightOffset, FIELD_INTEGER ),
 
 	DEFINE_THINKFUNC( OnReloadOffscreen ),
 END_DATADESC()
@@ -227,6 +233,8 @@ CGEWeapon::CGEWeapon()
 
     m_iWeaponSoundPitchOffset = 0;
     m_flWeaponSoundVolumeOffset = 0.0f;
+
+	m_iWeaponSwitchWeightOffset = 0;
 
     m_sPrintNameCustom.GetForModify()[0] = '\0';
 

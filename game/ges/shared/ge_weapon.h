@@ -181,6 +181,8 @@ public:
     virtual int     GetWeaponSoundPitchShift() { return m_iWeaponSoundPitchOffset; }
     virtual float   GetWeaponSoundVolumeShift() { return m_flWeaponSoundVolumeOffset; }
 
+	virtual int		GetWeight(bool modded = true) const { return GetGEWpnData().iWeight + (modded ? m_iWeaponSwitchWeightOffset : 0.0f); }
+
 	virtual bool	CanBeSilenced( void ) { return false; };
 	virtual bool	IsSilenced() { return m_bSilenced; };
 	virtual bool	IsShotgun() { return false; };
@@ -255,6 +257,8 @@ public:
 
     GEWeaponStatModVar( int, m_i, WeaponSoundPitchOffset );
     GEWeaponStatModVar( float, m_fl, WeaponSoundVolumeOffset );
+
+	GEWeaponStatModVar(int, m_i, WeaponSwitchWeightOffset );
 
     // Returns the custom print name if set, otherwise returns the standard one.
     const char *GetCustomPrintName(void);

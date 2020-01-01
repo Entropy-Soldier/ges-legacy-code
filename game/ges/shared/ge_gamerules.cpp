@@ -378,7 +378,7 @@ bool CGERules::ShouldForcePickup( CBasePlayer *pPlayer, CBaseEntity *pItem )
 	
 bool CGERules::FShouldSwitchWeapon( CBasePlayer *pPlayer, CBaseCombatWeapon *pWeapon )
 {		
-	if ( pPlayer->GetActiveWeapon() && pPlayer->IsNetClient() && !(pPlayer->GetFlags() & FL_FAKECLIENT) )
+	if ( pWeapon && pPlayer->GetActiveWeapon() && pPlayer->IsNetClient() && !(pPlayer->GetFlags() & FL_FAKECLIENT) )
 	{
 		// Player has an active item, so let's check cl_autowepswitch.
 		const char *cl_autowepswitch = engine->GetClientConVarValue( engine->IndexOfEdict( pPlayer->edict() ), "cl_autowepswitch" );
@@ -390,23 +390,13 @@ bool CGERules::FShouldSwitchWeapon( CBasePlayer *pPlayer, CBaseCombatWeapon *pWe
 			return false;
 
 		CGEWeapon *myweap = ToGEWeapon(pPlayer->GetActiveWeapon());
-		int myweapid = myweap->GetWeaponID();
-		int weapid	 = ToGEWeapon(pWeapon)->GetWeaponID();
+
+		// Update the accuracy penalty so our check is accurate.
+		myweap->UpdateAccPenalty();
 
 		// Don't switch if we fired our weapon recently.  
 		// Might be a dinky way of doing this, last shot fired time may be more intuitive but this will scale to weapon fire rates at least.
-		if (myweap->GetAccPenalty() > 0 && GetStrengthOfWeapon(weapid) < 8) // Top level weapons get to ignore this by popular request.
-			return false;
-		
-		// Never switch if we have explosives out
-		if ( myweapid == WEAPON_GRENADE_LAUNCHER || myweapid == WEAPON_ROCKET_LAUNCHER || myweapid == WEAPON_GRENADE ||
-			 myweapid == WEAPON_REMOTEMINE || myweapid == WEAPON_PROXIMITYMINE || myweapid == WEAPON_TIMEDMINE )
-		{
-			return false;
-		} 
-		
-		// Also never automatically switch to esoteric explosives.
-		if (weapid == WEAPON_GRENADE || weapid == WEAPON_REMOTEMINE || weapid == WEAPON_PROXIMITYMINE || weapid == WEAPON_TIMEDMINE)
+		if ((myweap->GetAccPenalty() > 0) && (pWeapon->GetWeight() <= (myweap->GetWeight() + 4))) // Switch anyway if the difference in weapon strength is big enough to warrant the switch time.
 		{
 			return false;
 		}

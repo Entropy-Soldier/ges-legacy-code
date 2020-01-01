@@ -301,6 +301,7 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMinSpreadVec_overloads, CGEWeapon::Get
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetMaxSpreadVec_overloads, CGEWeapon::GetMaxSpreadVec, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetAimBonus_overloads, CGEWeapon::GetAimBonus, 0, 1);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetJumpPenalty_overloads, CGEWeapon::GetJumpPenalty, 0, 1);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(GetSwitchWeight_overloads, CGEWeapon::GetWeight, 0, 1);
 
 BOOST_PYTHON_FUNCTION_OVERLOADS(GetWeaponSlot_overloads, pyGetWeaponSlot, 1, 2);
 
@@ -323,7 +324,7 @@ BOOST_PYTHON_MODULE(GEWeapon)
 
 	// The weapon class definition
     class_<CGEWeapon, bases<CBaseCombatWeapon>, boost::noncopyable>("CGEWeapon", no_init)
-        .def("GetWeight", &CGEWeapon::GetWeight)
+		.def("GetWeight", &CGEWeapon::GetWeight, GetSwitchWeight_overloads())
         .def("GetPrintName", &CGEWeapon::GetPrintName)
         .def("GetSpawnerSlot", &CGEWeapon::GetWeaponSpawnerSlot)
         .def("IsMeleeWeapon", &CGEWeapon::IsMeleeWeapon)
@@ -409,6 +410,8 @@ BOOST_PYTHON_MODULE(GEWeapon)
 		.def("SetWeaponSoundPitchOffset", &CGEWeapon::SetWeaponSoundPitchOffset)
         .def("GetWeaponSoundVolumeOffset", &CGEWeapon::GetWeaponSoundVolumeOffset)
 		.def("SetWeaponSoundVolumeOffset", &CGEWeapon::SetWeaponSoundVolumeOffset)
+		.def("GetWeaponSwitchWeightOffset", &CGEWeapon::GetWeaponSwitchWeightOffset)
+		.def("SetWeaponSwitchWeightOffset", &CGEWeapon::SetWeaponSwitchWeightOffset)
         .def("GetCustomPrintName", &CGEWeapon::GetCustomPrintName)
 		.def("SetCustomPrintName", &CGEWeapon::SetCustomPrintName)
 

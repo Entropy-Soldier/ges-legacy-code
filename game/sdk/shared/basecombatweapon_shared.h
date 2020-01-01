@@ -315,7 +315,11 @@ public:
 	virtual void			SetShouldGiveDefaultClip( bool state ) { m_bGiveDefaultClip = state; }
 	virtual bool			ShouldGiveDefaultClip() { return m_bGiveDefaultClip; }
 #endif
+#ifdef GE_DLL
+	virtual int				GetWeight( bool modded = true ) const;
+#else
 	virtual int				GetWeight( void ) const;
+#endif
 	virtual bool			AllowsAutoSwitchTo( void ) const;
 	virtual bool			AllowsAutoSwitchFrom( void ) const;
 	virtual int				GetWeaponFlags( void ) const;

@@ -425,7 +425,11 @@ bool CBaseCombatWeapon::UsesClipsForAmmo2( void ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+#ifdef GE_DLL
+int CBaseCombatWeapon::GetWeight( bool modded /*== true*/ ) const
+#else
 int CBaseCombatWeapon::GetWeight( void ) const
+#endif
 {
 	return GetWpnData().iWeight;
 }
