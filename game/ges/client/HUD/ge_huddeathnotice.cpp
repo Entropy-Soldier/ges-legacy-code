@@ -303,6 +303,11 @@ void CGEHudDeathNotice::FireGameEvent( IGameEvent * event )
 			Q_snprintf(szConMsg, sizeof(szConMsg), "%s drove %s to suicide", m_DeathMsgInfo.Killer.szName, m_DeathMsgInfo.Victim.szName);
 			m_DeathMsgInfo.wszFormat = g_pVGuiLocalize->Find("#GES_Death_Killed_Suicide");
 		}
+		else if (!strcmp(m_DeathMsgInfo.killedWith, "landing"))
+		{
+			Q_snprintf(szConMsg, sizeof(szConMsg), "%s used %s to break their fall", m_DeathMsgInfo.Killer.szName, m_DeathMsgInfo.Victim.szName);
+			m_DeathMsgInfo.wszFormat = g_pVGuiLocalize->Find("#GES_Death_Killed_Crushed");
+		}
 		else if(damagetype & DMG_BLAST) // Then try to get specific damagetype death messages first, starting with explosives since they are the most common.
 		{
 			Q_snprintf(szConMsg, sizeof(szConMsg), "%s got %s to blow themselves up", m_DeathMsgInfo.Killer.szName, m_DeathMsgInfo.Victim.szName);

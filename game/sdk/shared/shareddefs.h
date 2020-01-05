@@ -391,7 +391,11 @@ enum PLAYER_ANIM
 // TODO: keep this up to date so all the mod-specific flags don't overlap anything.
 #define DMG_LASTGENERICFLAG	DMG_BUCKSHOT
 
-
+#ifdef GE_DLL
+// Record of repurposed damage types
+#define DMG_TRANSFERKILL DMG_NERVEGAS  // Used for transfered kills in the event someone died to a trigger after being hurt by another player.
+#define DMG_TRANSFERFALL DMG_SONIC	// Used for damage dealt from transfered fall damage, when a player lands on another.
+#endif
 
 // settings for m_takedamage
 #define	DAMAGE_NO				0

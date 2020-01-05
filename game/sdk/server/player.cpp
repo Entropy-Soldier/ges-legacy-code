@@ -1142,7 +1142,7 @@ int CBasePlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		  flHealthDmg = 0;
 
 	// armor doesn't protect against fall or drown damage!
-	if ( m_ArmorValue && !(info.GetDamageType() & (DMG_FALL | DMG_DROWN | DMG_POISON | DMG_RADIATION)) )
+	if ( m_ArmorValue && !(info.GetDamageType() & (DMG_FALL | DMG_TRANSFERFALL | DMG_DROWN | DMG_POISON | DMG_RADIATION)) )
 	{
 		float flDmg = info.GetDamage();
 		if( flDmg < 1.0 )

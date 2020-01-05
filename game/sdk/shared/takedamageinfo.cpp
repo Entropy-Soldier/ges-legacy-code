@@ -55,7 +55,7 @@ void CTakeDamageInfo::Init( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBa
 	m_iDamageCustom = iCustomDamage;
 
 #ifdef GE_DLL
-    m_iDamageCap = INT_MAX; // Can do unlimited damage by default.
+    m_iDamageCap = SHRT_MAX; // Can do unlimited damage by default.
 
 	m_iDamageStats = 0;
 #endif

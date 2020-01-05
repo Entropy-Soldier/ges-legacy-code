@@ -1523,7 +1523,7 @@ void CGEMPRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &info
 		modinfo.SetAttacker(pLastAttacker);
 		modinfo.SetWeapon(NULL); // Set the weapon to weapon_none so transfered suicides with a given weapon don't just count as kills with that weapon.
 		if (!trapInflictor)
-			modinfo.AddDamageType(DMG_NERVEGAS); //Add the NerveGas damage type as a flag to tell other parts of the code that this was a transfered kill.
+			modinfo.AddDamageType(DMG_TRANSFERKILL); //Add the NerveGas damage type as a flag to tell other parts of the code that this was a transfered kill.
 	}
 
 	BaseClass::PlayerKilled( pVictim, modinfo );
@@ -2553,11 +2553,20 @@ void CGEMPRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &info 
 	{
 		if (!Q_stricmp( killer_weapon_name, "player" ))
 		{
-			// Detects killbinds and displays a special message for them
-			dmgType = DMG_GENERIC;
-			killer_weapon_name = "self";
+			if (dmgType & DMG_TRANSFERFALL)
+			{
+				// Detects killbinds and displays a special message for them
+				dmgType = DMG_GENERIC;
+				killer_weapon_name = "landing";
+			}
+			else
+			{
+				// Detects killbinds and displays a special message for them
+				dmgType = DMG_GENERIC;
+				killer_weapon_name = "self";
+			}
 		}
-		else if (dmgType & DMG_NERVEGAS) // Make sure we're actually looking for a weapon first, if this flag is set we want to pretend there isn't one.
+		else if (dmgType & DMG_TRANSFERKILL) // Make sure we're actually looking for a weapon first, if this flag is set we want to pretend there isn't one.
 		{
 			killer_weapon_name = default_killer;
 		}

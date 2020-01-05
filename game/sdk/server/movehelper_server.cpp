@@ -352,6 +352,23 @@ bool CMoveHelperServer::PlayerFallingDamage( void )
 	float flFallDamage = g_pGameRules->FlPlayerFallDamage( m_pHostPlayer );	
 	if ( flFallDamage > 0 )
 	{
+#ifdef GE_DLL
+		CBaseEntity *groundEnt = m_pHostPlayer->GetGroundEntity();
+		if (groundEnt && (groundEnt->IsPlayer() || groundEnt->IsNPC()))
+		{
+			Vector targetcenter = groundEnt->GetAbsOrigin() + Vector(0, 0, 38);
+			Vector impactforce = targetcenter - m_pHostPlayer->GetAbsOrigin();
+			VectorNormalize(impactforce);
+
+			impactforce *= flFallDamage*2;
+
+			CTakeDamageInfo tackleinfo(m_pHostPlayer, m_pHostPlayer, impactforce, m_pHostPlayer->GetAbsOrigin(), flFallDamage + 80, DMG_TRANSFERFALL); // Do a bit of extra damage so we always get a nice reward.
+			groundEnt->TakeDamage(tackleinfo);
+
+			flFallDamage = max(flFallDamage - 120, 20); // Other player softened our landing.
+		}
+#endif
+
 		m_pHostPlayer->TakeDamage( CTakeDamageInfo( GetContainingEntity(INDEXENT(0)), GetContainingEntity(INDEXENT(0)), flFallDamage, DMG_FALL ) ); 
 		// GE_DLL
 		StartSound( m_pHostPlayer->GetAbsOrigin(), "GEPlayer.FallDamage" );

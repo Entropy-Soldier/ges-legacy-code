@@ -13,6 +13,7 @@
 #include "baseentity.h"
 #include "ge_player.h"
 #include "ehandle.h"
+#include "eventqueue.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -49,6 +50,106 @@ bp::list pyGetEntitiesInBox( const char *classname, Vector origin, Vector mins, 
 	}
 
 	return ents;
+}
+
+void pyFireEntityInput(const char *target, const char *targetInput, bp::object value, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller)
+{
+	bp::extract<char*> to_string(value);
+	bp::extract<int> to_int(value);
+	bp::extract<float> to_float(value);
+	bp::extract<bool> to_bool(value);
+
+	bp::extract<CBaseEntity*> to_ent(value);
+	bp::extract<color32> to_color(value);
+	bp::extract<Vector> to_vector(value);
+
+	variant_t valueVariant;
+
+	if (to_string.check())
+	{
+		valueVariant.SetString(AllocPooledString(to_string()));
+	}
+	else if (to_int.check())
+	{
+		valueVariant.SetInt(to_int());
+	}
+	else if (to_float.check())
+	{
+		valueVariant.SetFloat(to_float());
+	}
+	else if (to_bool.check())
+	{
+		valueVariant.SetBool(to_bool());
+	}
+	else if (to_ent.check())
+	{
+		valueVariant.SetEntity(to_ent());
+	}
+	else if (to_color.check())
+	{
+		valueVariant.SetColor32(to_color());
+	}
+	else if (to_vector.check())
+	{
+		valueVariant.SetVector3D(to_vector());
+	}
+
+	g_EventQueue.AddEvent(target, targetInput, valueVariant, fireDelay, pActivator, pCaller);
+}
+
+void pyAcceptEntityInput(CBaseEntity *pEntity, const char *targetInput, bp::object value, CBaseEntity *pActivator, CBaseEntity *pCaller)
+{
+	bp::extract<char*> to_string(value);
+	bp::extract<int> to_int(value);
+	bp::extract<float> to_float(value);
+	bp::extract<bool> to_bool(value);
+
+	bp::extract<CBaseEntity*> to_ent(value);
+	bp::extract<color32> to_color(value);
+	bp::extract<Vector> to_vector(value);
+
+	variant_t valueVariant;
+
+	if (to_string.check())
+	{
+		valueVariant.SetString(AllocPooledString(to_string()));
+	}
+	else if (to_int.check())
+	{
+		valueVariant.SetInt(to_int());
+	}
+	else if (to_float.check())
+	{
+		valueVariant.SetFloat(to_float());
+	}
+	else if (to_bool.check())
+	{
+		valueVariant.SetBool(to_bool());
+	}
+	else if (to_ent.check())
+	{
+		valueVariant.SetEntity(to_ent());
+	}
+	else if (to_color.check())
+	{
+		valueVariant.SetColor32(to_color());
+	}
+	else if (to_vector.check())
+	{
+		valueVariant.SetVector3D(to_vector());
+	}
+
+	pEntity->AcceptInput(targetInput, pActivator, pCaller, valueVariant, 0);
+}
+
+CBaseEntity *pyFindEntityByName(const char *szName, CBaseEntity *pStartEntity, CBaseEntity *pSearchingEntity, CBaseEntity *pActivator, CBaseEntity *pCaller)
+{
+	return gEntList.FindEntityByName(pStartEntity, szName, pSearchingEntity, pActivator, pCaller);
+}
+
+CBaseEntity *pyFindEntityByClassname(const char *szName, CBaseEntity *pStartEntity)
+{
+	return gEntList.FindEntityByClassname(pStartEntity, szName);
 }
 
 // The follow funcs are for simple virtualization
@@ -163,6 +264,11 @@ BOOST_PYTHON_MODULE(GEEntity)
 
 	def("GetEntitiesInBox", pyGetEntitiesInBox);
 
+	def("FireEntityInput", pyFireEntityInput);
+
+	def("FindEntityByName", pyFindEntityByName, return_value_policy<reference_existing_object>());
+	def("FindEntityByClassname", pyFindEntityByClassname, return_value_policy<reference_existing_object>());
+
 	class_< EHANDLE >("EntityHandle", init<CBaseEntity*>())
 		.def("__str__", EHANDLE_str)
 		.def("__eq__", CBaseEntity_eq)
@@ -180,6 +286,9 @@ BOOST_PYTHON_MODULE(GEEntity)
 		.def("GetClassname", &CBaseEntity::GetClassname)
 		.def("SetTargetName", pySetTargetName)
 		.def("GetTargetName", pyGetTargetName)
+
+		.def("FireInput", pyAcceptEntityInput)
+
 		.def("SetModel", &CBaseEntity::SetModel)
 		.def("IsAlive", &CBaseEntity::IsAlive)
         .def("GetGroundEntity", pyGetGroundEntity, return_value_policy<reference_existing_object>())

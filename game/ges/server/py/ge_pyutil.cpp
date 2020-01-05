@@ -20,7 +20,6 @@
 #include "gemp_player.h"
 #include "ge_gameplay.h"
 #include "ge_tokenmanager.h"
-#include "eventqueue.h"
 
 #include "particle_parse.h"
 #include "networkstringtable_gamedll.h"
@@ -399,6 +398,62 @@ Vector pyGetNearestSpawnerOriginToPoint( Vector point, int spawnerFlags, int tea
     }
 }
 
+struct SpawnerDistanceAssociation
+{
+	EHANDLE spawner;
+	vec_t distSqr;
+};
+
+inline int __cdecl SortBySpawnerDistance(const SpawnerDistanceAssociation *a, const SpawnerDistanceAssociation *b)
+{
+	if (a->distSqr == b->distSqr)
+	{
+		return 0;
+	}
+
+	return (a->distSqr < b->distSqr) ? -1 : 1;
+}
+
+bp::list pyGetSpawnersSortedByDistanceToPoint(Vector point, int spawnerFlags, int team = -1, int pvsPenalty = 1000)
+{
+	bp::list spawnerList;
+
+	if (!GEMPRules())
+	{
+		return spawnerList;
+	}
+
+	CUtlVector<EHANDLE> validSpawners;
+	AppendAllRelevantSpawnersToVector(spawnerFlags, team, validSpawners);
+
+	CUtlVector<SpawnerDistanceAssociation> spawnerDistances;
+
+	byte PVS[MAX_MAP_CLUSTERS / 8];
+	int clusterIndex = engine->GetClusterForOrigin(point);
+	engine->GetPVSForCluster(clusterIndex, sizeof(PVS), PVS);
+
+	for (int i = 0; i < validSpawners.Count(); i++)
+	{
+		vec_t distance = validSpawners[i]->GetAbsOrigin().DistToSqr(point);
+
+		if (!engine->CheckOriginInPVS(validSpawners[i]->GetAbsOrigin(), PVS, sizeof(PVS)))
+		{
+			distance += pvsPenalty;
+		}
+
+		spawnerDistances.AddToTail({ validSpawners[i], distance });
+	}
+
+	spawnerDistances.Sort(SortBySpawnerDistance);
+
+	for (int i = 0; i < spawnerDistances.Count(); i++)
+	{
+		spawnerList.append(spawnerDistances[i].spawner->GetAbsOrigin());
+	}
+
+	return spawnerList;
+}
+
 void pyPlaySoundTo( bp::object dest, const char* soundname, bool bDimMusic = false )
 {
 	if ( !soundname )
@@ -706,51 +761,6 @@ void pyClientCmd( CGEPlayer *pPlayer, std::string cmd )
 	engine->ClientCommand( pPlayer->edict(), cmd.c_str() );
 }
 
-void pyFireEntityInput(const char *target, const char *targetInput, bp::object value, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller)
-{
-	bp::extract<char*> to_string( value );
-	bp::extract<int> to_int( value );
-    bp::extract<float> to_float( value );
-    bp::extract<bool> to_bool( value );
-
-    bp::extract<CBaseEntity*> to_ent( value );
-    bp::extract<color32> to_color( value );
-    bp::extract<Vector> to_vector( value );
-
-	variant_t valueVariant;
-
-    if (to_string.check())
-    {
-        valueVariant.SetString(AllocPooledString(to_string()));
-    }
-    else if (to_int.check())
-    {
-        valueVariant.SetInt(to_int());
-    }
-    else if (to_float.check())
-    {
-        valueVariant.SetFloat(to_float());
-    }
-    else if (to_bool.check())
-    {
-        valueVariant.SetBool(to_bool());
-    }
-    else if (to_ent.check())
-    {
-        valueVariant.SetEntity(to_ent());
-    }
-    else if (to_color.check())
-    {
-        valueVariant.SetColor32(to_color());
-    }
-    else if (to_vector.check())
-    {
-        valueVariant.SetVector3D(to_vector());
-    }
-
-    g_EventQueue.AddEvent( target, targetInput, valueVariant, fireDelay, pActivator, pCaller);
-}
-
 bool pyIsDedicatedServer()
 {
 	return engine->IsDedicatedServer();
@@ -978,6 +988,7 @@ public:
 BOOST_PYTHON_FUNCTION_OVERLOADS(Trace_overloads, pyTrace, 3, 4);
 BOOST_PYTHON_FUNCTION_OVERLOADS(AdvancedTrace_overloads, pyAdvancedTrace, 2, 5);
 BOOST_PYTHON_FUNCTION_OVERLOADS(ClosestSpawner_overloads, pyGetNearestSpawnerOriginToPoint, 2, 3);
+BOOST_PYTHON_FUNCTION_OVERLOADS(ClosestSpawnerList_overloads, pyGetSpawnersSortedByDistanceToPoint, 2, 4);
 
 BOOST_PYTHON_MODULE(GEUtil)
 {
@@ -1013,8 +1024,6 @@ BOOST_PYTHON_MODULE(GEUtil)
 	def("ServerCommand", pyServerCmd);
 	def("ClientCommand", pyClientCmd);
 
-    def("FireEntityInput", &pyFireEntityInput, ("target", "input", arg("value")="", arg("delay")=0.0f, arg("activator")=NULL, arg("caller")=NULL));
-
 	def("IsDedicatedServer", pyIsDedicatedServer);
 	def("IsLAN", pyIsLAN);
 
@@ -1022,6 +1031,7 @@ BOOST_PYTHON_MODULE(GEUtil)
 	def("EmitGameplayEvent", pyEmitGameplayEvent, ("name", arg("value1")="", arg("value2")="", arg("value3")="", arg("value4")="", arg("send_to_clients")=false));
 	
     def("GetNearestSpawnerOriginToPoint", pyGetNearestSpawnerOriginToPoint, ClosestSpawner_overloads());
+	def("GetSpawnerOriginsSortedByDistanceToPoint", pyGetSpawnersSortedByDistanceToPoint, ClosestSpawnerList_overloads());
 
 	// Temporary Entities
 	enum_< TEMPENT_TYPE >("TempEnt")
