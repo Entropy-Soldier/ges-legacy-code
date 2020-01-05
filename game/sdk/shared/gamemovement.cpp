@@ -4132,9 +4132,25 @@ void CGameMovement::CategorizePosition( void )
 	// NOTE: 145 is a jump.
 #define NON_JUMP_VELOCITY 140.0f
 
+#ifdef GE_DLL
+	float verticalSpeedThresh = 275.0f; // Max vertical movespeed up a 45 degree slope, plus a little wiggle room.
+
+	// Scale up this threshold based on the player's movespeed and strafe run multipliers.
+	CGEPlayer *pGEPlayer = ToGEPlayer(player);
+
+	if (pGEPlayer)
+	{
+		verticalSpeedThresh = max(player->MaxSpeed() * max(pGEPlayer->GetStrafeRunMult(), 1.0f) + 10.0f, 100.0f); // Max vertical movespeed up a 45 degree slope, plus a little wiggle room.
+	}
+#endif
+
 	float zvel = mv->m_vecVelocity[2];
 	bool bMovingUp = zvel > 0.0f;
+#ifdef GE_DLL
+	bool bMovingUpRapidly = zvel > verticalSpeedThresh;
+#else
 	bool bMovingUpRapidly = zvel > NON_JUMP_VELOCITY;
+#endif
 
 	float flGroundEntityVelZ = 0.0f;
 	if ( bMovingUpRapidly )
@@ -4149,7 +4165,11 @@ void CGameMovement::CategorizePosition( void )
 		if ( ground )
 		{
 			flGroundEntityVelZ = ground->GetAbsVelocity().z;
+#ifdef GE_DLL
+			bMovingUpRapidly = (zvel - flGroundEntityVelZ) > verticalSpeedThresh;
+#else
 			bMovingUpRapidly = ( zvel - flGroundEntityVelZ ) > NON_JUMP_VELOCITY;
+#endif
 		}
 	}
 
@@ -4995,10 +5015,27 @@ void CGameMovement::PlayerMove( void )
 	}
 	else
 	{
+#ifdef GE_DLL
+		float speedThresh = 275.0f; // Max vertical movespeed up a 45 degree slope, plus a little wiggle room.
+
+		// Scale up this threshold based on the player's movespeed and strafe run multipliers.
+		CGEPlayer *pGEPlayer = ToGEPlayer(player);
+
+		if (pGEPlayer)
+		{
+			speedThresh = player->MaxSpeed() * pGEPlayer->GetStrafeRunMult() + 10; // Max vertical movespeed up a 45 degree slope, plus a little wiggle room.
+		}
+
+		if ( mv->m_vecVelocity.z > speedThresh )
+		{
+			SetGroundEntity(NULL);
+		}
+#else
 		if ( mv->m_vecVelocity.z > 250.0f )
 		{
 			SetGroundEntity( NULL );
 		}
+#endif
 	}
 
 	// Store off the starting water level

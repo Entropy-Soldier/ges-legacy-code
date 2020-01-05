@@ -673,9 +673,6 @@ public:
 	virtual void EquipSuit( bool bPlayEffects = true );
 	virtual void RemoveSuit( void );
 	void	SetMaxSpeed( float flMaxSpeed ) { m_flMaxspeed = flMaxSpeed; }
-#ifdef GE_DLL
-	float	GetMaxSpeed( void ) { return m_flMaxspeed; };
-#endif
 
 	void	NotifyNearbyRadiationSource( float flRange );
 
