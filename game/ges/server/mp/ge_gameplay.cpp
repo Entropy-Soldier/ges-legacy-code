@@ -642,12 +642,22 @@ const char *CGEBaseGameplayManager::GetNextScenario()
 		CUtlVector<int>		weights;
 		CUtlVector<const char*>	recentgamemodes;
 
-		// Don't select random modes when we're below a certain playercount.
-        if (iNumConnections <= ge_gameplay_threshold.GetInt())
-            return ge_gameplay_default.GetString();
-
 		// Random game mode according to map script.  
 		GEMPRules()->GetMapManager()->GetMapGameplayList(gamemodes, weights, iNumConnections >= teamthresh);
+
+		// Don't select random modes when we're below a certain playercount, and our default mode is a valid mode for the map.
+		if (iNumConnections <= ge_gameplay_threshold.GetInt())
+		{
+			const char *defaultMode = ge_gameplay_default.GetString();
+
+			for (int i = 0; i < gamemodes.Count(); i++)
+			{
+				if (weights[i] > 0 && !Q_stricmp(gamemodes[i], defaultMode))
+				{
+					return defaultMode;
+				}
+			}
+		}
 
 		// Adjust the weight of gamemodes we just played.
 		GetRecentModes(recentgamemodes);
@@ -668,7 +678,7 @@ const char *CGEBaseGameplayManager::GetNextScenario()
 
 				for (int l = 0; l < gamemodes.Count(); l++)
 				{
-					if (!Q_strcmp(gamemodes[l], recentgamemodes[b]))
+					if (!Q_stricmp(gamemodes[l], recentgamemodes[b]))
 					{
 						int deduction = min(weights[l], deductionamount);
 						weights[l] -= deduction;

@@ -322,23 +322,34 @@ void CGEMapManager::ParseMapData(const char *mapname)
 			{
 				if (data.Count() > 1)
 				{
-					int previndex = -1;
-
-					for (int i = 0; i < m_pMapGamemodes.Count(); i++)
+					if (!Q_stricmp("AllExisting", data[0]))
 					{
-						if (!Q_strcmp(m_pMapGamemodes[i], data[0]))
-							previndex = i;
-					}
-
-					if (previndex != -1)
-					{
-						DevMsg("Matched %s, overwriting weight with %d\n", data[0], atoi(data[1]));
-						m_pMapGamemodeWeights[previndex] = atoi(data[1]);
+						for (int g = 0; g < m_pMapGamemodeWeights.Count(); g++)
+						{
+							DevMsg("Matched %s, overwriting weight with %d\n", data[0], atoi(data[1]));
+							m_pMapGamemodeWeights[g] = atoi(data[1]);
+						}
 					}
 					else
 					{
-						m_pMapGamemodes.AddToTail(data[0]);
-						m_pMapGamemodeWeights.AddToTail(atoi(data[1]));
+						int previndex = -1;
+
+						for (int g = 0; g < m_pMapGamemodes.Count(); g++)
+						{
+							if (!Q_strcmp(m_pMapGamemodes[g], data[0]))
+								previndex = g;
+						}
+
+						if (previndex != -1)
+						{
+							DevMsg("Matched %s, overwriting weight with %d\n", data[0], atoi(data[1]));
+							m_pMapGamemodeWeights[previndex] = atoi(data[1]);
+						}
+						else
+						{
+							m_pMapGamemodes.AddToTail(data[0]);
+							m_pMapGamemodeWeights.AddToTail(atoi(data[1]));
+						}
 					}
 				}
 				else if (data.Count() == 1)
@@ -348,22 +359,33 @@ void CGEMapManager::ParseMapData(const char *mapname)
 			{
 				if (data.Count() > 1)
 				{
-					int previndex = -1;
-
-					for (int i = 0; i < m_pMapTeamGamemodes.Count(); i++)
+					if (!Q_strcmp("AllExisting", data[0]))
 					{
-						if (!Q_strcmp(m_pMapTeamGamemodes[i], data[0]))
-							previndex = i;
-					}
-
-					if (previndex != -1)
-					{
-						m_pMapTeamGamemodeWeights[previndex] = atoi(data[1]);
+						for (int g = 0; g < m_pMapTeamGamemodeWeights.Count(); g++)
+						{
+							DevMsg("Matched %s, overwriting team weight with %d\n", data[0], atoi(data[1]));
+							m_pMapTeamGamemodeWeights[g] = atoi(data[1]);
+						}
 					}
 					else
 					{
-						m_pMapTeamGamemodes.AddToTail(data[0]);
-						m_pMapTeamGamemodeWeights.AddToTail(atoi(data[1]));
+						int previndex = -1;
+
+						for (int g = 0; g < m_pMapTeamGamemodes.Count(); g++)
+						{
+							if (!Q_strcmp(m_pMapTeamGamemodes[g], data[0]))
+								previndex = g;
+						}
+
+						if (previndex != -1)
+						{
+							m_pMapTeamGamemodeWeights[previndex] = atoi(data[1]);
+						}
+						else
+						{
+							m_pMapTeamGamemodes.AddToTail(data[0]);
+							m_pMapTeamGamemodeWeights.AddToTail(atoi(data[1]));
+						}
 					}
 				}
 				else if (data.Count() == 1)
