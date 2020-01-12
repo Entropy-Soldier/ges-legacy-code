@@ -410,7 +410,7 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
     else if ( pActiveWeapon && pActiveWeapon->GetSlot() == iSlot )
     {
         iPosition = pActiveWeapon->GetPosition();
-        iSubtype = GetSelectedWeapon()->GetSubType();
+		iSubtype = pActiveWeapon->GetSubType();
     }
 	else if ( cl_ge_hud_uselastbucketitem.GetBool() )
 	{
