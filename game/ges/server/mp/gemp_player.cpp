@@ -672,6 +672,15 @@ bool CGEMPPlayer::WillGetStuckAtPosition( Vector pos )
     return trace.allsolid || trace.startsolid;
 }
 
+CBaseEntity *CGEMPPlayer::WillIntersectAtPosition(Vector pos)
+{
+	trace_t trace;
+
+	UTIL_TraceEntity( this, pos + Vector(0, 0, 1), pos + Vector(0, 0, 1), MASK_PLAYERSOLID, this, GetCollisionGroup(), &trace );
+
+	return trace.m_pEnt;
+}
+
 void CGEMPPlayer::SetSpawnState( SpawnState state )
 {
 #ifdef DEBUG
