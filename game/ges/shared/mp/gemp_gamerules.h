@@ -160,7 +160,11 @@ public:
 	void SetSuperfluousAreasState(bool state)	{ m_bAllowSuperfluousAreas = state; }
 	bool SuperfluousAreasEnabled()				{ return m_bAllowSuperfluousAreas; }
 
+	void SetShouldReloadWorld(bool state)		{ m_bShouldReloadWorld = state; }
+
 	// These accessors control the use of team spawns (if available and team play enabled)
+	void SetShouldSwapTeamSpawns(bool state)	{ m_bShouldSwapTeamSpawns = state; }
+
 	bool IsTeamSpawn()				{ return m_bUseTeamSpawns; }
 	bool IsTeamSpawnSwapped()		{ return m_bSwappedTeamSpawns; }
 	void SwapTeamSpawns()			{ m_bSwappedTeamSpawns = !m_bSwappedTeamSpawns; }
@@ -311,6 +315,9 @@ private:
 	char  m_szGameDesc[32];
 
 	bool  m_bPromoStatus;
+
+	bool  m_bShouldSwapTeamSpawns;
+	bool  m_bShouldReloadWorld;
 
 	bool  m_bUseTeamSpawns;
 	bool  m_bSwappedTeamSpawns;

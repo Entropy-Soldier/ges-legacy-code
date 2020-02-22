@@ -689,6 +689,10 @@ CGEMPRules::CGEMPRules()
 	m_bUseTeamSpawns	 = false;
 	m_bSwappedTeamSpawns = false;
 
+	m_bShouldSwapTeamSpawns = true;
+
+	m_bShouldReloadWorld = true;
+
 	m_bGlobalInfAmmo = false;
 	m_bGamemodeInfAmmo = false;
     m_bWeaponModsEnabled = false;
@@ -855,6 +859,9 @@ void CGEMPRules::OnScenarioInit()
 	SetArmorSpawnState( true );
 	SetTeamSpawn( false ); // Only CTF uses teamspawns nowadays.
 
+	SetShouldReloadWorld( true );
+	SetShouldSwapTeamSpawns( true );
+
     m_bWeaponModsEnabled = false;
     m_bAllowSuperfluousAreas = true;
 
@@ -1008,10 +1015,16 @@ void CGEMPRules::SetupRound()
 	m_iRandomSeedOffset = GetSpawnInvulnInterval() + sysTime.tm_sec + sysTime.tm_min * 60 + sysTime.tm_hour * 3600;
 
 	// Reload the world entities (unless protected)
-	WorldReload();
+	if ( m_bShouldReloadWorld )
+	{
+		WorldReload();
+	}
 
 	// Swap the team spawns
-	SwapTeamSpawns();
+	if ( m_bShouldSwapTeamSpawns )
+	{
+		SwapTeamSpawns();
+	}
 
 	// Setup teamplay from our scenario
 	SetTeamplayMode( GetScenario()->GetTeamPlay() );

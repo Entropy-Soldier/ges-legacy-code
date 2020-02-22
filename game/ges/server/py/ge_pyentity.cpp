@@ -97,6 +97,32 @@ void pyFireEntityInput(const char *target, const char *targetInput, bp::object v
 	g_EventQueue.AddEvent(target, targetInput, valueVariant, fireDelay, pActivator, pCaller);
 }
 
+void pyDamageEnt(CBaseEntity *pEntity, CBaseEntity *pAttacker, float damage)
+{
+	if (!pEntity)
+	{
+		Warning("Tried to damage non-existant entity!\n");
+		return;
+	}
+
+	CTakeDamageInfo damageInfo;
+
+	damageInfo.SetDamage(damage);
+
+	damageInfo.SetAttacker(pAttacker);
+
+	damageInfo.SetInflictor(pAttacker);
+	damageInfo.SetWeapon(NULL);
+
+	damageInfo.SetDamageType(DMG_COMMAND);
+
+	damageInfo.SetDamagePosition(pEntity->GetAbsOrigin());
+
+	damageInfo.SetDamageForce(vec3_origin);
+
+	pEntity->TakeDamage(damageInfo);
+}
+
 void pyAcceptEntityInput(CBaseEntity *pEntity, const char *targetInput, bp::object value, CBaseEntity *pActivator, CBaseEntity *pCaller)
 {
 	bp::extract<char*> to_string(value);
@@ -286,6 +312,8 @@ BOOST_PYTHON_MODULE(GEEntity)
 		.def("GetClassname", &CBaseEntity::GetClassname)
 		.def("SetTargetName", pySetTargetName)
 		.def("GetTargetName", pyGetTargetName)
+
+		.def("Damage", pyDamageEnt)
 
 		.def("FireInput", pyAcceptEntityInput)
 

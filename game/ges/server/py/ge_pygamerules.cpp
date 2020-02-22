@@ -388,6 +388,44 @@ void pySetAllowTeamSpawns(bool state)
 	GEMPRules()->SetTeamSpawn( state );
 }
 
+void pyEnableTeamSpawnSwap()
+{
+	GEMPRules()->SetShouldSwapTeamSpawns(true);
+}
+
+void pyDisableTeamSpawnSwap()
+{
+	GEMPRules()->SetShouldSwapTeamSpawns(false);
+}
+
+bool pyAreTeamSpawnsSwapped()
+{
+	return GEMPRules()->IsTeamSpawnSwapped();
+}
+
+void pySwapTeamSpawns()
+{
+	GEMPRules()->SwapTeamSpawns();
+}
+
+void pyResetTeamSpawnSwap()
+{
+	if (GEMPRules()->IsTeamSpawnSwapped())
+	{
+		GEMPRules()->SwapTeamSpawns();
+	}
+}
+
+void pyEnableWorldReload()
+{
+	GEMPRules()->SetShouldReloadWorld(true);
+}
+
+void pyDisableWorldReload()
+{
+	GEMPRules()->SetShouldReloadWorld(false);
+}
+
 int pyGetNumAlivePlayers()
 {
 	return GEMPRules()->GetNumAlivePlayers();
@@ -661,6 +699,16 @@ BOOST_PYTHON_MODULE(GEMPGameRules)
 	def("IsIntermission", pyIsIntermission);
 	def("IsGameOver", pyIsGameOver);
 	def("IsTeamplay", pyIsTeamplay);
+
+	def("EnableTeamSpawnSwap", pyEnableTeamSpawnSwap);
+	def("DisableTeamSpawnSwap", pyDisableTeamSpawnSwap);
+
+	def("AreTeamSpawnsSwapped", pyAreTeamSpawnsSwapped);
+	def("SwapTeamSpawns", pySwapTeamSpawns);
+	def("ResetTeamSpawnSwap", pyResetTeamSpawnSwap);
+
+	def("EnableWorldReload", pyEnableWorldReload);
+	def("DisableWorldReload", pyDisableWorldReload);
 
 	def("SetHUDTimerVisible", pySetHUDTimerVisible);
 
