@@ -46,7 +46,10 @@ LINK_ENTITY_TO_CLASS( info_player_janus, CGEPlayerSpawn );
 LINK_ENTITY_TO_CLASS( info_player_mi6, CGEPlayerSpawn );
 
 BEGIN_DATADESC( CGEPlayerSpawn )
-	DEFINE_KEYFIELD( m_flDesirabilityMultiplier, FIELD_FLOAT, "desirability" ),
+	DEFINE_KEYFIELD( m_flBaseDesirabilityMultiplier, FIELD_FLOAT, "desirability" ),
+	DEFINE_KEYFIELD( m_flDesirabilityMultiplier, FIELD_FLOAT, "desirabilitymult" ),
+	DEFINE_KEYFIELD( m_flOccupationWidth, FIELD_FLOAT, "occupationzonewidthboost" ),
+	DEFINE_KEYFIELD( m_flOccupationHeight, FIELD_FLOAT, "occupationzoneheightboost" ),
 	// Think
 	DEFINE_THINKFUNC( Think ),
 END_DATADESC()
@@ -63,6 +66,10 @@ CGEPlayerSpawn::CGEPlayerSpawn( void )
 	m_fDeathFadeTime = 0;
 	m_fMaxSpawnDist = 0;
 	m_flDesirabilityMultiplier = 1;
+	m_flBaseDesirabilityMultiplier = 1;
+
+	m_flOccupationWidth = 96;
+	m_flOccupationHeight = 16;
 }
 
 void CGEPlayerSpawn::Spawn( void )
@@ -85,7 +92,7 @@ void CGEPlayerSpawn::Spawn( void )
 		m_iTeam = TEAM_MI6;
 
 	// Multiply the default weight by the hammer modifer
-	m_iBaseDesirability = SPAWNER_DEFAULT_WEIGHT * m_flDesirabilityMultiplier;
+	m_iBaseDesirability = SPAWNER_DEFAULT_WEIGHT * m_flBaseDesirabilityMultiplier;
 
 	SetThink( &CGEPlayerSpawn::Think );
 	SetNextThink( gpGlobals->curtime );
@@ -259,7 +266,7 @@ int CGEPlayerSpawn::GetDesirability(CGEPlayer *pRequestor)
 		m_iUniLastDeathWeight *= 2;
 
 	// Return a sum of our weight factors
-	return min(m_iBaseDesirability - m_iLastEnemyWeight - m_iLastUseWeight - m_iLastDeathWeight - m_iUniLastDeathWeight - m_iUniLastUseWeight, SPAWNER_DEFAULT_WEIGHT);
+	return min(m_iBaseDesirability - m_iLastEnemyWeight - m_iLastUseWeight - m_iLastDeathWeight - m_iUniLastDeathWeight - m_iUniLastUseWeight, SPAWNER_DEFAULT_WEIGHT * m_flBaseDesirabilityMultiplier) * m_flDesirabilityMultiplier;
 }
 
 bool CGEPlayerSpawn::IsOccupied( void )
@@ -275,13 +282,44 @@ bool CGEPlayerSpawn::IsOccupied( void )
 
 	CBaseEntity *pList[32];
 
+	int effectiveTeamNumber = m_iTeam;
+
+	if (effectiveTeamNumber == TEAM_JANUS || effectiveTeamNumber == TEAM_MI6)
+	{
+		if (GEMPRules()->IsTeamSpawnSwapped())
+		{ 
+			if (effectiveTeamNumber == TEAM_JANUS)
+			{
+				effectiveTeamNumber = TEAM_MI6;
+			}
+			else
+			{
+				effectiveTeamNumber = TEAM_JANUS;
+			}
+		}
+	}
+
 	// Check a bit extra so we don't spawn so close to someone or something that we may as well have been inside of them.
 	// This really jacks up the surface area but that's okay.
-	int count = UTIL_EntitiesInBox( pList, 32, GetAbsOrigin() + VEC_HULL_MIN + Vector(-96, -96, -16) , GetAbsOrigin() + VEC_HULL_MAX + Vector( 96, 96, 16) , 0 );
+	int count = UTIL_EntitiesInBox(pList, 32, GetAbsOrigin() + VEC_HULL_MIN + Vector(m_flOccupationWidth * -1, m_flOccupationWidth * -1, m_flOccupationHeight * -1), GetAbsOrigin() + VEC_HULL_MAX + Vector(m_flOccupationWidth, m_flOccupationWidth, m_flOccupationHeight), 0);
 	for ( int i = 0; i < count; i++ )
 	{
 		if ( pList[i]->CanBlockPlayerSpawn() )
-			return true;
+		{
+			if (effectiveTeamNumber != TEAM_UNASSIGNED && (pList[i]->IsPlayer() || pList[i]->IsNPC()) && pList[i]->GetTeamNumber() == effectiveTeamNumber)
+			{
+				float heightdiff = pList[i]->GetAbsOrigin().z - GetAbsOrigin().z;
+
+				if ((abs(heightdiff) > 80) || (((pList[i]->GetAbsOrigin() - GetAbsOrigin()).Length2DSqr()) <= 32 * 32)) // Players from our own team carry much less of a penalty.
+				{
+					return true;
+				}
+			}
+			else
+			{
+				return true;
+			}
+		}
 	}
 
 	return false;

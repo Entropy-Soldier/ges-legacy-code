@@ -71,7 +71,10 @@ private:
 
 	// KeyValues
 	int   m_iTeam;
+	float m_flBaseDesirabilityMultiplier;
 	float m_flDesirabilityMultiplier;
+	float m_flOccupationWidth;
+	float m_flOccupationHeight;
 };
 
 #endif
