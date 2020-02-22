@@ -538,7 +538,7 @@ void pyPlaySound( const char* soundname, bool bDimMusic = false )
 	pyPlaySoundTo( bp::object(), soundname, bDimMusic );
 }
 
-void pyInitHudProgressBar( bp::object dest, int idx, std::string title, int flags, float maxValue, float x, float y, int w, int h, Color col, float currValue )
+void pyInitHudProgressBar( bp::object dest, int idx, std::string title, int flags, float maxValue, float x, float y, int w, int h, bp::object col, float currValue )
 {
 	bp::extract<CGEPlayer*> to_player( dest );
 	bp::extract<int> to_team( dest );
@@ -559,7 +559,44 @@ void pyInitHudProgressBar( bp::object dest, int idx, std::string title, int flag
 
 		int xPer = clamp(x,-1.0f,1.0f) * 100;
 		int yPer = clamp(y,-1.0f,1.0f) * 100;
-		int iColor = col.GetRawColor();
+
+		bp::extract<Color> to_fgcolor(col);
+		bp::extract<bp::tuple> to_colorpair(col);
+
+		int iColor = Color(255, 255, 255, 255).GetRawColor();
+		int iBgColor = COLOR_VOID.GetRawColor();
+
+		if (!col.is_none())
+		{
+			if (to_fgcolor.check())
+			{
+				iColor = to_fgcolor().GetRawColor();
+			}
+			else if (to_colorpair.check())
+			{
+				bp::tuple colorpair = to_colorpair();
+
+				if (bp::len(colorpair) > 0)
+				{
+					bp::extract<Color> to_idx1color(colorpair[0]);
+
+					if (to_idx1color.check())
+					{
+						iColor = to_idx1color().GetRawColor();
+					}
+
+					if (bp::len(colorpair) > 1)
+					{
+						bp::extract<Color> to_idx2color(colorpair[1]);
+
+						if (to_idx2color.check())
+						{
+							iBgColor = to_idx2color().GetRawColor();
+						}
+					}
+				}
+			}
+		}
 
 		UserMessageBegin( *filter, "AddProgressBar" );
 		WRITE_BYTE(idx);
@@ -571,6 +608,7 @@ void pyInitHudProgressBar( bp::object dest, int idx, std::string title, int flag
 		WRITE_SHORT(w);
 		WRITE_SHORT(h);
 		WRITE_BITS(&iColor, 32);
+		WRITE_BITS(&iBgColor, 32);
 		WRITE_STRING(title.c_str());
 		MessageEnd();
 
@@ -1014,7 +1052,7 @@ BOOST_PYTHON_MODULE(GEUtil)
 
 	def("PopupMessage", &pyPopupMessage, ("dest", "title", "msg", arg("image")=""));
 
-	def("HudMessage", &pyHudMessage, ("dest", "msg", "x", "y", arg("color")=Color(255,255,255,255), arg("hold_time")=5.0f, arg("channel")=-1));
+	def("HudMessage", &pyHudMessage, ("dest", "msg", "x", "y", arg("color") = Color(255, 255, 255, 255), arg("hold_time") = 5.0f, arg("channel") = -1));
 
 	def("Msg", pyMsg);
 	def("DevMsg", pyDevMsg);
@@ -1082,7 +1120,7 @@ BOOST_PYTHON_MODULE(GEUtil)
 	def("ParticleEffectBeam", pyParticleEffectBeam);
 
 	def("InitHudProgressBar", pyInitHudProgressBar, ("dest", "index", arg("title")="", arg("flags")=0, 
-		arg("max_value")=0, arg("x")=-1, arg("y")=-1, arg("w")=120, arg("h")=60, arg("color")=Color(255,255,255,255), arg("curr_value")=0));
+		arg("max_value")=0, arg("x")=-1, arg("y")=-1, arg("w")=120, arg("h")=60, arg("color")=bp::object(), arg("curr_value")=0));
 	def("UpdateHudProgressBar", pyUpdateHudProgressBar, ("dest", "index", arg("value")=FLT_MAX, arg("title")="\r", arg("color")=Color()));
 	def("RemoveHudProgressBar", pyRemoveHudProgressBar, ("dest", "index"));
 	// DEPRECATED

@@ -347,6 +347,10 @@ static Color COLOR_JANUS	( 238,  54,  54, 255 );
 static Color COLOR_MI6		( 161, 207, 243, 255 );
 static Color COLOR_NOTEAM	( 153, 255, 140, 255 );
 
+// A standard value for colors that are not set yet, or not used.  
+// A value which is very unlikely to see actual use has been chosen for this purpose, but it is still a valid color.
+static Color COLOR_VOID     ( 2,   2,   2,   2   );
+
 // Team values
 #define TEAM_MI6		2
 #define TEAM_JANUS		3

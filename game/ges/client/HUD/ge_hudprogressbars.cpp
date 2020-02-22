@@ -178,12 +178,19 @@ void CHudProgressBars::MsgFunc_AddProgressBar( bf_read &msg )
 	bar->w = msg.ReadShort();
 	bar->h = msg.ReadShort();
 
-	int iColor;
+	int iColor, iBgColor;
 	msg.ReadBits( &iColor, 32 );
+	msg.ReadBits( &iBgColor, 32 );
 
 	Color fgColor, bgColor;
 	fgColor.SetRawColor( iColor );
-	bgColor.SetColor( fgColor[0], fgColor[1], fgColor[2], 50 );
+	bgColor.SetRawColor( iBgColor );
+
+	// If we don't have a bg color, just set it to a more transparent version of the foreground color.
+	if (bgColor == COLOR_VOID)
+	{
+		bgColor.SetColor(fgColor[0], fgColor[1], fgColor[2], 50);
+	}
 
 	// Setup the title text
 	char title[64];

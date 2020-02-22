@@ -26,7 +26,7 @@ class CGEWebRequest : public CThread
 {
 public:
 	CGEWebRequest( const char *addr, WEBRQST_CLBK = NULL, const char *methodData = NULL, const char *internalData = NULL);
-	~CGEWebRequest();
+	virtual ~CGEWebRequest();
 
 	void Destroy();
 
