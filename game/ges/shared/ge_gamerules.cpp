@@ -390,6 +390,21 @@ bool CGERules::FShouldSwitchWeapon( CBasePlayer *pPlayer, CBaseCombatWeapon *pWe
 			return false;
 
 		CGEWeapon *myweap = ToGEWeapon(pPlayer->GetActiveWeapon());
+		int myweapid = myweap->GetWeaponID();
+		int weapid = ToGEWeapon(pWeapon)->GetWeaponID();
+
+		// Never switch if we have explosives or melee out
+		if (myweapid == WEAPON_GRENADE_LAUNCHER || myweapid == WEAPON_ROCKET_LAUNCHER || myweapid == WEAPON_GRENADE ||
+			myweapid == WEAPON_REMOTEMINE || myweapid == WEAPON_PROXIMITYMINE || myweapid == WEAPON_TIMEDMINE)
+		{
+			return false;
+		}
+
+		// Also never automatically switch to esoteric explosives.
+		if (weapid == WEAPON_GRENADE || weapid == WEAPON_REMOTEMINE || weapid == WEAPON_PROXIMITYMINE || weapid == WEAPON_TIMEDMINE)
+		{
+			return false;
+		}
 
 		// Update the accuracy penalty so our check is accurate.
 		myweap->UpdateAccPenalty();

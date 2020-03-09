@@ -26,6 +26,7 @@
 #define GE_EXP_SPAWN_DELAY	0.25f
 #define GE_EXP_DIE_DELAY	0.5f
 #define GE_EXP_DMG_TIME		2.5f
+#define GE_EXP_REFRESH_TIME	1.7f
 
 extern short	g_sModelIndexFireball;		// (in combatweapon.cpp) holds the index for the fireball 
 extern short	g_sModelIndexWExplosion;	// (in combatweapon.cpp) holds the index for the underwater explosion
@@ -53,6 +54,7 @@ public:
 	void SetDamageRadius( float dmgR );
     void SetDamageCap( int dmgC );
     void SetPushForceMult( float mult );
+	void SetLifetimeMult(float mult);
 	void SetOwner( CBaseEntity *owner );
 	void SetActivator( CBaseEntity *activator);
 
@@ -67,6 +69,9 @@ private:
     int m_iDamageCap;
 	float m_flDamageRadius;
     float m_flPushForceMult;
+
+	float m_flLifeDuration;
+	float m_flNextRefresh;
 
 	float m_flDieTime;
 	float m_flShakeTime;
@@ -88,6 +93,9 @@ CGE_Explosion::CGE_Explosion()
     m_flPushForceMult = 1.0f;
 	m_flShakeTime = 0;
 	m_flDieTime = 0;
+	m_flNextRefresh = 0.0f;
+
+	m_flLifeDuration = GE_EXP_DMG_TIME;
 }
 
 void CGE_Explosion::SetDamage( float dmg )
@@ -105,9 +113,17 @@ void CGE_Explosion::SetDamageCap( int dmgC )
 	m_iDamageCap = dmgC;
 }
 
-void CGE_Explosion::SetPushForceMult(float mult)
+void CGE_Explosion::SetPushForceMult( float mult )
 {
     m_flPushForceMult = mult;
+}
+
+void CGE_Explosion::SetLifetimeMult( float mult )
+{
+	float lifediff = mult * GE_EXP_DMG_TIME - m_flLifeDuration;
+
+	m_flDieTime += lifediff;
+	m_flLifeDuration = mult * GE_EXP_DMG_TIME;
 }
 
 void CGE_Explosion::SetActivator( CBaseEntity *activator)
@@ -146,14 +162,15 @@ void CGE_Explosion::Activate()
 {
 	BaseClass::Activate();
 
+	m_flDieTime = gpGlobals->curtime + m_flLifeDuration;
+	m_flNextRefresh = gpGlobals->curtime + GE_EXP_REFRESH_TIME;
+
 	if ( !IsSmallExp() )
 	{
-		m_flDieTime = gpGlobals->curtime + GE_EXP_DMG_TIME;
 		EmitSound("Explosion.large");
 	}
 	else
 	{
-		m_flDieTime = gpGlobals->curtime + GE_EXP_DMG_TIME;
 		EmitSound("Explosion.small");
 	}
 
@@ -221,7 +238,7 @@ void CGE_Explosion::CreateInitialBlast( void )
 			0.0f );
 	}
 
-	CSoundEnt::InsertSound( SOUND_DANGER, GetAbsOrigin(), min(m_flDamageRadius, 500)*1.5f, GE_EXP_DMG_TIME, this );
+	CSoundEnt::InsertSound( SOUND_DANGER, GetAbsOrigin(), min(m_flDamageRadius, 500)*1.5f, m_flLifeDuration, this );
 
 	//Wreak paintball havok if paintball mode is on
 	//otherwise just place a scorch mark down
@@ -264,14 +281,26 @@ void CGE_Explosion::CreateInitialBlast( void )
 
 
 void CGE_Explosion::Think()
-{
-	if ( gpGlobals->curtime > m_flDieTime + GE_EXP_DIE_DELAY )
+{ 
+	if (gpGlobals->curtime > m_flDieTime + GE_EXP_DIE_DELAY * ( m_flLifeDuration / GE_EXP_DMG_TIME ))
 	{
 		StopParticleSystem();
 		UTIL_Remove(this);
 	}
 	else if ( gpGlobals->curtime < m_flDieTime )
 	{
+		if ( !m_bActive )
+		{
+			StartParticleSystem();
+			m_flNextRefresh = gpGlobals->curtime + GE_EXP_REFRESH_TIME;
+		}
+		else if ( gpGlobals->curtime > m_flNextRefresh && gpGlobals->curtime + 1.0f < m_flDieTime )
+		{
+			StopParticleSystem();
+			m_flStartTime = gpGlobals->curtime;
+			//SetNextThink(gpGlobals->curtime);
+		}
+
 		// Only apply damage if our owner and activator are still valid
 		if ( m_hActivator.Get() && m_hOwner.Get() && m_flDamageRadius > 0 && m_flDamage > 0 )
 		{
@@ -321,7 +350,7 @@ void CGE_Explosion::CreateHeatWave( void )
 	pHeatWave->m_JetLength = 80.0f * scale;
 	pHeatWave->m_InitialState = true;
 	pHeatWave->m_bIsForExplosion = true;
-	pHeatWave->m_flStartFadeTime = gpGlobals->curtime + GE_EXP_DMG_TIME - 0.5f;
+	pHeatWave->m_flStartFadeTime = gpGlobals->curtime + m_flLifeDuration - 0.5f;
 	pHeatWave->m_flFadeDuration = 0.5f;
 
 	DispatchSpawn( pHeatWave );
@@ -340,7 +369,7 @@ void CGE_Explosion::DestroyHeatWave( void )
 	}
 }
 
-CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, const Vector pos, float dmg, float dmgRadius, int dmgCap, float pushScale )
+CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, const Vector pos, float dmg, float dmgRadius, int dmgCap, float pushScale, float lifetimeScale )
 {
 	// We must have an owner
 	if ( !owner )
@@ -357,6 +386,7 @@ CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, con
 		pExp->SetDamageRadius( dmgRadius );
 		pExp->SetAbsOrigin( pos );
         pExp->SetPushForceMult( pushScale );
+		pExp->SetLifetimeMult( lifetimeScale );
 
 		DispatchSpawn( pExp );
 		pExp->Activate();
@@ -365,7 +395,7 @@ CBaseEntity* Create_GEExplosion( CBaseEntity* owner, CBaseEntity* activator, con
 	return pExp;
 }
 
-CBaseEntity* Create_GEExplosion( CBaseEntity* owner, const Vector pos, float dmg, float dmgRadius, int dmgCap, float pushScale )
+CBaseEntity* Create_GEExplosion( CBaseEntity* owner, const Vector pos, float dmg, float dmgRadius, int dmgCap, float pushScale, float lifetimeScale )
 {
-	return Create_GEExplosion( owner, NULL, pos, dmg, dmgRadius, dmgCap, pushScale );
+	return Create_GEExplosion( owner, NULL, pos, dmg, dmgRadius, dmgCap, pushScale, lifetimeScale );
 }

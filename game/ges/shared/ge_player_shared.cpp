@@ -268,6 +268,8 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 	CGEWeapon *pWeapon = NULL;
 	bool isWepShotgun = false;
     int damageCap = INT_MAX;
+	float lifetimemult = 1.0f;
+	float pushforcemult = 1.0f;
 
 	// Player and NPC specific actions
 	if ( IsNPC() || IsPlayer() )
@@ -282,6 +284,8 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 
 			isWepShotgun = pWeapon->IsShotgun(); // We can't use the amount of shots fired for this because automatics can fire multiple bullets per frame.
             damageCap = pWeapon->GetDamageCap();
+			lifetimemult = pWeapon->GetWeaponBlastLifetimeMult();
+			pushforcemult = pWeapon->GetWeaponPushForceMult();
 		}
 	}
 
@@ -468,8 +472,8 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 		
             if ( !(modinfo.m_nFlags & FIRE_BULLETS_PENETRATED_SHOT) && modinfo.m_flBlastRadius > 0.0f )
             {
-                ExplosionCreate(tr.endpos, GetAbsAngles(), this, modinfo.m_flBlastRadiusDamage, modinfo.m_flBlastRadius,
-			    SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, (CBaseEntity *)NULL);
+				ExplosionCreate(tr.endpos, GetAbsAngles(), this, modinfo.m_flBlastRadiusDamage, modinfo.m_flBlastRadiusDamage, modinfo.m_flBlastRadius,
+								SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, pushforcemult, lifetimemult, (CBaseEntity *)NULL);
             }
         #endif
 

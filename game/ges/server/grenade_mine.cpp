@@ -118,11 +118,11 @@ void CGEMine::InputExplode( inputdata_t &inputdata )
     {
         // Create the explosion 4 units AWAY from the surface we are attached to
         ExplosionCreate(GetAbsOrigin() + forward * 4, GetAbsAngles(), inputdata.pActivator, GetDamage(), GetDamageCap(), GetDamageRadius(),
-            SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, GetPushForceMult(), this);
+            SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS, 0.0f, GetPushForceMult(), GetLifetimeMult(), this);
     }
 	StopSound(GetAttachSound());
 	// Effectively hide us from everyone until the explosion is done with
-	GEUTIL_DelayRemove( this, GE_EXP_MAX_DURATION );
+	GEUTIL_DelayRemove( this, GE_EXP_MAX_DURATION * GetLifetimeMult() );
 }
 
 void CGEMine::Precache( void )
@@ -161,7 +161,7 @@ void CGEMine::MineThink( void )
 {
 	if ( gpGlobals->curtime > m_flSpawnTime + MINE_LIFETIME )
 	{
-		GEUTIL_DelayRemove( this, GE_EXP_MAX_DURATION );
+		GEUTIL_DelayRemove( this, GE_EXP_MAX_DURATION * GetLifetimeMult() );
 		return;
 	}
 
@@ -262,7 +262,7 @@ void CGEMine::MineThink( void )
 	}
 	else if ( GetMineType() == WEAPON_TIMEDMINE )
 	{
-		if ( gpGlobals->curtime > m_flAttachTime + MINE_TIMEDDELAY )
+		if ( !m_bInAir && gpGlobals->curtime > m_flSpawnTime + MINE_TIMEDDELAY )
 			g_EventQueue.AddEvent( this, "Explode", 0, GetThrower(), this );
 	}
 

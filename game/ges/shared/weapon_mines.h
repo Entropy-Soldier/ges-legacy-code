@@ -167,6 +167,8 @@ public:
 
 	virtual GEWeaponID GetWeaponID( void ) const { return WEAPON_PROXIMITYMINE; }
 
+	virtual float	GetWeaponBaseBlastLifetimeMult()	{ return 0.4f; }
+
 	CWeaponProximityMine( void ) { };
 	virtual void Precache(void);
 	virtual void Spawn( void );

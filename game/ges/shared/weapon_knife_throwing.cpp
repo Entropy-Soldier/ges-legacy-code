@@ -27,8 +27,11 @@
 #define CWeaponKnifeThrowing C_WeaponKnifeThrowing
 #endif
 
-#define TKNIFE_AIR_VELOCITY		820
-#define TKNIFE_WATER_VELOCITY	400
+#define TKNIFE_AIR_VELOCITY		850
+#define TKNIFE_WATER_VELOCITY	700
+
+#define TKNIFE_AIR_VELOCITY_ZBOOST		75
+#define TKNIFE_WATER_VELOCITY_ZBOOST	50
 
 //-----------------------------------------------------------------------------
 // CWeaponKnife
@@ -237,6 +240,7 @@ CGETKnife *CWeaponKnifeThrowing::CreateKnife( const Vector &vecOrigin, const QAn
     // Copy custom print name string directly instead of possibly copying the normal print name.
     pKnife->SetCustomPrintName(m_sPrintNameCustom);
     pKnife->SetPushForceMult( GetWeaponPushForceMult() );
+	pKnife->SetLifetimeMult( GetWeaponBlastLifetimeMult() );
 
 	return pKnife;
 }
@@ -253,9 +257,8 @@ void CWeaponKnifeThrowing::ThrowKnife()
 #ifndef CLIENT_DLL
 	Vector vecSrc = pOwner->Weapon_ShootPosition();
 
-	Vector	vForward, vRight;
-	AngleVectors( pOwner->EyeAngles(), &vForward, &vRight, NULL );
-	vForward[2] += 0.1f;
+	Vector	vForward, vRight, vUp;
+	AngleVectors( pOwner->EyeAngles(), &vForward, &vRight, &vUp );
 	
 	if (pOwner->IsPlayer())
 	{
@@ -267,12 +270,19 @@ void CWeaponKnifeThrowing::ThrowKnife()
 		VectorMA(vecSrc, 20.0, vForward, vecSrc);
 	}
 
-	Vector vecThrow;
-	pOwner->GetVelocity( &vecThrow, NULL );
-	if ( pOwner->GetWaterLevel() == 3 )
-		vecThrow += vForward * TKNIFE_WATER_VELOCITY;
+	Vector vecThrow = pOwner->GetAbsVelocity();
+
+	//pOwner->GetVelocity( &vecThrow, NULL );
+	if (pOwner->GetWaterLevel() == 3)
+	{
+		VectorMA(vecThrow, TKNIFE_WATER_VELOCITY, vForward, vecThrow);
+		VectorMA(vecThrow, TKNIFE_WATER_VELOCITY_ZBOOST, vUp, vecThrow);
+	}
 	else
-		vecThrow += vForward * TKNIFE_AIR_VELOCITY;
+	{
+		VectorMA(vecThrow, TKNIFE_AIR_VELOCITY, vForward, vecThrow);
+		VectorMA(vecThrow, TKNIFE_AIR_VELOCITY_ZBOOST, vUp, vecThrow);
+	}
 
 	QAngle angAiming;
 	VectorAngles( vForward, angAiming );

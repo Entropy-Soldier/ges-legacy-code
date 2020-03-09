@@ -176,6 +176,9 @@ public:
 
     virtual float	GetWeaponDamageRadius( bool modded = true )	{ return GetGEWpnData().m_flDamageRadius + (modded ? m_flBlastRadiusOffset : 0.0f); }
 
+	virtual float	GetWeaponBaseBlastLifetimeMult()	{ return 1.0f; }
+	virtual float	GetWeaponBlastLifetimeMult(bool modded = true)	{ return GetWeaponBaseBlastLifetimeMult() + (modded ? m_flBlastLifetimeOffset : 0.0f); }
+
     virtual float	GetWeaponPushForceMult( bool modded = true ) { return 1.0f + (modded ? m_flPushForceMultOffset : 0.0f); }
 
     virtual int     GetWeaponSoundPitchShift() { return m_iWeaponSoundPitchOffset; }
@@ -249,6 +252,7 @@ public:
     GEWeaponStatModVar( int, m_i, ZoomOffsetOffset );
 
     GEWeaponStatModVar( float, m_fl, BlastRadiusOffset );
+	GEWeaponStatModVar( float, m_fl, BlastLifetimeOffset );
     GEWeaponStatModVar( float, m_fl, RangeOffset );
 
     GEWeaponStatModVar( float, m_fl, PushForceMultOffset );

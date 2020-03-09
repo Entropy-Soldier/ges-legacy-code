@@ -130,7 +130,8 @@ void CGEWeaponMine::PrimaryAttack( void )
 	if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
 		return;
 
-	m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + GetFireRate();
+	m_flNextSecondaryAttack = gpGlobals->curtime + GetFireRate();
+	m_flNextPrimaryAttack = max(gpGlobals->curtime + GetFireRate(), m_flNextPrimaryAttack);
 
 	m_bPreThrow = true;
 	m_flReleaseTime = gpGlobals->curtime + GetFireDelay();
@@ -213,10 +214,13 @@ void CGEWeaponMine::ThrowMine( void )
 	Vector	vForward, vRight, vUp;
 	AngleVectors( pOwner->EyeAngles(), &vForward, &vRight, &vUp );
 	
-	Vector vecThrow;
-	pOwner->GetVelocity( &vecThrow, NULL );
-	vecThrow += vForward * 600 + vUp * 80; //Pretty close to original throwing behavior.
+	Vector vecThrow = pOwner->GetAbsVelocity();
+	//pOwner->GetVelocity( &vecThrow, NULL );
+	//vecThrow += vForward * 750 + vUp * 80; //Pretty close to original throwing behavior.
 	
+	VectorMA(vecThrow, 750.0f, vForward, vecThrow);
+	VectorMA(vecThrow, 80.0f, vUp, vecThrow);
+
 	QAngle angAiming;
 	VectorAngles( vecThrow, angAiming );
 
@@ -258,6 +262,7 @@ void CGEWeaponMine::ThrowMine( void )
     pMine->SetDamageCap( GetDamageCap() );
 	pMine->SetDamageRadius( GetWeaponDamageRadius() );
     pMine->SetPushForceMult( GetWeaponPushForceMult() );
+	pMine->SetLifetimeMult( GetWeaponBlastLifetimeMult() );
 
     // Copy custom print name string directly instead of possibly copying the normal print name.
     pMine->SetCustomPrintName(m_sPrintNameCustom);
@@ -417,7 +422,9 @@ void CWeaponRemoteMine::PrimaryAttack( void )
 	if ( m_bWatchDeployed )
 	{
 		SendWeaponAnim( ACT_VM_WATCH_DETONATE );
-		m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+
+		m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+		m_flNextPrimaryAttack = max(gpGlobals->curtime + SequenceDuration(), m_flNextPrimaryAttack);
 
 		// Emit the watch beep sound
 		WeaponSound( SPECIAL1 );
@@ -459,12 +466,15 @@ void CWeaponRemoteMine::SecondaryAttack( void )
 
 		SendWeaponAnim( ACT_VM_WATCH_DRAW );
 		m_bWatchDeployed = !m_bWatchDeployed;
-		m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+
+		m_flNextPrimaryAttack = max( gpGlobals->curtime + SequenceDuration(), m_flNextPrimaryAttack );
+		m_flNextSecondaryAttack = max( gpGlobals->curtime + SequenceDuration(), m_flNextSecondaryAttack );
 		return;
 	}
 
 	ToggleWatch();
-	m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+	m_flNextPrimaryAttack = max(gpGlobals->curtime + SequenceDuration(), m_flNextPrimaryAttack);
+	m_flNextSecondaryAttack = max(gpGlobals->curtime + SequenceDuration(), m_flNextSecondaryAttack);
 }
 
 void CWeaponRemoteMine::ToggleWatch( void )
@@ -501,7 +511,8 @@ void CWeaponRemoteMine::ItemPreFrame( void )
 	if ( (pOwner->m_nButtons & IN_ATTACK) && (pOwner->m_nButtons & IN_ATTACK2) )
 	{
 		// This makes sure we don't enter watch mode or throw another mine
-		m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + 0.30f;
+		m_flNextSecondaryAttack = gpGlobals->curtime + 0.30f;
+		m_flNextPrimaryAttack = max(gpGlobals->curtime + 0.30f, m_flNextPrimaryAttack);
 
 #ifdef GAME_DLL
 		int detonated = 0;

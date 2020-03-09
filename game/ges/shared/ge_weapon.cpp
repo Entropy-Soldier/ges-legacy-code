@@ -77,6 +77,8 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
     RecvPropInt( RECVINFO( m_iZoomOffsetOffset ) ),
     
     RecvPropFloat( RECVINFO( m_flBlastRadiusOffset ) ),
+	RecvPropFloat( RECVINFO( m_flBlastLifetimeOffset ) ),
+
     RecvPropFloat( RECVINFO( m_flRangeOffset ) ),
     RecvPropFloat( RECVINFO( m_flPushForceMultOffset ) ),
     RecvPropFloat( RECVINFO( m_flPenetrationOffset ) ),
@@ -115,6 +117,7 @@ BEGIN_NETWORK_TABLE( CGEWeapon, DT_GEWeapon )
 	SendPropFloat( SENDINFO( m_flAimBonusOffset ) ),
 
 	SendPropFloat( SENDINFO( m_flBlastRadiusOffset ) ),
+	SendPropFloat( SENDINFO( m_flBlastLifetimeOffset ) ),
 	SendPropFloat( SENDINFO( m_flRangeOffset ) ),
     SendPropFloat( SENDINFO( m_flPushForceMultOffset ) ),
     SendPropFloat( SENDINFO( m_flPenetrationOffset ) ),
@@ -166,6 +169,8 @@ BEGIN_DATADESC( CGEWeapon )
     DEFINE_FIELD( m_flAimBonusOffset,	FIELD_FLOAT ),
 
     DEFINE_FIELD( m_flBlastRadiusOffset,	FIELD_FLOAT ),
+	DEFINE_FIELD( m_flBlastLifetimeOffset, FIELD_FLOAT ),
+
     DEFINE_FIELD( m_flRangeOffset,	FIELD_FLOAT ),
     DEFINE_FIELD( m_flPenetrationOffset,	FIELD_FLOAT ),
 
@@ -226,6 +231,8 @@ CGEWeapon::CGEWeapon()
     m_flAimBonusOffset = 0.0f;
 
     m_flBlastRadiusOffset = 0.0f;
+	m_flBlastLifetimeOffset = 0.0f;
+
     m_flRangeOffset = 0.0f;
     m_flPenetrationOffset = 0.0f;
 

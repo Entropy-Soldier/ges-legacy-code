@@ -51,6 +51,8 @@ public:
 	CGEWeaponGrenadeLauncher( void );
 
 	virtual GEWeaponID GetWeaponID( void ) const { return WEAPON_GRENADE_LAUNCHER; }
+
+	virtual float	GetWeaponBaseBlastLifetimeMult()	{ return 0.5f; }
 	
 	virtual bool IsExplosiveWeapon() { return true; }
 	virtual void OnReloadOffscreen( void );
@@ -432,8 +434,8 @@ void CGEWeaponGrenadeLauncher::LaunchGrenade( void )
 
 	CheckLaunchPosition( pOwner->EyePosition(), vecSrc );
 
-	Vector vecThrow;
-	pOwner->GetVelocity( &vecThrow, NULL );
+	Vector vecThrow = pOwner->GetAbsVelocity();
+	//pOwner->GetVelocity( &vecThrow, NULL );
 	VectorMA( vecThrow, 1050.0f, vForward, vecThrow );
 	VectorMA( vecThrow, 100.0f, vUp, vecThrow );
 
@@ -466,6 +468,7 @@ void CGEWeaponGrenadeLauncher::LaunchGrenade( void )
         pShell->SetDamageCap( GetDamageCap() );
 		pShell->SetDamageRadius( GetWeaponDamageRadius() );
         pShell->SetPushForceMult( GetWeaponPushForceMult() );
+		pShell->SetLifetimeMult( GetWeaponBlastLifetimeMult() );
 
         // Copy custom print name string directly instead of possibly copying the normal print name.
         pShell->SetCustomPrintName(m_sPrintNameCustom);

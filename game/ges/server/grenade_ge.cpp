@@ -99,7 +99,7 @@ void CGEGrenade::SetVelocity( const Vector &velocity, const AngularImpulse &angV
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
 	if ( pPhysicsObject )
 	{
-		pPhysicsObject->AddVelocity( &velocity, &angVelocity );
+		pPhysicsObject->SetVelocityInstantaneous(&velocity, &angVelocity);
 	}
 }
 

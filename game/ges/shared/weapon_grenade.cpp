@@ -380,16 +380,20 @@ void CGEWeaponGrenade::ThrowGrenade( float throwforce, bool deathThrow /* == fal
 #ifndef CLIENT_DLL
 	Vector	vecEye = pOwner->EyePosition();
 
-	Vector	vForward, vRight;
-	AngleVectors( pOwner->EyeAngles(), &vForward, &vRight, NULL );
+	Vector	vForward, vRight, vUp;
+	AngleVectors( pOwner->EyeAngles(), &vForward, &vRight, &vUp );
 
 	Vector vecSrc = vecEye + vForward * 18.0f + vRight * 8.0f;
 	CheckThrowPosition( vecEye, vecSrc );
-	vForward[2] += 0.1f;
+	//vForward[2] += 0.1f;
 
-	Vector vecThrow;
-	pOwner->GetVelocity( &vecThrow, NULL );
-	vecThrow += vForward * throwforce;
+	Vector vecThrow = pOwner->GetAbsVelocity();
+	//pOwner->GetVelocity( &vecThrow, NULL );
+
+	VectorMA(vecThrow, throwforce, vForward, vecThrow);
+	VectorMA(vecThrow, throwforce * 0.1, vUp, vecThrow);
+
+	//vecThrow += vForward * throwforce;
 
 	// Convert us into a bot player :-D
 	if ( pOwner->IsNPC() )
@@ -412,6 +416,7 @@ void CGEWeaponGrenade::ThrowGrenade( float throwforce, bool deathThrow /* == fal
 		pGrenade->SetDamageRadius( GetWeaponDamageRadius() );
 		pGrenade->SetSourceWeapon(this);
         pGrenade->SetPushForceMult( GetWeaponPushForceMult() );
+		pGrenade->SetLifetimeMult( GetWeaponBlastLifetimeMult() );
 
         // Copy custom print name string directly instead of possibly copying the normal print name.
         pGrenade->SetCustomPrintName(m_sPrintNameCustom);
@@ -464,6 +469,7 @@ void CGEWeaponGrenade::ExplodeInHand( void )
         pGrenade->SetDamageCap( GetDamageCap() );
 		pGrenade->SetDamageRadius( GetWeaponDamageRadius() );
         pGrenade->SetPushForceMult( GetWeaponPushForceMult() );
+		pGrenade->SetLifetimeMult( GetWeaponBlastLifetimeMult() );
 
         // Copy custom print name string directly instead of possibly copying the normal print name.
         pGrenade->SetCustomPrintName(m_sPrintNameCustom);
